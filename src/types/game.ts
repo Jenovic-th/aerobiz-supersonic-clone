@@ -1,0 +1,262 @@
+export type RegionId = 
+  | 'NORTH_AMERICA'
+  | 'SOUTH_AMERICA'
+  | 'EUROPE'
+  | 'AFRICA'
+  | 'MIDDLE_EAST_SOUTH_ASIA'
+  | 'EAST_SOUTHEAST_ASIA'
+  | 'OCEANIA';
+
+export interface City {
+  id: string;
+  name: string;
+  country: string;
+  region: RegionId;
+  lat: number;
+  lon: number;
+  population: number; // Millions (e.g. 14.0 for Tokyo)
+  businessIndex: number; // 1 - 100
+  tourismIndex: number; // 1 - 100
+  baseSlots: number;
+  bloc: 'WEST' | 'EAST' | 'NEUTRAL';
+}
+
+export type Manufacturer = 
+  | 'Boeing' 
+  | 'Airbus' 
+  | 'McDonnell Douglas' 
+  | 'Lockheed' 
+  | 'Ilyushin' 
+  | 'Tupolev' 
+  | 'Aérospatiale' 
+  | 'Boom Supersonic'
+  | 'Tesla Aerospace'
+  | 'SpaceX';
+
+export type GameMode = 'CAMPAIGN_20YR' | 'SANDBOX_INFINITE';
+
+export interface AircraftModel {
+  id: string;
+  model: string;
+  manufacturer: Manufacturer;
+  originBloc: 'WEST' | 'EAST';
+  introYear: number;
+  retireYear?: number;
+  capacity: number; // Passenger seats
+  rangeKm: number; // Max range in km
+  speedKmh: number; // Speed km/h (Concorde/Boom ~1800-2200, Subsonic ~850-920)
+  fuelBurnPerKm: number; // Fuel rating
+  maintCostPerHour: number; // Maintenance cost factor
+  priceK: number; // Price in $K (e.g. 135000 = $135M)
+  comfortRating: number; // 1 - 100
+  isSupersonic?: boolean;
+  era: 1 | 2 | 3;
+  wingspanM?: number;
+  lengthM?: number;
+  heightM?: number;
+  mtowTon?: number;
+  engineType?: string;
+  cabinAisle?: string;
+  serviceCeilingFt?: number;
+}
+
+export interface AircraftInstance {
+  instanceId: string;
+  modelId: string;
+  ageYears: number;
+  purchaseYear?: number;
+  conditionPct?: number; // 0 - 100% mechanical health
+  assignedRouteId: string | null;
+}
+
+export interface RouteIncident {
+  type: 'WEATHER' | 'MECHANICAL' | 'AIR_TRAFFIC' | 'RANGE_EXCEEDED';
+  title: string;
+  description: string;
+  lostFlights: number; // Number of cancelled flights this quarter
+  emergencyCostK: number; // Repair & passenger care expense in $K
+}
+
+export interface Route {
+  id: string;
+  airlineId: string;
+  originCityId: string;
+  destCityId: string;
+  assignedAircraftIds: string[]; // List of aircraft instance IDs
+  weeklyFrequency: number; // 1 - 14 flights / week
+  priceModifierPct: number; // -50% to +50% (0 = normal base fare)
+  serviceQuality: number; // 1.0 = standard, 1.2 = premium
+  status: 'ACTIVE' | 'SUSPENDED';
+  consecutiveLossQuarters?: number; // Quarters consecutively running at a loss
+  lastQuarterIncident?: RouteIncident; // Incident recorded in last quarter
+  
+  // Last quarter results
+  lastQuarterStats?: {
+    passengers: number;
+    capacity: number;
+    loadFactorPct: number;
+    revenueK: number;
+    expensesK: number;
+    profitK: number;
+    actualFlightsCompleted?: number;
+    scheduledFlights?: number;
+  };
+}
+
+export interface AircraftDiscountDeal {
+  id: string;
+  manufacturer: Manufacturer;
+  discountPct: number; // e.g. 30, 40, 50%
+  specificModelId?: string; // If omitted, applies to all models of this manufacturer
+  modelName: string;
+  quartersRemaining: number;
+  reason: string;
+}
+
+export interface BusinessVenture {
+  id: string;
+  cityId: string;
+  airlineId: string;
+  type: 'HOTEL' | 'SHUTTLE_BUS' | 'TRAVEL_AGENCY' | 'AMUSEMENT_PARK' | 'GOLF_COURSE' | 'SKI_RESORT' | 'MUSEUM';
+  name: string;
+  purchaseCostK: number;
+  quarterlyDividendK: number;
+  tourismBoost: number;
+}
+
+export interface WorldEvent {
+  id: string;
+  year: number;
+  quarter: 1 | 2 | 3 | 4;
+  type: 'WORLD_CUP' | 'EURO' | 'OLYMPICS' | 'WAR' | 'OIL_CRISIS' | 'EPIDEMIC' | 'ECONOMIC_CRISIS';
+  title: string;
+  description: string;
+  affectedCityIds?: string[];
+  affectedRegionIds?: RegionId[];
+  demandMultiplier?: number; // e.g. 2.0 = +100% demand
+  fuelPriceMultiplier?: number; // e.g. 1.8 = oil crisis
+  durationQuarters: number;
+}
+
+export interface NegotiatorMission {
+  type: 'SLOT_NEGOTIATION' | 'SUBSIDIARY_ACQUISITION' | 'ESTABLISH_HUB';
+  targetCityId: string;
+  targetCityName: string;
+  requestedSlots?: number;
+  ventureType?: BusinessVenture['type'];
+  ventureName?: string;
+  costK: number;
+  quartersRemaining: number;
+  totalQuarters: number;
+}
+
+export interface Negotiator {
+  id: string;
+  name: string;
+  title: string;
+  avatarId: 'john' | 'kenji' | 'sarah' | 'elena' | 'david';
+  role: 'FIELD' | 'HQ';
+  status: 'AVAILABLE' | 'DISPATCHED';
+  currentMission?: NegotiatorMission;
+}
+
+export interface DiplomaticReport {
+  id: string;
+  negotiatorName: string;
+  avatarId: string;
+  targetCityName: string;
+  type: 'SLOT_NEGOTIATION' | 'SUBSIDIARY_ACQUISITION' | 'ESTABLISH_HUB';
+  success: boolean;
+  slotsGranted?: number;
+  message: string;
+}
+
+export interface Airline {
+  id: string;
+  name: string;
+  color: string;
+  isHuman: boolean;
+  homeCityId: string;
+  hubCityIds: string[]; // Cities with established regional hubs
+  cashK: number;
+  slots: Record<string, number>; // cityId -> count of slots owned
+  fleet: AircraftInstance[];
+  businesses: BusinessVenture[];
+  negotiators: Negotiator[];
+  ceoName?: string;
+  personality?: 'AGGRESSIVE' | 'BALANCED' | 'LUXURY' | 'REGIONAL' | 'BUDGET_DISCOUNTER' | 'GLOBAL_FLAGSHIP';
+  avatarId?: string;
+  aiActionLog?: string[]; // Decisions and actions performed in recent quarter
+}
+
+export interface AirlineStanding {
+  rank: number;
+  airlineId: string;
+  airlineName: string;
+  airlineColor: string;
+  isHuman: boolean;
+  ceoName?: string;
+  personality?: string;
+  homeCityId: string;
+  totalValuationK: number; // Cash + Fleet value + Business venture value
+  cashK: number;
+  fleetValueK: number;
+  businessValueK: number;
+  quarterProfitK: number;
+  quarterRevenueK: number;
+  quarterExpensesK: number;
+  quarterPassengers: number;
+  activeRoutesCount: number;
+  fleetCount: number;
+}
+
+export interface GameState {
+  gameMode: GameMode;
+  era: 1 | 2 | 3;
+  startYear: number;
+  endYear: number;
+  currentYear: number;
+  currentQuarter: 1 | 2 | 3 | 4;
+  turnNumber: number; // 1 to 80 (or unlimited in Sandbox)
+  maxTurns?: number; // 80 for Campaign, undefined for Sandbox
+  fuelPriceIndex: number; // Base 1.0, fluctuates with wars/crises
+  airlines: Airline[];
+  routes: Route[];
+  activeEvents: WorldEvent[];
+  airlineStandings?: AirlineStanding[];
+  quarterHistory: {
+    year: number;
+    quarter: number;
+    humanProfitK: number;
+    humanRevenueK: number;
+    humanPassengers: number;
+    events: string[];
+    standings?: AirlineStanding[];
+  }[];
+  diplomaticReports?: DiplomaticReport[];
+  isGameOver?: boolean;
+  winnerAirlineId?: string;
+  victoryReason?: string;
+  newlyIntroducedAircraft?: AircraftModel[];
+  upcomingAircraft?: AircraftModel[]; // Aircraft entering service in 1 year (advance notice)
+  retiringAircraft?: AircraftModel[]; // Aircraft ceasing commercial production in 1 year (end-of-production advance notice!)
+  retiredAircraft?: AircraftModel[]; // Aircraft that have ceased production this quarter
+  activeDiscountDeal?: AircraftDiscountDeal; // Special flash manufacturer discount promotion
+  lastQuarterClosedRoutes?: {
+    airlineId: string;
+    airlineName: string;
+    airlineColor: string;
+    originCityId: string;
+    destCityId: string;
+    lossK: number;
+  }[];
+  routeIncidents?: {
+    routeId: string;
+    airlineId: string;
+    airlineName: string;
+    airlineColor: string;
+    originCityName: string;
+    destCityName: string;
+    incident: RouteIncident;
+  }[];
+}

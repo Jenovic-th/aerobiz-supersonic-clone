@@ -1,0 +1,738 @@
+import { Airline, Route, GameState, AircraftModel, City, BusinessVenture, AircraftInstance } from '../types/game';
+import { CITIES } from '../data/cities';
+import { AIRCRAFTS } from '../data/aircrafts';
+import { createDefaultNegotiators } from '../data/negotiators';
+import { getCityVisual } from '../data/cityVisuals';
+import { calculateDistance, calculateRouteDemand } from './engine';
+
+export interface AIRivalProfile {
+  id: string;
+  name: string;
+  color: string;
+  ceoName: string;
+  avatarId: string;
+  personality: 'AGGRESSIVE' | 'BALANCED' | 'LUXURY' | 'REGIONAL' | 'BUDGET_DISCOUNTER' | 'GLOBAL_FLAGSHIP';
+  personalityLabel: string;
+  personalityDesc: string;
+  defaultHQs: string[];
+}
+
+export const AI_RIVAL_ARCHETYPES: AIRivalProfile[] = [
+  {
+    id: 'AIRLINE_AI_1',
+    name: 'Global Atlantic Airways',
+    color: '#ef4444', // Executive Crimson Red
+    ceoName: 'Sir Richard Sterling',
+    avatarId: 'david',
+    personality: 'AGGRESSIVE',
+    personalityLabel: 'Aggressive Expansionist',
+    personalityDesc: 'ขยายเส้นทางบินดุดัน แย่งชิงสล็อตเมืองใหญ่ ตัดราคาตั๋วเพื่อดึงส่วนแบ่งตลาด',
+    defaultHQs: ['NYC', 'LAX', 'ORD'],
+  },
+  {
+    id: 'AIRLINE_AI_2',
+    name: 'EuroWings Continental',
+    color: '#10b981', // Emerald Green
+    ceoName: 'Helena Van Der Bilt',
+    avatarId: 'elena',
+    personality: 'LUXURY',
+    personalityLabel: 'Prestige & Luxury Fleet',
+    personalityDesc: 'เน้นเครื่องบินหรู อากาศยานความเร็วสูง Supersonic และการบริการระดับเฟิร์สคลาส',
+    defaultHQs: ['LON', 'PAR', 'FRA'],
+  },
+  {
+    id: 'AIRLINE_AI_3',
+    name: 'Pacific Orient Aviation',
+    color: '#f59e0b', // Royal Amber Gold
+    ceoName: 'Kenzo Takahashi',
+    avatarId: 'kenji',
+    personality: 'REGIONAL',
+    personalityLabel: 'Regional Hub Dominator',
+    personalityDesc: 'สร้างฐานฮับภูมิภาคเหนียวแน่น เพิ่มความถี่เที่ยวบิน และเน้นเส้นทางในทวีปตนเองก่อน',
+    defaultHQs: ['TYO', 'SYD', 'SIN'],
+  },
+  {
+    id: 'AIRLINE_AI_4',
+    name: 'Nordic Trans-Polar',
+    color: '#3b82f6', // Cobalt Blue
+    ceoName: 'Astrid Lindqvist',
+    avatarId: 'sarah',
+    personality: 'GLOBAL_FLAGSHIP',
+    personalityLabel: 'Global Flagship Carrier',
+    personalityDesc: 'เน้นเปิดเที่ยวบินข้ามทวีประยะไกล เชื่อมต่อมหานครเศรษฐกิจระดับโลก',
+    defaultHQs: ['FRA', 'LON', 'NYC'],
+  },
+  {
+    id: 'AIRLINE_AI_5',
+    name: 'Southern Cross Express',
+    color: '#f97316', // Deep Coral
+    ceoName: 'Marcus Thornton',
+    avatarId: 'john',
+    personality: 'BUDGET_DISCOUNTER',
+    personalityLabel: 'Low-Cost Volume Pioneer',
+    personalityDesc: 'ลดราคาตั๋วเพื่อสร้างปริมาณผู้โดยสารมหาศาล ใช้เครื่องบินความจุสูง',
+    defaultHQs: ['SYD', 'BOM', 'CAI'],
+  },
+  {
+    id: 'AIRLINE_AI_6',
+    name: 'Imperial Dynastic Air',
+    color: '#a855f7', // Royal Violet
+    ceoName: 'Lin Chen',
+    avatarId: 'elena',
+    personality: 'BALANCED',
+    personalityLabel: 'Conservative Tycoon',
+    personalityDesc: 'บริหารความเสี่ยงอย่างรอบคอบ รักษากระแสเงินสดสำรอง และเติบโตอย่างมั่นคง',
+    defaultHQs: ['BJS', 'HKG', 'SIN'],
+  },
+];
+
+// Fallback constant for backwards compatibility
+export const AI_RIVAL_PROFILES = AI_RIVAL_ARCHETYPES.slice(0, 3);
+
+/**
+ * Generate randomized or dynamically shuffled AI rivals so colors, traits and personalities vary
+ */
+export function getDynamicAIRivals(rivalCount: number, seed: number = 0): AIRivalProfile[] {
+  // Shuffle archetypes deterministically based on seed
+  const shuffled = [...AI_RIVAL_ARCHETYPES];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.abs(Math.sin(seed + i * 997)) * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, rivalCount).map((arch, idx) => ({
+    ...arch,
+    id: `AIRLINE_AI_${idx + 1}`,
+  }));
+}
+
+/**
+ * Prime flagship cities for each global region
+ */
+const REGION_PRIME_CITIES: Record<string, string[]> = {
+  NORTH_AMERICA: ['NYC', 'LAX', 'ORD', 'MIA'],
+  EUROPE: ['LON', 'PAR', 'FRA', 'ROM'],
+  EAST_SOUTHEAST_ASIA: ['TYO', 'BKK', 'SIN', 'HKG'],
+  MIDDLE_EAST_SOUTH_ASIA: ['DXB', 'DEL', 'CAI', 'BOM'],
+  OCEANIA: ['SYD', 'MEL', 'AKL'],
+  SOUTH_AMERICA: ['GRU', 'BOG', 'EZE'],
+  AFRICA: ['CAI', 'JNB', 'LOS', 'NBO'],
+};
+
+/**
+ * Assign distinct continent headquarters for AI rivals so they don't immediately cannibalize each other
+ */
+export function assignDistributedHQs(playerHomeCityId: string, rivalCount: number): string[] {
+  const cityMap = new Map(CITIES.map((c) => [c.id, c]));
+  const playerCity = cityMap.get(playerHomeCityId);
+  const playerRegion = playerCity ? playerCity.region : 'EAST_SOUTHEAST_ASIA';
+
+  // Priority pool of regions other than the player's region
+  const allRegions = [
+    'NORTH_AMERICA',
+    'EUROPE',
+    'EAST_SOUTHEAST_ASIA',
+    'MIDDLE_EAST_SOUTH_ASIA',
+    'OCEANIA',
+    'SOUTH_AMERICA',
+    'AFRICA',
+  ].filter((r) => r !== playerRegion);
+
+  const assignedCityIds: string[] = [];
+
+  for (let i = 0; i < rivalCount; i++) {
+    const targetRegion = allRegions[i % allRegions.length];
+    const primeCities = REGION_PRIME_CITIES[targetRegion] || ['NYC'];
+    const chosenCity =
+      primeCities.find((cId) => cId !== playerHomeCityId && !assignedCityIds.includes(cId)) ||
+      primeCities[0];
+    assignedCityIds.push(chosenCity);
+  }
+
+  return assignedCityIds;
+}
+
+/**
+ * Create a fully initialized AI Airline with starter aircraft and 2 initial routes
+ */
+export function createAIAirline(
+  profile: AIRivalProfile,
+  homeCityId: string,
+  starterModelId: string,
+  initialCash: number,
+  selectedEra: 1 | 2 | 3
+): { airline: Airline; initialRoutes: Route[] } {
+  const cityMap = new Map(CITIES.map((c) => [c.id, c]));
+  const homeCity = cityMap.get(homeCityId) || CITIES[0];
+
+  const otherCities = CITIES.filter((c) => c.id !== homeCityId);
+  const sortedByDistance = [...otherCities].sort((a, b) => {
+    const distA = calculateDistance(homeCity.lat, homeCity.lon, a.lat, a.lon);
+    const distB = calculateDistance(homeCity.lat, homeCity.lon, b.lat, b.lon);
+    return distA - distB;
+  });
+
+  const regionalPartner = sortedByDistance.find((c) => c.region === homeCity.region) || sortedByDistance[0];
+  const globalMegahubs = ['NYC', 'LON', 'TYO', 'PAR', 'DXB', 'SIN', 'FRA', 'LAX'];
+  const interconPartner =
+    sortedByDistance.find((c) => globalMegahubs.includes(c.id) && c.id !== regionalPartner.id) ||
+    sortedByDistance[1];
+
+  const p1Id = `${profile.id}_P1`;
+  const p2Id = `${profile.id}_P2`;
+  const p3Id = `${profile.id}_P3`;
+
+  const route1Id = `ROUTE_${profile.id}_1`;
+  const route2Id = `ROUTE_${profile.id}_2`;
+
+  const fleet: AircraftInstance[] = [
+    {
+      instanceId: p1Id,
+      modelId: starterModelId,
+      ageYears: 1,
+      assignedRouteId: route1Id,
+    },
+    {
+      instanceId: p2Id,
+      modelId: starterModelId,
+      ageYears: 1,
+      assignedRouteId: route2Id,
+    },
+    {
+      instanceId: p3Id,
+      modelId: starterModelId,
+      ageYears: 0,
+      assignedRouteId: null, // Ready for autonomous expansion in turn 1
+    },
+  ];
+
+  const starterAircraft = AIRCRAFTS.find((a) => a.id === starterModelId) || AIRCRAFTS[0];
+
+  const route1: Route = {
+    id: route1Id,
+    airlineId: profile.id,
+    originCityId: homeCityId,
+    destCityId: regionalPartner.id,
+    assignedAircraftIds: [p1Id],
+    weeklyFrequency: 7,
+    priceModifierPct:
+      profile.personality === 'AGGRESSIVE' || profile.personality === 'BUDGET_DISCOUNTER'
+        ? -10
+        : profile.personality === 'LUXURY'
+        ? 10
+        : 0,
+    serviceQuality: profile.personality === 'LUXURY' ? 1.2 : 1.0,
+    status: 'ACTIVE',
+    consecutiveLossQuarters: 0,
+    lastQuarterStats: {
+      passengers: Math.round(starterAircraft.capacity * 7 * 12 * 0.82),
+      capacity: starterAircraft.capacity * 7 * 12,
+      loadFactorPct: 82,
+      revenueK: Math.round(starterAircraft.capacity * 7 * 12 * 0.82 * 0.12),
+      expensesK: Math.round(starterAircraft.capacity * 7 * 12 * 0.82 * 0.07),
+      profitK: Math.round(starterAircraft.capacity * 7 * 12 * 0.82 * 0.05),
+    },
+  };
+
+  const route2: Route = {
+    id: route2Id,
+    airlineId: profile.id,
+    originCityId: homeCityId,
+    destCityId: interconPartner.id,
+    assignedAircraftIds: [p2Id],
+    weeklyFrequency: 7,
+    priceModifierPct:
+      profile.personality === 'AGGRESSIVE'
+        ? -5
+        : profile.personality === 'LUXURY'
+        ? 15
+        : 0,
+    serviceQuality: profile.personality === 'LUXURY' ? 1.2 : 1.0,
+    status: 'ACTIVE',
+    consecutiveLossQuarters: 0,
+    lastQuarterStats: {
+      passengers: Math.round(starterAircraft.capacity * 7 * 12 * 0.88),
+      capacity: starterAircraft.capacity * 7 * 12,
+      loadFactorPct: 88,
+      revenueK: Math.round(starterAircraft.capacity * 7 * 12 * 0.88 * 0.15),
+      expensesK: Math.round(starterAircraft.capacity * 7 * 12 * 0.88 * 0.08),
+      profitK: Math.round(starterAircraft.capacity * 7 * 12 * 0.88 * 0.07),
+    },
+  };
+
+  const slots: Record<string, number> = {
+    [homeCityId]: 25,
+    [regionalPartner.id]: 14,
+    [interconPartner.id]: 14,
+    NYC: 8,
+    LON: 8,
+    TYO: 8,
+    DXB: 8,
+    SIN: 8,
+    PAR: 8,
+  };
+
+  const airline: Airline = {
+    id: profile.id,
+    name: profile.name,
+    color: profile.color,
+    isHuman: false,
+    homeCityId: homeCityId,
+    hubCityIds: [homeCityId],
+    cashK: initialCash,
+    slots,
+    fleet,
+    businesses: [],
+    negotiators: createDefaultNegotiators(),
+    ceoName: profile.ceoName,
+    personality: profile.personality,
+    avatarId: profile.avatarId,
+    aiActionLog: [`Established corporate headquarters in ${homeCity.name} with starter fleet of 3 aircraft`],
+  };
+
+  return { airline, initialRoutes: [route1, route2] };
+}
+
+export interface AISimulationResult {
+  updatedAirline: Airline;
+  newRoutes: Route[];
+  updatedExistingRoutes: Route[];
+  closedRoutes: {
+    airlineId: string;
+    airlineName: string;
+    airlineColor: string;
+    originCityId: string;
+    destCityId: string;
+    lossK: number;
+  }[];
+  aiActions: string[];
+}
+
+/**
+ * Autonomous AI Tycoon Turn Simulation
+ * Executes slot diplomacy, aircraft purchases, route expansions, business investments, and loss cutting.
+ */
+export function simulateAITurn(
+  airline: Airline,
+  gameState: GameState
+): AISimulationResult {
+  let currentCash = airline.cashK;
+  const currentSlots = { ...airline.slots };
+  const currentFleet = [...airline.fleet];
+  const currentBusinesses = [...airline.businesses];
+  const currentHubs = [...airline.hubCityIds];
+  let negotiators = [...(airline.negotiators || createDefaultNegotiators())];
+  const newRoutes: Route[] = [];
+  const existingRoutes = gameState.routes.filter((r) => r.airlineId === airline.id);
+  const updatedExistingRoutes: Route[] = [...existingRoutes];
+  const aiActions: string[] = [];
+  const closedRoutes: AISimulationResult['closedRoutes'] = [];
+
+  const cityMap = new Map(CITIES.map((c) => [c.id, c]));
+  const aircraftMap = new Map(AIRCRAFTS.map((a) => [a.id, a]));
+  const homeCity = cityMap.get(airline.homeCityId) || CITIES[0];
+
+  const safetyReserveK = 15000; // Minimum cash buffer to prevent bankruptcy
+
+  // ========================================================
+  // 1. ROUTE HEALTH MANAGEMENT & LOSS-CUTTING TERMINATION
+  // ========================================================
+  const survivingRoutes: Route[] = [];
+
+  for (let i = 0; i < updatedExistingRoutes.length; i++) {
+    const route = updatedExistingRoutes[i];
+    const origCity = cityMap.get(route.originCityId);
+    const destCity = cityMap.get(route.destCityId);
+    const origName = origCity?.name || route.originCityId;
+    const destName = destCity?.name || route.destCityId;
+
+    if (route.lastQuarterStats) {
+      if (route.lastQuarterStats.profitK < 0) {
+        // Track consecutive loss quarters
+        route.consecutiveLossQuarters = (route.consecutiveLossQuarters || 0) + 1;
+
+        // CUT LOSSES: If route is bleeding cash for 2+ quarters, or lost > $1,500K with low load factor
+        if (
+          (route.consecutiveLossQuarters >= 2 && route.lastQuarterStats.profitK < -400) ||
+          route.lastQuarterStats.profitK < -1500
+        ) {
+          // Terminate route and release aircraft back to hangar
+          for (const planeId of route.assignedAircraftIds) {
+            const plane = currentFleet.find((f) => f.instanceId === planeId);
+            if (plane) {
+              plane.assignedRouteId = null;
+            }
+          }
+
+          closedRoutes.push({
+            airlineId: airline.id,
+            airlineName: airline.name,
+            airlineColor: airline.color,
+            originCityId: route.originCityId,
+            destCityId: route.destCityId,
+            lossK: Math.abs(route.lastQuarterStats.profitK),
+          });
+
+          aiActions.push(
+            `⚠️ Terminated loss-making route ${origName} ➔ ${destName} to stop bleeding cash (-$${Math.abs(
+              route.lastQuarterStats.profitK
+            ).toLocaleString()}K)`
+          );
+          // Omit from surviving routes -> closed!
+          continue;
+        }
+
+        // Attempt rescue if not yet ready to close
+        if (route.lastQuarterStats.loadFactorPct < 55) {
+          if (route.priceModifierPct > -15) {
+            route.priceModifierPct -= 10;
+          } else {
+            route.weeklyFrequency = Math.max(3, route.weeklyFrequency - 2);
+          }
+        }
+      } else {
+        // Profitable route: reset loss counter
+        route.consecutiveLossQuarters = 0;
+        if (route.lastQuarterStats.loadFactorPct > 90 && route.lastQuarterStats.profitK > 1000) {
+          if (route.weeklyFrequency < 12) {
+            route.weeklyFrequency = Math.min(12, route.weeklyFrequency + 1);
+          } else if (route.priceModifierPct < 15) {
+            route.priceModifierPct += 5;
+          }
+        }
+      }
+    }
+    survivingRoutes.push(route);
+  }
+
+  // ========================================================
+  // 2. DIPLOMATIC SLOT ACQUISITION
+  // ========================================================
+  const freeFieldEnvoys = negotiators.filter((n) => n.role === 'FIELD' && n.status === 'AVAILABLE');
+
+  if (freeFieldEnvoys.length > 0 && currentCash >= safetyReserveK + 2000) {
+    const negotiatingCityIds = new Set(
+      negotiators
+        .filter((n) => n.status === 'DISPATCHED' && n.currentMission)
+        .map((n) => n.currentMission!.targetCityId)
+    );
+
+    const candidateCities = CITIES.filter((c) => {
+      const slotsOwned = currentSlots[c.id] || 0;
+      return slotsOwned < 10 && !negotiatingCityIds.has(c.id);
+    });
+
+    if (candidateCities.length > 0) {
+      candidateCities.sort((a, b) => {
+        let scoreA = a.population * 2 + a.businessIndex * 1.5 + a.tourismIndex;
+        let scoreB = b.population * 2 + b.businessIndex * 1.5 + b.tourismIndex;
+
+        if (a.region === homeCity.region) scoreA += 50;
+        if (b.region === homeCity.region) scoreB += 50;
+
+        const distA = calculateDistance(homeCity.lat, homeCity.lon, a.lat, a.lon);
+        const distB = calculateDistance(homeCity.lat, homeCity.lon, b.lat, b.lon);
+        scoreA -= distA * 0.005;
+        scoreB -= distB * 0.005;
+
+        return scoreB - scoreA;
+      });
+
+      const targetCity = candidateCities[0];
+      const envoyToDispatch = freeFieldEnvoys[0];
+
+      currentCash -= 2000;
+
+      negotiators = negotiators.map((neg) => {
+        if (neg.id === envoyToDispatch.id) {
+          return {
+            ...neg,
+            status: 'DISPATCHED' as const,
+            currentMission: {
+              type: 'SLOT_NEGOTIATION' as const,
+              targetCityId: targetCity.id,
+              targetCityName: targetCity.name,
+              requestedSlots: 10,
+              costK: 2000,
+              quartersRemaining: 2,
+              totalQuarters: 2,
+            },
+          };
+        }
+        return neg;
+      });
+
+      aiActions.push(`🏛️ Dispatched diplomatic envoy to ${targetCity.name} requesting 10 airport slots`);
+    }
+  }
+
+  // ========================================================
+  // 3. FLEET PROCUREMENT (TAKE ADVANTAGE OF FLASH DISCOUNTS!)
+  // ========================================================
+  // 5. Fleet Procurement (Aircraft Purchase)
+  // ========================================================
+  const idleAircraft = currentFleet.filter((f) => f.assignedRouteId === null);
+  const activeDeal = gameState.activeDiscountDeal;
+
+  const isModelDiscounted = (model: AircraftModel) => {
+    if (!activeDeal) return false;
+    if (activeDeal.specificModelId) {
+      return activeDeal.specificModelId === model.id;
+    }
+    return activeDeal.manufacturer.toLowerCase() === model.manufacturer.toLowerCase();
+  };
+
+  if (idleAircraft.length === 0 && currentCash >= safetyReserveK + 20000) {
+    const availableModels = AIRCRAFTS.filter((a) => {
+      const inService =
+        a.introYear <= gameState.currentYear && (!a.retireYear || a.retireYear >= gameState.currentYear);
+      let effectivePrice = a.priceK;
+      if (isModelDiscounted(a) && activeDeal) {
+        effectivePrice = Math.round(a.priceK * (1 - activeDeal.discountPct / 100));
+      }
+      const affordable = currentCash - effectivePrice >= safetyReserveK;
+      return inService && affordable;
+    });
+
+    if (availableModels.length > 0) {
+      availableModels.sort((a, b) => {
+        let priceA = a.priceK;
+        let priceB = b.priceK;
+        let isDealA = isModelDiscounted(a);
+        let isDealB = isModelDiscounted(b);
+
+        if (isDealA && activeDeal) {
+          priceA = Math.round(a.priceK * (1 - activeDeal.discountPct / 100));
+        }
+        if (isDealB && activeDeal) {
+          priceB = Math.round(b.priceK * (1 - activeDeal.discountPct / 100));
+        }
+
+        let scoreA = 0;
+        let scoreB = 0;
+
+        if (airline.personality === 'LUXURY') {
+          scoreA = a.comfortRating + (a.isSupersonic ? 45 : 0);
+          scoreB = b.comfortRating + (b.isSupersonic ? 45 : 0);
+        } else if (airline.personality === 'AGGRESSIVE' || airline.personality === 'BUDGET_DISCOUNTER') {
+          scoreA = a.capacity / (priceA / 1000);
+          scoreB = b.capacity / (priceB / 1000);
+        } else {
+          scoreA = a.rangeKm / 100 + a.comfortRating - priceA / 5000;
+          scoreB = b.rangeKm / 100 + b.comfortRating - priceB / 5000;
+        }
+
+        // Substantial incentive for active flash deals!
+        if (isDealA) scoreA *= 1.6;
+        if (isDealB) scoreB *= 1.6;
+
+        return scoreB - scoreA;
+      });
+
+      const chosenModel = availableModels[0];
+      let purchasePrice = chosenModel.priceK;
+      let hasDiscount = isModelDiscounted(chosenModel);
+
+      if (hasDiscount && activeDeal) {
+        purchasePrice = Math.round(chosenModel.priceK * (1 - activeDeal.discountPct / 100));
+      }
+
+      currentCash -= purchasePrice;
+
+      const newPlane: AircraftInstance = {
+        instanceId: `PLANE_${airline.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        modelId: chosenModel.id,
+        ageYears: 0,
+        assignedRouteId: null,
+      };
+
+      currentFleet.push(newPlane);
+      idleAircraft.push(newPlane);
+
+      if (hasDiscount && activeDeal) {
+        aiActions.push(
+          `✈️ Seized ${activeDeal.discountPct}% OFF promotion to purchase 1x ${chosenModel.model} ($${purchasePrice.toLocaleString()}K)`
+        );
+      } else {
+        aiActions.push(`✈️ Purchased 1x ${chosenModel.model} ($${purchasePrice.toLocaleString()}K)`);
+      }
+    }
+  }
+
+  // ========================================================
+  // 4. ROUTE OPERATIONS & EXPANSION
+  // ========================================================
+  const allAirlineRoutes = [...survivingRoutes, ...newRoutes];
+  const intraContinentRoutes = allAirlineRoutes.filter((r) => {
+    const orig = cityMap.get(r.originCityId);
+    const dest = cityMap.get(r.destCityId);
+    return orig && dest && orig.region === homeCity.region && dest.region === homeCity.region;
+  });
+
+  for (const plane of idleAircraft) {
+    const model = aircraftMap.get(plane.modelId);
+    if (!model) continue;
+
+    const originCityIds = [airline.homeCityId, ...currentHubs].filter((id) => (currentSlots[id] || 0) >= 2);
+    const potentialDestCityIds = Object.keys(currentSlots).filter((id) => (currentSlots[id] || 0) >= 2);
+
+    interface CandidateRoutePair {
+      origin: City;
+      dest: City;
+      distance: number;
+      demand: number;
+      score: number;
+    }
+
+    const candidatePairs: CandidateRoutePair[] = [];
+
+    for (const origId of originCityIds) {
+      const origCity = cityMap.get(origId);
+      if (!origCity) continue;
+
+      for (const destId of potentialDestCityIds) {
+        if (origId === destId) continue;
+        const destCity = cityMap.get(destId);
+        if (!destCity) continue;
+
+        const alreadyFlies = allAirlineRoutes.some(
+          (r) =>
+            (r.originCityId === origId && r.destCityId === destId) ||
+            (r.originCityId === destId && r.destCityId === origId)
+        );
+        if (alreadyFlies) continue;
+
+        const distance = calculateDistance(origCity.lat, origCity.lon, destCity.lat, destCity.lon);
+        if (distance > model.rangeKm || distance < 300) continue;
+
+        const demand = calculateRouteDemand(
+          origCity,
+          destCity,
+          gameState.currentYear,
+          gameState.currentQuarter,
+          gameState.activeEvents
+        );
+
+        const competitors = gameState.routes.filter(
+          (r) =>
+            (r.originCityId === origId && r.destCityId === destId) ||
+            (r.originCityId === destId && r.destCityId === origId)
+        ).length;
+
+        let score = demand - competitors * 800;
+
+        // Personality strategic bias
+        if (
+          (airline.personality === 'REGIONAL' || airline.personality === 'BALANCED') &&
+          intraContinentRoutes.length < 3
+        ) {
+          // Strongly prioritize regional hub & domestic routes first
+          if (destCity.region === homeCity.region) {
+            score += 1200;
+          }
+        } else if (airline.personality === 'GLOBAL_FLAGSHIP' || airline.personality === 'AGGRESSIVE') {
+          // Prioritize megahub corridors
+          const megahubs = ['NYC', 'LON', 'TYO', 'PAR', 'DXB', 'SIN', 'FRA', 'LAX'];
+          if (megahubs.includes(destCity.id)) {
+            score += 900;
+          }
+        }
+
+        candidatePairs.push({ origin: origCity, dest: destCity, distance, demand, score });
+      }
+    }
+
+    if (candidatePairs.length > 0) {
+      candidatePairs.sort((a, b) => b.score - a.score);
+      const bestPair = candidatePairs[0];
+
+      const desiredFlights = Math.min(10, Math.max(3, Math.round(bestPair.demand / (model.capacity * 12 * 0.8))));
+      const routeId = `ROUTE_${airline.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
+
+      const priceMod =
+        airline.personality === 'AGGRESSIVE' || airline.personality === 'BUDGET_DISCOUNTER'
+          ? -10
+          : airline.personality === 'LUXURY'
+          ? 10
+          : 0;
+
+      const newRoute: Route = {
+        id: routeId,
+        airlineId: airline.id,
+        originCityId: bestPair.origin.id,
+        destCityId: bestPair.dest.id,
+        assignedAircraftIds: [plane.instanceId],
+        weeklyFrequency: desiredFlights,
+        priceModifierPct: priceMod,
+        serviceQuality: airline.personality === 'LUXURY' ? 1.2 : 1.0,
+        status: 'ACTIVE',
+        consecutiveLossQuarters: 0,
+      };
+
+      plane.assignedRouteId = routeId;
+      newRoutes.push(newRoute);
+      allAirlineRoutes.push(newRoute);
+
+      aiActions.push(
+        `🌐 Opened flight route ${bestPair.origin.name} ➔ ${bestPair.dest.name} (${desiredFlights} flt/wk with ${model.model})`
+      );
+    }
+  }
+
+  // ========================================================
+  // 5. SUBSIDIARY BUSINESS VENTURES (HOTELS & RESORTS)
+  // ========================================================
+  if (currentCash >= safetyReserveK + 20000) {
+    const servedCityIds = Array.from(
+      new Set(allAirlineRoutes.flatMap((r) => [r.originCityId, r.destCityId]))
+    );
+
+    for (const cityId of servedCityIds) {
+      const visual = getCityVisual(cityId);
+      const ownedVentureNames = currentBusinesses.filter((b) => b.cityId === cityId).map((b) => b.name);
+
+      const availableVenture = visual.ventures.find(
+        (v) => !ownedVentureNames.includes(v.name) && currentCash - v.costK >= safetyReserveK
+      );
+
+      if (availableVenture) {
+        currentCash -= availableVenture.costK;
+
+        const newVenture: BusinessVenture = {
+          id: `VENTURE_${airline.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+          cityId,
+          airlineId: airline.id,
+          type: availableVenture.type,
+          name: availableVenture.name,
+          purchaseCostK: availableVenture.costK,
+          quarterlyDividendK: availableVenture.dividendK,
+          tourismBoost: availableVenture.tourismBoost,
+        };
+
+        currentBusinesses.push(newVenture);
+        aiActions.push(
+          `🏨 Acquired subsidiary venture "${availableVenture.name}" in ${cityMap.get(cityId)?.name || cityId} ($${availableVenture.costK.toLocaleString()}K)`
+        );
+        break;
+      }
+    }
+  }
+
+  const updatedAirline: Airline = {
+    ...airline,
+    cashK: currentCash,
+    slots: currentSlots,
+    fleet: currentFleet,
+    businesses: currentBusinesses,
+    hubCityIds: currentHubs,
+    negotiators,
+    aiActionLog: aiActions,
+  };
+
+  return {
+    updatedAirline,
+    newRoutes,
+    updatedExistingRoutes: survivingRoutes,
+    closedRoutes,
+    aiActions,
+  };
+}
