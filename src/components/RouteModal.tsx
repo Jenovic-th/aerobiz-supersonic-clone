@@ -5,6 +5,7 @@ import { AIRCRAFTS } from '../data/aircrafts';
 import { calculateDistance, calculateBaseFare, calculateRouteDemand, simulateRoutePerformance } from '../simulation/engine';
 import { X, Plane, AlertCircle, AlertTriangle, CheckCircle2, ShoppingCart, ArrowRight, Compass } from 'lucide-react';
 import { AircraftVisual } from './AircraftVisual';
+import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
 
 interface RouteModalProps {
   playerAirline: Airline;
@@ -313,22 +314,31 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                   if (!model) return null;
                   const isSelected = plane.instanceId === selectedInstanceId;
 
-                  return (
-                    <div
-                      key={plane.instanceId}
-                      onClick={() => setSelectedInstanceId(plane.instanceId)}
-                      className={`p-3.5 rounded-2xl border-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-blue-950/80 border-sky-400 shadow-xl text-white'
-                          : 'bg-slate-800/90 border-slate-700 hover:border-slate-500'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <AircraftVisual
-                          modelId={model.id}
-                          isSupersonic={model.isSupersonic}
-                          className="w-24 h-10 shrink-0"
-                        />
+                      const planePhoto = getAircraftPhotoInfo(model);
+
+                      return (
+                        <div
+                          key={plane.instanceId}
+                          onClick={() => setSelectedInstanceId(plane.instanceId)}
+                          className={`p-3.5 rounded-2xl border-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 cursor-pointer transition-all ${
+                            isSelected
+                              ? 'bg-blue-950/80 border-sky-400 shadow-xl text-white'
+                              : 'bg-slate-800/90 border-slate-700 hover:border-slate-500'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <div className="w-20 h-14 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 relative shadow shrink-0">
+                              <img
+                                src={planePhoto.photoUrl}
+                                alt={model.model}
+                                className="w-full h-full object-cover object-center filter brightness-105"
+                              />
+                              {model.isSupersonic && (
+                                <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black font-mono text-[8px]">
+                                  SST
+                                </span>
+                              )}
+                            </div>
                         <div>
                           <div className="font-black text-base text-slate-100 flex items-center gap-2">
                             <span>{model.model}</span>

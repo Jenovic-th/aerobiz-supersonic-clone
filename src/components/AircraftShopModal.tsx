@@ -5,6 +5,7 @@ import { CITIES } from '../data/cities';
 import { calculateDistance } from '../simulation/engine';
 import { X, ShoppingCart, Plane, CheckCircle2, AlertCircle, Sparkles, Filter, Flame, Tag, AlertTriangle, Wrench, Compass } from 'lucide-react';
 import { AircraftBlueprintViewer } from './AircraftBlueprintViewer';
+import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
 
 interface AircraftShopModalProps {
   playerAirline: Airline;
@@ -28,9 +29,11 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
   const [filterMfg, setFilterMfg] = useState<string>('ALL');
 
   // Filter available aircraft models for current era & year
-  const availableModels = AIRCRAFTS.filter((model) => {
-    return model.introYear <= currentYear && (!model.retireYear || model.retireYear >= currentYear);
-  });
+  const availableModels = useMemo(() => {
+    return AIRCRAFTS.filter((model) => {
+      return model.introYear <= currentYear && (!model.retireYear || model.retireYear >= currentYear);
+    });
+  }, [currentYear]);
 
   // Helper to compute effective price with active manufacturer discount deal
   const getModelPriceInfo = (model: AircraftModel) => {
@@ -93,22 +96,14 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
   }, [availableModels, targetDistance, filterMfg, activeDiscountDeal]);
 
   // Currently selected model for Blueprint viewing
-  const [selectedModelId, setSelectedModelId] = useState<string>(
-    availableModels[0]?.id || AIRCRAFTS[0].id
-  );
+  const [selectedModelId, setSelectedModelId] = useState<string>('');
 
-  // Auto-synchronize selected model if current model is filtered out
-  useEffect(() => {
-    if (filteredModels.length > 0 && !filteredModels.some((m) => m.id === selectedModelId)) {
-      setSelectedModelId(filteredModels[0].id);
-    }
-  }, [filteredModels, selectedModelId]);
-
+  // Selected model is simply: current selection if it is in filteredModels, otherwise the first in filteredModels!
   const selectedModel =
     filteredModels.find((m) => m.id === selectedModelId) ||
-    availableModels.find((m) => m.id === selectedModelId) ||
     filteredModels[0] ||
-    availableModels[0];
+    availableModels[0] ||
+    AIRCRAFTS[0];
 
   const selectedPriceInfo = selectedModel ? getModelPriceInfo(selectedModel) : { priceK: 0, originalPriceK: 0, hasDiscount: false, discountPct: 0 };
   const canAfford = selectedModel ? playerAirline.cashK >= selectedPriceInfo.priceK : false;
@@ -118,9 +113,9 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
     : 0;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150">
-      <div className="bg-slate-900 border-2 border-sky-600/70 rounded-2xl shadow-2xl w-full max-w-7xl h-[94vh] max-h-[94vh] flex flex-col overflow-hidden text-slate-100">
-        {/* Top Header */}
+    <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col w-full h-full overflow-hidden text-slate-100 animate-in fade-in duration-150">
+      <div className="w-full h-full flex flex-col overflow-hidden bg-slate-950">
+        {/* Top Header - Full Window Bleed */}
         <div className="shrink-0 bg-gradient-to-r from-sky-950 via-slate-900 to-indigo-950 px-6 py-3.5 border-b border-sky-800/80 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-sky-900/70 border border-sky-500 shadow">
@@ -136,9 +131,9 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-4">
             {/* Airline Available Cash Balance */}
-            <div className="bg-slate-950/80 border-2 border-emerald-500/70 px-4 py-1.5 rounded-xl shadow text-right">
+            <div className="bg-slate-950/90 border-2 border-emerald-500/80 px-4 py-1.5 rounded-xl shadow-lg text-right">
               <span className="text-[10px] text-slate-400 font-mono block">YOUR AVAILABLE CASH:</span>
               <span className="text-base md:text-lg font-black font-mono text-emerald-400">
                 ${playerAirline.cashK.toLocaleString()}K
@@ -147,9 +142,11 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
 
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition cursor-pointer"
+              className="px-4 py-2 bg-slate-800/90 hover:bg-rose-900/70 border border-slate-700 hover:border-rose-500 rounded-xl text-slate-300 hover:text-white transition cursor-pointer flex items-center gap-2 font-mono text-xs font-bold shadow"
+              title="Close Aircraft Showroom (Esc)"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 text-rose-400" />
+              <span className="hidden sm:inline">CLOSE SHOWROOM (ESC)</span>
             </button>
           </div>
         </div>
@@ -192,41 +189,53 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
         {/* Main Workspace Body */}
         {activeTab === 'DEPOT' ? (
           <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
-            {/* LEFT COLUMN: Aircraft Selection Catalog */}
-            <div className="w-full md:w-80 lg:w-96 shrink-0 flex flex-col border-r border-slate-700/80 bg-slate-950/90">
-              {/* Manufacturer Filter Chips */}
-              <div className="p-3 border-b border-slate-800 flex items-center gap-1.5 overflow-x-auto text-xs">
-                <Filter className="w-3.5 h-3.5 text-sky-400 shrink-0 mr-1" />
+            {/* LEFT COLUMN: Aircraft Selection Catalog (Comfortable 460px width, no horizontal truncation) */}
+            <div className="w-full md:w-[440px] lg:w-[480px] xl:w-[500px] shrink-0 flex flex-col border-r border-slate-700/80 bg-slate-950">
+              {/* Manufacturer Filter Chips (Flex-wrap with comfortable spacing) */}
+              <div className="p-3 border-b border-slate-800 bg-slate-950 flex flex-wrap items-center gap-2 text-xs">
+                <div className="flex items-center gap-1.5 text-sky-400 font-mono font-bold mr-1">
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>FILTER:</span>
+                </div>
                 {['ALL', 'Boeing', 'Airbus', 'SUPERSONIC'].map((mfg) => (
                   <button
                     key={mfg}
                     onClick={() => setFilterMfg(mfg)}
-                    className={`px-2.5 py-1 rounded-lg font-mono font-bold text-xs transition cursor-pointer whitespace-nowrap ${
+                    className={`px-3 py-1.5 rounded-lg font-mono font-bold text-xs transition cursor-pointer ${
                       filterMfg === mfg
-                        ? 'bg-sky-500 text-slate-950 shadow'
+                        ? 'bg-sky-500 text-slate-950 shadow-md font-black'
                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                     }`}
                   >
                     {mfg === 'ALL' ? 'All Models' : mfg}
                   </button>
                 ))}
-                {activeDiscountDeal && (
-                  <button
-                    onClick={() => setFilterMfg('DISCOUNT')}
-                    className={`px-2.5 py-1 rounded-lg font-mono font-bold text-xs transition cursor-pointer whitespace-nowrap flex items-center gap-1 ${
-                      filterMfg === 'DISCOUNT'
-                        ? 'bg-amber-500 text-slate-950 shadow font-black'
-                        : 'bg-amber-950/70 border border-amber-500/80 text-amber-300 hover:bg-amber-900/60'
-                    }`}
-                  >
-                    <Flame className="w-3 h-3 text-amber-400" />
-                    <span>{activeDiscountDeal.discountPct}% OFF Promo</span>
-                  </button>
-                )}
               </div>
 
+              {/* Dedicated Full-Width Flash Promotion Banner (Never clipped, prominent gold) */}
+              {activeDiscountDeal && (
+                <div className="px-3 pt-2.5 pb-1 bg-slate-950">
+                  <button
+                    onClick={() => setFilterMfg(filterMfg === 'DISCOUNT' ? 'ALL' : 'DISCOUNT')}
+                    className={`w-full px-3.5 py-2 rounded-xl font-mono font-bold text-xs transition cursor-pointer flex items-center justify-between border ${
+                      filterMfg === 'DISCOUNT'
+                        ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 border-amber-300 shadow-[0_0_18px_rgba(245,158,11,0.6)] font-black'
+                        : 'bg-gradient-to-r from-amber-950/80 via-slate-900 to-amber-950/80 border-amber-500/80 text-amber-300 hover:border-amber-400 hover:bg-amber-900/40 shadow'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Flame className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
+                      <span>SPECIAL {activeDiscountDeal.discountPct}% OFF REBATE: {activeDiscountDeal.manufacturer.toUpperCase()}</span>
+                    </span>
+                    <span className="text-[10px] uppercase font-black tracking-wider bg-amber-950/90 border border-amber-500/50 px-2 py-0.5 rounded-md text-amber-200">
+                      {filterMfg === 'DISCOUNT' ? 'FILTER ON' : 'FILTER'}
+                    </span>
+                  </button>
+                </div>
+              )}
+
               {/* Destination Reachability Filter (Koei Aerobiz Route Filter) */}
-              <div className="px-3 py-2 border-b border-slate-800 bg-slate-900/60">
+              <div className="px-3 py-2.5 border-b border-slate-800 bg-slate-900/60">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] font-mono font-bold text-sky-300 flex items-center gap-1.5">
                     <Compass className="w-3.5 h-3.5 text-sky-400 shrink-0" />
@@ -312,79 +321,94 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                   const owned = playerAirline.fleet.filter((f) => f.modelId === model.id).length;
                   const isRetiringThisYear = model.retireYear === currentYear;
                   const isRetiringNextYear = model.retireYear === currentYear + 1;
+                  const photoInfo = getAircraftPhotoInfo(model);
 
                   return (
                     <div
                       key={model.id}
+                      data-model-id={model.id}
                       onClick={() => setSelectedModelId(model.id)}
-                      className={`p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                      className={`p-3 rounded-xl border transition-all cursor-pointer select-none group ${
                         isSelected
-                          ? 'bg-sky-950/80 border-2 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.25)]'
+                          ? 'bg-sky-950/80 border-2 border-sky-400 shadow-[0_0_18px_rgba(56,189,248,0.3)]'
                           : 'bg-slate-900/80 border-slate-800 hover:border-slate-600 hover:bg-slate-800/80'
                       }`}
                     >
-                      <div className="flex justify-between items-start gap-2">
-                        <div>
-                          <div className="font-black text-sm md:text-base text-white flex items-center gap-2 flex-wrap">
-                            <span>{model.model}</span>
-                            {model.isSupersonic && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                                SST
-                              </span>
-                            )}
-                            {isRetiringThisYear && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-600/30 text-rose-300 border border-rose-500 flex items-center gap-0.5 animate-pulse">
-                                <AlertTriangle className="w-2.5 h-2.5" />
-                                <span>FINAL PRODUCTION YEAR</span>
-                              </span>
-                            )}
-                            {!isRetiringThisYear && isRetiringNextYear && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500 flex items-center gap-0.5">
-                                <AlertTriangle className="w-2.5 h-2.5" />
-                                <span>RETIRES {model.retireYear}</span>
-                              </span>
-                            )}
-                            {priceInfo.hasDiscount && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/50 flex items-center gap-0.5">
-                                <Flame className="w-2.5 h-2.5" />
-                                <span>{priceInfo.discountPct}% OFF</span>
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-slate-400 mt-0.5 font-mono">
-                            {model.manufacturer} • Intro {model.introYear} {model.retireYear ? `• End ${model.retireYear}` : ''}
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          {priceInfo.hasDiscount ? (
-                            <div>
-                              <span className="line-through text-slate-500 font-mono text-[11px] block">
-                                ${priceInfo.originalPriceK.toLocaleString()}K
-                              </span>
-                              <span className="font-black font-mono text-sm md:text-base text-amber-300">
-                                ${priceInfo.priceK.toLocaleString()}K
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="font-black font-mono text-sm md:text-base text-emerald-400">
-                              ${priceInfo.priceK.toLocaleString()}K
-                            </div>
-                          )}
-                          {owned > 0 && (
-                            <span className="text-[10px] font-mono font-bold text-sky-400">
-                              Owned: {owned}
+                      <div className="flex items-start gap-3">
+                        {/* Realistic Aviation Photo Thumbnail */}
+                        <div className="shrink-0 w-20 h-14 rounded-lg overflow-hidden border border-slate-700/80 bg-slate-950 relative shadow group-hover:border-sky-400 transition">
+                          <img
+                            src={photoInfo.photoUrl}
+                            alt={model.model}
+                            className="w-full h-full object-cover object-center filter brightness-105"
+                          />
+                          {model.isSupersonic && (
+                            <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black font-mono text-[8px] leading-tight shadow">
+                              SST
                             </span>
                           )}
                         </div>
-                      </div>
 
-                      <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-slate-300 border-t border-slate-800 pt-1.5">
-                        <span>{model.capacity} Seats</span>
-                        <span>•</span>
-                        <span>{model.rangeKm.toLocaleString()} km</span>
-                        <span>•</span>
-                        <span>{model.speedKmh} km/h</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="min-w-0">
+                              <div className="font-black text-sm md:text-base text-white flex items-center gap-1.5 flex-wrap">
+                                <span className="truncate">{model.model}</span>
+                                {isRetiringThisYear && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-600/30 text-rose-300 border border-rose-500 flex items-center gap-0.5 animate-pulse">
+                                    <AlertTriangle className="w-2.5 h-2.5" />
+                                    <span>FINAL YEAR</span>
+                                  </span>
+                                )}
+                                {!isRetiringThisYear && isRetiringNextYear && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500 flex items-center gap-0.5">
+                                    <AlertTriangle className="w-2.5 h-2.5" />
+                                    <span>RETIRES {model.retireYear}</span>
+                                  </span>
+                                )}
+                                {priceInfo.hasDiscount && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/50 flex items-center gap-0.5">
+                                    <Flame className="w-2.5 h-2.5" />
+                                    <span>{priceInfo.discountPct}% OFF</span>
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-slate-400 mt-0.5 font-mono">
+                                {model.manufacturer} • Intro {model.introYear} {model.retireYear ? `• End ${model.retireYear}` : ''}
+                              </div>
+                            </div>
+
+                            <div className="text-right shrink-0">
+                              {priceInfo.hasDiscount ? (
+                                <div>
+                                  <span className="line-through text-slate-500 font-mono text-[11px] block">
+                                    ${priceInfo.originalPriceK.toLocaleString()}K
+                                  </span>
+                                  <span className="font-black font-mono text-sm md:text-base text-amber-300">
+                                    ${priceInfo.priceK.toLocaleString()}K
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="font-black font-mono text-sm md:text-base text-emerald-400">
+                                  ${priceInfo.priceK.toLocaleString()}K
+                                </div>
+                              )}
+                              {owned > 0 && (
+                                <span className="text-[10px] font-mono font-bold text-sky-400 block mt-0.5">
+                                  Owned: {owned}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-slate-300 border-t border-slate-800/80 pt-1.5">
+                            <span>{model.capacity} Seats</span>
+                            <span>•</span>
+                            <span className="text-emerald-400 font-bold">{model.rangeKm.toLocaleString()} km</span>
+                            <span>•</span>
+                            <span>{model.speedKmh} km/h</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );
@@ -396,7 +420,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
             <div className="flex-1 min-h-0 flex flex-col p-3 md:p-4 bg-slate-900/90 overflow-hidden">
               {/* Large CAD Blueprint Schematic */}
               <div className="flex-1 min-h-0 relative">
-                {selectedModel && <AircraftBlueprintViewer model={selectedModel} />}
+                {selectedModel && <AircraftBlueprintViewer key={selectedModel.id} model={selectedModel} />}
               </div>
 
               {/* Bottom Order Execution Strip */}
@@ -540,15 +564,24 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                       ? 'bg-amber-500'
                       : 'bg-rose-500';
 
+                  const fleetPhoto = getAircraftPhotoInfo(model);
+
                   return (
                     <div
                       key={plane.instanceId}
                       className="bg-slate-900 border border-slate-700 hover:border-slate-500 p-4 rounded-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-lg transition"
                     >
                       <div className="flex items-start gap-4 flex-1 min-w-0">
-                        <div className="w-12 h-12 rounded-xl bg-slate-950 border border-sky-500/50 flex flex-col items-center justify-center font-mono shrink-0">
-                          <span className="text-[10px] text-slate-400">REG</span>
-                          <span className="font-black text-sky-400 text-sm">#{index + 1}</span>
+                        {/* Real Photo Thumbnail with Registration Index */}
+                        <div className="w-20 h-14 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 relative shadow shrink-0">
+                          <img
+                            src={fleetPhoto.photoUrl}
+                            alt={model.model}
+                            className="w-full h-full object-cover object-center filter brightness-105"
+                          />
+                          <span className="absolute bottom-0.5 left-0.5 bg-slate-950/85 px-1.5 py-0.2 rounded font-mono text-[9px] text-sky-300 font-bold border border-slate-700">
+                            #{index + 1}
+                          </span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-black text-base md:text-lg text-white flex items-center gap-2 flex-wrap">

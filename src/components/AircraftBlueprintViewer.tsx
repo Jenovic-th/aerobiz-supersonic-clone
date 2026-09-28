@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AircraftModel } from '../types/game';
 import { getAircraftBlueprintData } from '../data/aircraftBlueprints';
+import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
 import {
   Gauge,
   Compass,
@@ -12,6 +13,8 @@ import {
   Plane,
   Sparkles,
   Info,
+  Camera,
+  Layers,
 } from 'lucide-react';
 
 interface AircraftBlueprintViewerProps {
@@ -20,7 +23,8 @@ interface AircraftBlueprintViewerProps {
 
 export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = ({ model }) => {
   const bp = getAircraftBlueprintData(model);
-  const [viewMode, setViewMode] = useState<'REALISTIC' | 'TECH_SPECS'>('REALISTIC');
+  const photoInfo = getAircraftPhotoInfo(model);
+  const [viewMode, setViewMode] = useState<'PHOTO' | 'BLUEPRINT' | 'TECH_SPECS'>('PHOTO');
 
   // Identify specific airframe configuration
   const isSST =
@@ -45,7 +49,7 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
     model.id.includes('767');
 
   return (
-    <div className="relative w-full h-full flex flex-col bg-[#070d19] text-slate-100 rounded-2xl border-2 border-slate-700/80 shadow-2xl overflow-hidden select-none">
+    <div className="relative w-full h-full flex flex-col bg-[#070d19] text-slate-100 rounded-none md:rounded-2xl border-0 md:border-2 border-slate-700/80 shadow-2xl overflow-hidden select-none">
       {/* 1. Aerospace Showroom Horizon & Atmospheric Lighting */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_90%_60%_at_50%_15%,rgba(56,189,248,0.12),transparent_75%)]" />
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_bottom,transparent_60%,rgba(2,6,23,0.85)_100%)]" />
@@ -97,26 +101,37 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
         <div className="flex items-center gap-3">
           <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-700 font-mono text-xs">
             <button
-              onClick={() => setViewMode('REALISTIC')}
-              className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                viewMode === 'REALISTIC'
+              onClick={() => setViewMode('PHOTO')}
+              className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                viewMode === 'PHOTO'
                   ? 'bg-sky-600 text-white shadow'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Realistic Profile</span>
+              <Camera className="w-3.5 h-3.5 text-sky-300" />
+              <span>Real Photo</span>
+            </button>
+            <button
+              onClick={() => setViewMode('BLUEPRINT')}
+              className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                viewMode === 'BLUEPRINT'
+                  ? 'bg-sky-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5 text-sky-300" />
+              <span>CAD Profile</span>
             </button>
             <button
               onClick={() => setViewMode('TECH_SPECS')}
-              className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer flex items-center gap-1.5 ${
                 viewMode === 'TECH_SPECS'
                   ? 'bg-sky-600 text-white shadow'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <Info className="w-3.5 h-3.5" />
-              <span>Full Telemetry</span>
+              <span>Telemetry</span>
             </button>
           </div>
 
@@ -130,19 +145,76 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
       </div>
 
       {/* 3. Main Aircraft Presentation Stage */}
-      <div className="relative flex-1 min-h-[260px] p-3 md:p-4 flex flex-col justify-center items-center overflow-hidden">
-        {/* Tarmac Runway Light & Dimension Banner */}
-        <div className="w-full max-w-3xl flex items-center justify-between text-xs font-mono px-4 mb-1 z-10">
-          <div className="flex items-center gap-2 text-slate-400">
-            <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b] animate-pulse" />
-            <span className="text-[11px] font-bold text-slate-300 tracking-wider">
-              AEROSPACE FLIGHTLINE PRESENTATION // 1:200 SCALE SIDE PROFILE
-            </span>
-          </div>
-          <div className="text-sky-300 font-bold text-[11px]">
-            LENGTH: {bp.lengthM}m • SPAN: {bp.wingspanM}m
+      {viewMode === 'PHOTO' ? (
+        <div className="relative flex-1 min-h-[300px] w-full flex items-center justify-center p-3 md:p-5 overflow-hidden bg-slate-950/80">
+          <div className="relative w-full max-w-5xl h-full max-h-[460px] rounded-2xl overflow-hidden border border-sky-500/40 shadow-[0_20px_50px_rgba(0,0,0,0.85)] bg-slate-950 flex items-center justify-center group">
+            {/* Real High-Resolution Aviation Photograph */}
+            <img
+              src={photoInfo.photoUrl}
+              alt={photoInfo.caption}
+              className="w-full h-full object-cover object-center filter brightness-105 contrast-105 transition-transform duration-700 group-hover:scale-105"
+            />
+
+            {/* Atmospheric Overlays & Vignette */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-transparent to-slate-950/40 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/50 via-transparent to-slate-950/50 pointer-events-none" />
+
+            {/* Top Banner: Authenticity & Live Photography Watermark */}
+            <div className="absolute top-3 left-4 right-4 flex items-center justify-between text-xs font-mono z-10 pointer-events-none">
+              <div className="flex items-center gap-2 bg-slate-950/75 backdrop-blur-md px-3 py-1.5 rounded-lg border border-sky-500/40">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
+                <span className="text-[11px] font-bold text-sky-200 tracking-wider">
+                  REALISTIC AIR-TO-AIR PRESENTATION // 4K HIGH FIDELITY
+                </span>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 bg-slate-950/75 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700/80 text-[11px] text-slate-300 font-bold tracking-widest uppercase">
+                <span>{photoInfo.manufacturerWatermark}</span>
+              </div>
+            </div>
+
+            {/* Bottom Overlays: Livery, Flight Context, Airframe Details */}
+            <div className="absolute bottom-3 left-4 right-4 flex flex-col sm:flex-row sm:items-end justify-between gap-2 text-xs font-mono z-10 pointer-events-none">
+              <div className="bg-slate-950/85 backdrop-blur-md p-2.5 sm:p-3 rounded-xl border border-slate-700/80 max-w-lg shadow-xl">
+                <div className="text-sm font-black text-white flex items-center gap-2">
+                  <Plane className="w-4 h-4 text-sky-400 shrink-0" />
+                  <span>{photoInfo.caption}</span>
+                </div>
+                <div className="text-[11px] text-sky-300/90 mt-1 flex items-center gap-1.5">
+                  <Compass className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                  <span>{photoInfo.flightContext}</span>
+                </div>
+                <div className="text-[10px] text-amber-300 mt-1 flex items-center gap-1.5 font-bold">
+                  <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
+                  <span>LIVERY: {photoInfo.airlineLivery}</span>
+                </div>
+              </div>
+
+              <div className="bg-slate-950/85 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-700/80 text-right shadow-xl shrink-0">
+                <div className="text-[10px] text-slate-400 uppercase tracking-wider">AIRFRAME SCALE</div>
+                <div className="text-sm font-black text-emerald-400">
+                  {bp.lengthM}m L × {bp.wingspanM}m W
+                </div>
+                <div className="text-[10px] text-sky-300/80 mt-0.5">
+                  SPEED: {model.speedKmh} km/h ({bp.machNumber})
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      ) : (
+        <div className="relative flex-1 min-h-[260px] p-3 md:p-4 flex flex-col justify-center items-center overflow-hidden">
+          {/* Tarmac Runway Light & Dimension Banner */}
+          <div className="w-full max-w-3xl flex items-center justify-between text-xs font-mono px-4 mb-1 z-10">
+            <div className="flex items-center gap-2 text-slate-400">
+              <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b] animate-pulse" />
+              <span className="text-[11px] font-bold text-slate-300 tracking-wider">
+                AEROSPACE CAD BLUEPRINT // 1:200 SCALE SIDE PROFILE
+              </span>
+            </div>
+            <div className="text-sky-300 font-bold text-[11px]">
+              LENGTH: {bp.lengthM}m • SPAN: {bp.wingspanM}m
+            </div>
+          </div>
 
         {/* Master Realistic SVG Aircraft Canvas */}
         <div className="w-full max-w-3xl flex-1 flex items-center justify-center relative z-10">
@@ -785,6 +857,7 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
           </svg>
         </div>
       </div>
+      )}
 
       {/* 4. Engineering Telemetry Specifications Grid (High-Contrast, Senior-Friendly) */}
       <div className="relative shrink-0 px-5 py-3.5 bg-slate-950 border-t border-slate-800 backdrop-blur-md z-10">
