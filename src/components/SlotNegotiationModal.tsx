@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Airline, NegotiatorMission, City } from '../types/game';
+import { Airline, NegotiatorMission, City, GameState, AirportExpansionNotice } from '../types/game';
 import { CITIES, REGIONS } from '../data/cities';
 import { calculateNegotiationQuarters, calculateNegotiationCostK } from '../data/negotiators';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
@@ -11,6 +11,7 @@ interface SlotNegotiationModalProps {
   onDispatchNegotiator: (negotiatorId: string, mission: NegotiatorMission) => void;
   onEstablishHub: (cityId: string, costK: number) => void;
   initialCityId?: string;
+  gameState?: GameState;
 }
 
 export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
@@ -19,6 +20,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
   onDispatchNegotiator,
   onEstablishHub,
   initialCityId,
+  gameState,
 }) => {
   const initialCity = initialCityId ? CITIES.find((c) => c.id === initialCityId) : null;
   const [selectedRegion, setSelectedRegion] = useState<string>(
@@ -38,6 +40,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
   });
 
   const homeCity = CITIES.find((c) => c.id === playerAirline.homeCityId) || CITIES[0];
+  const allAirlines = gameState?.airlines || [playerAirline];
 
   const handleDispatch = (city: City) => {
     if (availableNegotiators.length === 0) return;
@@ -154,6 +157,18 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredCities.map((city) => {
               const currentSlots = playerAirline.slots[city.id] || 0;
+              const totalAirportCap = gameState?.airportSlots?.[city.id] ?? city.baseSlots;
+              const totalAllocated = allAirlines.reduce(
+                (sum: number, a: Airline) => sum + (a.slots[city.id] || 0),
+                0
+              );
+              const remainingFreeSlots = Math.max(0, totalAirportCap - totalAllocated);
+              const isAirportFull = remainingFreeSlots <= 0;
+              const isCongested = !isAirportFull && remainingFreeSlots <= 15;
+              const recentExpansion = gameState?.airportExpansions?.find(
+                (e: AirportExpansionNotice) => e.cityId === city.id
+              );
+
               const isHub = playerAirline.hubCityIds.includes(city.id) || playerAirline.homeCityId === city.id;
               const isHome = playerAirline.homeCityId === city.id;
               const quarters = calculateNegotiationQuarters(homeCity, city);
@@ -162,7 +177,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
 
               const canAffordSlots = playerAirline.cashK >= costK;
               const canAffordHub = playerAirline.cashK >= hubCostK;
-              const isMaxed = currentSlots >= city.baseSlots;
+              const isMaxed = currentSlots >= totalAirportCap || isAirportFull;
 
               // Check if currently negotiating this city
               const activeMission = fieldNegotiators.find(
@@ -190,15 +205,37 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                           HUB
                         </span>
                       )}
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-400">
-                        {city.bloc}
-                      </span>
+                      {recentExpansion && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500 font-bold animate-pulse">
+                          🏗️ +{recentExpansion.addedSlots} Expanded
+                        </span>
+                      )}
+                      {isCongested && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500 font-bold">
+                          ⚠️ Congested ({remainingFreeSlots} left)
+                        </span>
+                      )}
+                      {isAirportFull && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500 font-bold">
+                          ⛔ Airport Full
+                        </span>
+                      )}
                     </div>
 
-                    <div className="text-xs text-slate-300 mt-1">
-                      {city.country} • Slots Owned:{' '}
-                      <span className="font-black text-emerald-400 font-mono text-sm">
-                        {currentSlots} / {city.baseSlots}
+                    <div className="text-xs text-slate-300 mt-1 flex items-center gap-2 flex-wrap">
+                      <span>{city.country}</span>
+                      <span>•</span>
+                      <span>
+                        Owned:{' '}
+                        <strong className="text-emerald-400 font-mono text-sm">{currentSlots}</strong>
+                      </span>
+                      <span>•</span>
+                      <span>
+                        Airport Capacity:{' '}
+                        <strong className="text-sky-300 font-mono">
+                          {totalAllocated} / {totalAirportCap}
+                        </strong>{' '}
+                        <span className="text-[11px] text-slate-400">({remainingFreeSlots} unallocated)</span>
                       </span>
                     </div>
 
@@ -230,7 +267,9 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                       >
                         <Clock className="w-3.5 h-3.5" />
                         <span>
-                          {isMaxed
+                          {isAirportFull
+                            ? 'Airport Full'
+                            : isMaxed
                             ? 'Max Slots'
                             : `Dispatch Envoy (${quarters}Q)`}
                         </span>

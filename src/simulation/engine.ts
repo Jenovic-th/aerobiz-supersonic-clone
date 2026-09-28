@@ -439,6 +439,44 @@ export function advanceQuarter(currentState: GameState): GameState {
     }
   }
 
+  // Dynamic Airport Slot Capacities & Periodic Infrastructure Expansions
+  const currentAirportSlots: Record<string, number> = {
+    ...(currentState.airportSlots ||
+      CITIES.reduce((acc, c) => {
+        acc[c.id] = c.baseSlots;
+        return acc;
+      }, {} as Record<string, number>)),
+  };
+
+  const airportExpansionNotices: NonNullable<GameState['airportExpansions']> = [];
+
+  // Airport Expansion Cycle: Every 4-5 years (16 quarters), major global airports expand runways & terminals
+  const isExpansionCycle = nextTurn > 1 && nextTurn % 16 === 0;
+  if (isExpansionCycle) {
+    const candidateCities = [...CITIES].sort((a, b) => {
+      const scoreA = a.population * 2.5 + a.businessIndex * 1.5 + (a.baseSlots >= 100 ? 50 : 0);
+      const scoreB = b.population * 2.5 + b.businessIndex * 1.5 + (b.baseSlots >= 100 ? 50 : 0);
+      return scoreB - scoreA;
+    });
+
+    const cycleBatch = Math.floor(nextTurn / 16) % 3;
+    const citiesToExpand = candidateCities.slice(cycleBatch * 5, cycleBatch * 5 + 6);
+
+    citiesToExpand.forEach((city) => {
+      const addedSlots =
+        city.population >= 10 || city.baseSlots >= 120 ? 50 : city.population >= 5 ? 35 : 20;
+      currentAirportSlots[city.id] = (currentAirportSlots[city.id] || city.baseSlots) + addedSlots;
+
+      airportExpansionNotices.push({
+        cityId: city.id,
+        cityName: city.name,
+        addedSlots,
+        newTotalSlots: currentAirportSlots[city.id],
+        reason: `${city.name} International Airport completes new runway and terminal complex (+${addedSlots} slots).`,
+      });
+    });
+  }
+
   const cityMap = new Map(CITIES.map((c) => [c.id, c]));
   const aircraftMap = new Map(AIRCRAFTS.map((a) => [a.id, a]));
 
@@ -461,6 +499,7 @@ export function advanceQuarter(currentState: GameState): GameState {
         currentYear: nextYear,
         currentQuarter: nextQuarter,
         activeDiscountDeal: nextDiscountDeal,
+        airportSlots: currentAirportSlots,
       });
       intermediateAirlines.push(aiTurnResult.updatedAirline);
       allClosedRoutes.push(...aiTurnResult.closedRoutes);
@@ -616,10 +655,18 @@ export function advanceQuarter(currentState: GameState): GameState {
           const mission = neg.currentMission;
 
           if (mission.type === 'SLOT_NEGOTIATION') {
-            const slotsToAdd = mission.requestedSlots || 10;
+            const requested = mission.requestedSlots || 10;
+            const cityCap = currentAirportSlots[mission.targetCityId] || cityMap.get(mission.targetCityId)?.baseSlots || 100;
+            const usedSlotsAcrossAirlines = intermediateAirlines.reduce(
+              (sum, a) => sum + (a.id === airline.id ? (updatedSlots[mission.targetCityId] || 0) : (a.slots[mission.targetCityId] || 0)),
+              0
+            );
+            const remainingFreeSlots = Math.max(0, cityCap - usedSlotsAcrossAirlines);
+            const slotsToAdd = Math.min(requested, Math.max(2, remainingFreeSlots));
             updatedSlots[mission.targetCityId] = (updatedSlots[mission.targetCityId] || 0) + slotsToAdd;
 
             if (airline.isHuman) {
+              const isCongested = slotsToAdd < requested;
               diplomaticReports.push({
                 id: `DIP_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
                 negotiatorName: neg.name,
@@ -628,7 +675,9 @@ export function advanceQuarter(currentState: GameState): GameState {
                 type: 'SLOT_NEGOTIATION',
                 success: true,
                 slotsGranted: slotsToAdd,
-                message: `Treaty negotiations concluded with civil aviation officials in ${mission.targetCityName}! Officially awarded ${slotsToAdd} landing slots.`,
+                message: isCongested
+                  ? `Bilateral treaty concluded! Due to heavy airport congestion in ${mission.targetCityName}, civil aviation authorities awarded ${slotsToAdd} landing slots (Total capacity: ${cityCap}).`
+                  : `Treaty negotiations concluded with civil aviation officials in ${mission.targetCityName}! Officially awarded ${slotsToAdd} landing slots (Total airport capacity: ${cityCap}).`,
               });
             }
           } else if (mission.type === 'SUBSIDIARY_ACQUISITION') {
@@ -787,7 +836,10 @@ export function advanceQuarter(currentState: GameState): GameState {
     }
   }
 
-  const eventTitles = newActiveEvents.map((e) => e.title);
+  const eventTitles = [
+    ...newActiveEvents.map((e) => e.title),
+    ...airportExpansionNotices.map((n) => `🏗️ Airport Expansion: ${n.cityName} (+${n.addedSlots} slots)`),
+  ];
 
   return {
     ...currentState,
@@ -808,6 +860,8 @@ export function advanceQuarter(currentState: GameState): GameState {
     retiringAircraft: retiringAircraft,
     retiredAircraft: newlyRetired,
     activeDiscountDeal: nextDiscountDeal,
+    airportSlots: currentAirportSlots,
+    airportExpansions: airportExpansionNotices,
     lastQuarterClosedRoutes: allClosedRoutes,
     routeIncidents: routeIncidents,
     quarterHistory: [

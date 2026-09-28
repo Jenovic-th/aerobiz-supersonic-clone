@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { GameState, City, Route, AircraftModel, BusinessVenture, NegotiatorMission } from './types/game';
 import { advanceQuarter } from './simulation/engine';
 import { createDefaultNegotiators } from './data/negotiators';
+import { saveGameToLocalStorage, exportSaveFile, importSaveFile } from './utils/saveLoad';
 import { WorldMap } from './components/WorldMap';
 import { ExecutiveHeader } from './components/ExecutiveHeader';
 import { BottomToolbar } from './components/BottomToolbar';
@@ -14,9 +15,16 @@ import { FinancialReportModal } from './components/FinancialReportModal';
 import { QuarterReportModal } from './components/QuarterReportModal';
 import { NewGameSetupModal } from './components/NewGameSetupModal';
 import { CityDetailModal } from './components/CityDetailModal';
+import { CheckCircle2 } from 'lucide-react';
 
 export function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   // Modal display toggles
   const [showRouteModal, setShowRouteModal] = useState(false);
@@ -305,17 +313,57 @@ export function App() {
     });
   };
 
-  // Advance to next quarter
+  // Advance to next quarter (Auto-saves to localStorage!)
   const handleAdvanceQuarter = () => {
     const nextState = advanceQuarter(gameState);
     setGameState(nextState);
+    saveGameToLocalStorage(nextState, true);
+    showToast('💾 Auto-saved (บันทึกอัตโนมัติ)');
     setShowQuarterReport(true); // Open executive briefing modal!
   };
 
+  const handleQuickSave = () => {
+    if (!gameState) return;
+    saveGameToLocalStorage(gameState, false);
+    showToast('💾 Game Saved to Local Storage (บันทึกเซฟเรียบร้อย)');
+  };
+
+  const handleExportSave = () => {
+    if (!gameState) return;
+    exportSaveFile(gameState);
+    showToast('📥 Save File Exported (ดาวน์โหลดไฟล์เซฟสำเร็จ)');
+  };
+
+  const handleImportSave = async (file: File) => {
+    try {
+      const imported = await importSaveFile(file);
+      setGameState(imported);
+      showToast(
+        `📂 Loaded Save: ${imported.airlines.find((a) => a.isHuman)?.name || 'Airline'} (Turn ${imported.turnNumber})`
+      );
+    } catch (err: any) {
+      alert(err.message || 'Failed to import save file');
+    }
+  };
+
   return (
-    <div className="w-full h-[100dvh] flex flex-col bg-slate-950 overflow-hidden text-slate-100 font-sans">
+    <div className="w-full h-[100dvh] flex flex-col bg-slate-950 overflow-hidden text-slate-100 font-sans relative">
       {/* 1. Executive Top Bar */}
-      <ExecutiveHeader gameState={gameState} playerAirline={playerAirline} />
+      <ExecutiveHeader
+        gameState={gameState}
+        playerAirline={playerAirline}
+        onQuickSave={handleQuickSave}
+        onExportSave={handleExportSave}
+        onImportSave={handleImportSave}
+      />
+
+      {/* Floating System Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-16 right-6 z-50 px-4 py-2 bg-emerald-950/95 border-2 border-emerald-400 text-emerald-200 rounded-xl shadow-2xl font-black text-xs flex items-center gap-2 animate-bounce">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
 
       {/* 2. Interactive World Map */}
       <main className="flex-1 min-h-0 min-w-0 relative w-full overflow-hidden">
@@ -389,6 +437,7 @@ export function App() {
           onDispatchNegotiator={handleDispatchNegotiator}
           onEstablishHub={handleEstablishHub}
           initialCityId={selectedCity?.id}
+          gameState={gameState}
         />
       )}
 
@@ -438,6 +487,7 @@ export function App() {
           onDispatchNegotiator={handleDispatchNegotiator}
           onInstantReturnSlots={handleInstantReturnSlots}
           onInstantSellBusiness={handleInstantSellBusiness}
+          gameState={gameState}
         />
       )}
     </div>

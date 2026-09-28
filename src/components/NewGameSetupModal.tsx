@@ -1,11 +1,36 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { GameState, Airline, Route, GameMode, AirlineStanding } from '../types/game';
 import { CITIES } from '../data/cities';
 import { AIRCRAFTS } from '../data/aircrafts';
 import { createDefaultNegotiators } from '../data/negotiators';
 import { getDynamicAIRivals, assignDistributedHQs, createAIAirline } from '../simulation/aiCompetitor';
 import { calculateDistance, calculateBaseFare } from '../simulation/engine';
-import { Sparkles, Globe2, Shield, Rocket, Trophy, Infinity, Plane, Building2, CheckCircle2, Award, Zap, ChevronRight, Users, Shuffle, Settings2, Swords } from 'lucide-react';
+import {
+  getLatestAvailableSave,
+  loadGameFromLocalStorage,
+  importSaveFile,
+  SaveMetadata,
+} from '../utils/saveLoad';
+import {
+  Sparkles,
+  Globe2,
+  Shield,
+  Rocket,
+  Trophy,
+  Infinity,
+  Plane,
+  Building2,
+  CheckCircle2,
+  Award,
+  Zap,
+  ChevronRight,
+  Users,
+  Shuffle,
+  Settings2,
+  Swords,
+  Upload,
+  FolderOpen,
+} from 'lucide-react';
 
 interface NewGameSetupModalProps {
   onStartGame: (initialState: GameState) => void;
@@ -37,6 +62,40 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({ onStartGam
   const distributedHQs = useMemo(() => {
     return assignDistributedHQs(homeCityId, 3);
   }, [homeCityId, rerollSeed]);
+
+  // Save & Load state
+  const [availableSave, setAvailableSave] = useState<{
+    isAutoSave: boolean;
+    metadata: SaveMetadata;
+  } | null>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const save = getLatestAvailableSave();
+    if (save) {
+      setAvailableSave(save);
+    }
+  }, []);
+
+  const handleResumeSave = () => {
+    if (!availableSave) return;
+    const loaded = loadGameFromLocalStorage(availableSave.isAutoSave);
+    if (loaded) {
+      onStartGame(loaded);
+    }
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const imported = await importSaveFile(file);
+      onStartGame(imported);
+    } catch (err: any) {
+      alert(err.message || 'Failed to import save file');
+    }
+    e.target.value = '';
+  };
 
   const eraDescriptions = {
     1: {
@@ -285,6 +344,11 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({ onStartGam
       activeEvents: [],
       airlineStandings: initialStandings,
       quarterHistory: [],
+      airportSlots: CITIES.reduce((acc, c) => {
+        acc[c.id] = c.baseSlots;
+        return acc;
+      }, {} as Record<string, number>),
+      airportExpansions: [],
     };
 
     onStartGame(initialGameState);
@@ -325,21 +389,103 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({ onStartGam
           </div>
         </div>
 
-        {/* Top Quick Status Pill */}
-        <div className="hidden lg:flex items-center gap-4 text-xs font-mono bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-2 text-slate-300">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>STANDALONE DESKTOP SYSTEM READY</span>
+        {/* Top Import Save Button & Quick Status */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => importFileRef.current?.click()}
+            className="flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
+            title="Load an exported Aerobiz save file from your PC"
+          >
+            <Upload className="w-4 h-4 text-amber-400" />
+            <span>Load Save File (.json)</span>
+          </button>
+
+          <div className="hidden lg:flex items-center gap-4 text-xs font-mono bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-2 text-slate-300">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>STANDALONE DESKTOP SYSTEM READY</span>
+            </div>
+            <span className="text-slate-600">|</span>
+            <span className="text-amber-300">1980 - 2046+ TIMELINE</span>
+            <span className="text-slate-600">|</span>
+            <span className="text-sky-300">28 AIRCRAFT MODELS</span>
           </div>
-          <span className="text-slate-600">|</span>
-          <span className="text-amber-300">1980 - 2046+ TIMELINE</span>
-          <span className="text-slate-600">|</span>
-          <span className="text-sky-300">28 AIRCRAFT MODELS</span>
         </div>
       </header>
 
+      {/* Hidden File Input for Importing Save */}
+      <input
+        type="file"
+        ref={importFileRef}
+        accept=".json"
+        className="hidden"
+        onChange={handleImportFile}
+      />
+
       {/* 2. MAIN WIDESCREEN DASHBOARD (flex-1, zero empty sidebars, adaptively responsive) */}
       <main className="relative flex-1 min-h-0 overflow-y-auto p-4 md:p-6 lg:p-7 z-10">
+        {/* Continue Saved Career Hero Banner */}
+        {availableSave && (
+          <div className="w-full max-w-[1600px] mx-auto mb-6 p-4 md:p-5 bg-gradient-to-r from-blue-950/90 via-slate-900 to-indigo-950/90 border-2 border-sky-400 rounded-3xl shadow-2xl flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl border-2"
+                style={{ backgroundColor: availableSave.metadata.airlineColor, borderColor: '#38bdf8' }}
+              >
+                ✈️
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] px-2 py-0.5 rounded font-black font-mono uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500">
+                    {availableSave.isAutoSave ? 'AUTO-SAVE DETECTED' : 'SAVED CAREER'}
+                  </span>
+                  <span className="text-xs text-slate-400 font-mono">
+                    Saved: {new Date(availableSave.metadata.savedAt).toLocaleString()}
+                  </span>
+                </div>
+                <h2 className="text-lg md:text-xl font-black text-white font-mono mt-0.5">
+                  {availableSave.metadata.airlineName}
+                </h2>
+                <div className="text-xs text-slate-300 flex items-center gap-3 flex-wrap mt-1 font-mono">
+                  <span>
+                    Year {availableSave.metadata.currentYear} • Q{availableSave.metadata.currentQuarter} (Turn {availableSave.metadata.turnNumber})
+                  </span>
+                  <span>•</span>
+                  <span>
+                    Cash: <strong className="text-emerald-400">${availableSave.metadata.cashK.toLocaleString()}K</strong>
+                  </span>
+                  <span>•</span>
+                  <span>
+                    Fleet: <strong className="text-sky-300">{availableSave.metadata.fleetCount} planes</strong>
+                  </span>
+                  <span>•</span>
+                  <span>
+                    Routes: <strong className="text-amber-300">{availableSave.metadata.routesCount} active</strong>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                onClick={() => importFileRef.current?.click()}
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl font-bold text-xs md:text-sm shadow transition cursor-pointer flex items-center gap-2"
+              >
+                <Upload className="w-4 h-4 text-amber-400" />
+                <span>Import (.json)</span>
+              </button>
+
+              <button
+                onClick={handleResumeSave}
+                className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-black text-sm md:text-base shadow-xl hover:shadow-emerald-500/30 border-2 border-emerald-400 transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+              >
+                <span>▶ Resume Flight Operations (เล่นต่อ)</span>
+                <ChevronRight className="w-5 h-5 text-emerald-200 animate-pulse" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="w-full h-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5">
           {/* LEFT COLUMN: SIMULATION MODE & TIMELINE ERA (lg:col-span-7) */}
           <div className="lg:col-span-7 flex flex-col gap-4">

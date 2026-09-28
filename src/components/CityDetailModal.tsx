@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { City, Airline, Route, NegotiatorMission, Negotiator } from '../types/game';
+import { City, Airline, Route, NegotiatorMission, Negotiator, GameState } from '../types/game';
 import { getCityVisual } from '../data/cityVisuals';
 import { calculateNegotiationQuarters, calculateNegotiationCostK } from '../data/negotiators';
 import { CityLandmarkDiorama } from './CityLandmarkDiorama';
@@ -30,6 +30,7 @@ interface CityDetailModalProps {
   onDispatchNegotiator: (negotiatorId: string, mission: NegotiatorMission) => void;
   onInstantReturnSlots?: (cityId: string, count: number) => void;
   onInstantSellBusiness?: (businessId: string, refundK: number) => void;
+  gameState?: GameState;
 }
 
 export const CityDetailModal: React.FC<CityDetailModalProps> = ({
@@ -41,11 +42,20 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
   onDispatchNegotiator,
   onInstantReturnSlots,
   onInstantSellBusiness,
+  gameState,
 }) => {
   const visualData = getCityVisual(city.id);
   const isHQ = playerAirline.homeCityId === city.id;
   const isHub = playerAirline.hubCityIds.includes(city.id);
   const slotsOwned = playerAirline.slots[city.id] || 0;
+
+  const totalAirportCap = gameState?.airportSlots?.[city.id] ?? city.baseSlots;
+  const totalAllocated = (gameState?.airlines || [playerAirline]).reduce(
+    (sum, a) => sum + (a.slots[city.id] || 0),
+    0
+  );
+  const remainingFreeSlots = Math.max(0, totalAirportCap - totalAllocated);
+  const isAirportFull = remainingFreeSlots <= 0;
 
   // Active routes involving this city
   const cityRoutes = routes.filter(
@@ -67,7 +77,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
   const requiredQuarters = calculateNegotiationQuarters(homeCity, city);
   const requestedSlots = 10;
   const slotCostK = calculateNegotiationCostK(city, requestedSlots);
-  const maxSlotsReached = slotsOwned >= city.baseSlots;
+  const maxSlotsReached = slotsOwned >= totalAirportCap || isAirportFull;
 
   // Active slot negotiation in this city (if any)
   const activeSlotNegotiator = fieldNegotiators.find(
@@ -177,7 +187,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
               <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
               <span className="text-[10px] text-slate-400">Slots:</span>
               <span className="font-mono font-bold text-emerald-400">
-                {slotsOwned}/{city.baseSlots}
+                {slotsOwned}/{totalAirportCap}
               </span>
             </div>
             <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800">
@@ -450,7 +460,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400 font-bold uppercase font-mono">Status:</span>
               <span className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 font-mono font-bold text-xs text-sky-300">
-                {slotsOwned} / {city.baseSlots} Slots Owned
+                {slotsOwned} / {totalAirportCap} Slots (Airport: {totalAllocated}/{totalAirportCap})
               </span>
             </div>
 

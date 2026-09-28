@@ -276,6 +276,65 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
             </div>
           )}
 
+          {/* Active Global Crises & World Events Flash Alert */}
+          {gameState.activeEvents.length > 0 && (
+            <div className="p-3.5 bg-gradient-to-r from-amber-950/90 via-slate-900 to-rose-950/90 border-2 border-amber-500 rounded-2xl shadow-xl flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-xl">
+                  {gameState.activeEvents[0].type === 'WAR'
+                    ? '⚔️'
+                    : gameState.activeEvents[0].type === 'OIL_CRISIS'
+                    ? '🛢️'
+                    : gameState.activeEvents[0].type === 'EPIDEMIC'
+                    ? '☣️'
+                    : '🏆'}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-black uppercase font-mono">
+                      WORLD BREAKING NEWS
+                    </span>
+                    <span className="font-black text-amber-200 text-sm">
+                      {gameState.activeEvents[0].title}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-300 mt-0.5 truncate max-w-xl">
+                    {gameState.activeEvents[0].description}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveTab('NEWS')}
+                className="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 rounded-lg text-xs font-bold font-mono transition cursor-pointer shrink-0"
+              >
+                View News Bulletin ➔
+              </button>
+            </div>
+          )}
+
+          {/* Recent Airport Expansions Flash */}
+          {gameState.airportExpansions && gameState.airportExpansions.length > 0 && (
+            <div className="p-3 bg-gradient-to-r from-emerald-950/90 via-slate-900 to-teal-950/90 border border-emerald-500/80 rounded-2xl shadow-lg flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🏗️</span>
+                <div>
+                  <span className="font-bold text-emerald-300 uppercase font-mono text-[10px] mr-1.5">
+                    AIRPORT INFRASTRUCTURE ALERT:
+                  </span>
+                  <span className="text-slate-200">
+                    {gameState.airportExpansions.map((e) => `${e.cityName} (+${e.addedSlots})`).join(', ')} expanded runway capacity!
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveTab('NEWS')}
+                className="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 rounded-lg text-[11px] font-bold font-mono hover:bg-emerald-500/30 transition cursor-pointer shrink-0"
+              >
+                Details ➔
+              </button>
+            </div>
+          )}
+
           {/* 2. Executive Assistant Dialogue Box */}
           <div className="flex gap-4 p-4 bg-slate-950 border-2 border-slate-800 rounded-2xl shadow-inner items-start">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-700 flex items-center justify-center text-2xl shrink-0 border-2 border-indigo-400 shadow-md">
@@ -1490,26 +1549,117 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 <div className="space-y-3">
                   <h3 className="font-black text-slate-100 text-sm md:text-base flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-amber-400" />
-                    <span>Global Events & Crises:</span>
+                    <span>Global Events, Wars & Aviation Crises:</span>
                   </h3>
-                  {gameState.activeEvents.map((ev) => (
-                    <div
-                      key={ev.id}
-                      className="bg-amber-950/50 border-2 border-amber-500/80 p-4 rounded-2xl text-amber-200 shadow-md"
-                    >
-                      <div className="font-black text-sm md:text-base text-amber-300 flex items-center justify-between">
-                        <span>{ev.title}</span>
-                        {ev.demandMultiplier && (
-                          <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/30 text-amber-200 border border-amber-400 font-black">
-                            Demand: +{Math.round((ev.demandMultiplier - 1) * 100)}%
-                          </span>
-                        )}
+                  {gameState.activeEvents.map((ev) => {
+                    const isDemandPositive = (ev.demandMultiplier || 1) >= 1;
+                    const demandDeltaPct = Math.round(((ev.demandMultiplier || 1) - 1) * 100);
+                    const isFuelSpike = (ev.fuelPriceMultiplier || 1) > 1.05;
+                    const fuelDeltaPct = Math.round(((ev.fuelPriceMultiplier || 1) - 1) * 100);
+
+                    return (
+                      <div
+                        key={ev.id}
+                        className={`border-2 p-4 rounded-2xl shadow-md ${
+                          ev.type === 'WAR' ||
+                          ev.type === 'OIL_CRISIS' ||
+                          ev.type === 'EPIDEMIC' ||
+                          ev.type === 'ECONOMIC_CRISIS'
+                            ? 'bg-rose-950/60 border-rose-500/80 text-rose-200'
+                            : 'bg-amber-950/50 border-amber-500/80 text-amber-200'
+                        }`}
+                      >
+                        <div className="font-black text-sm md:text-base flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <span>
+                              {ev.type === 'WAR'
+                                ? '⚔️'
+                                : ev.type === 'OIL_CRISIS'
+                                ? '🛢️'
+                                : ev.type === 'EPIDEMIC'
+                                ? '☣️'
+                                : '🏆'}
+                            </span>
+                            <span className="text-white">{ev.title}</span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {ev.demandMultiplier && (
+                              <span
+                                className={`text-xs px-2.5 py-0.5 rounded-full border font-black ${
+                                  isDemandPositive
+                                    ? 'bg-emerald-500/30 text-emerald-200 border-emerald-400'
+                                    : 'bg-rose-500/30 text-rose-200 border-rose-400'
+                                }`}
+                              >
+                                {isDemandPositive
+                                  ? `Passenger Demand: +${demandDeltaPct}%`
+                                  : `Passenger Demand: ${demandDeltaPct}%`}
+                              </span>
+                            )}
+                            {isFuelSpike && (
+                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/30 text-amber-200 border border-amber-400 font-black">
+                                🛢️ Jet Fuel: +{fuelDeltaPct}%
+                              </span>
+                            )}
+                            <span className="text-xs px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-slate-300">
+                              Duration: {ev.durationQuarters}Q
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs md:text-sm text-slate-200 mt-2 leading-relaxed">
+                          {ev.description}
+                        </p>
                       </div>
-                      <p className="text-xs md:text-sm text-slate-200 mt-1.5 leading-relaxed">
-                        {ev.description}
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* 5.5 AIRPORT INFRASTRUCTURE & RUNWAY EXPANSIONS */}
+              {gameState.airportExpansions && gameState.airportExpansions.length > 0 && (
+                <div className="space-y-3 bg-gradient-to-r from-emerald-950/80 via-slate-900 to-teal-950/80 border-2 border-emerald-500/80 p-4 md:p-5 rounded-2xl shadow-xl">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-emerald-500/20 border border-emerald-400 text-emerald-300">
+                      <Building2 className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-white text-xs md:text-sm uppercase tracking-wider font-mono">
+                        🏗️ Global Airport Infrastructure & Runway Expansions ({gameState.airportExpansions.length} Hubs)
+                      </h3>
+                      <p className="text-[11px] text-slate-300 font-sans">
+                        Civil aviation authorities have completed major terminal, concourse, and runway expansion projects to relieve slot congestion!
                       </p>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                    {gameState.airportExpansions.map((exp) => (
+                      <div
+                        key={exp.cityId}
+                        className="p-3 bg-slate-900/90 border border-emerald-500/40 rounded-xl flex items-center justify-between gap-3 shadow"
+                      >
+                        <div>
+                          <div className="font-black text-white text-sm flex items-center gap-2">
+                            <span>{exp.cityName}</span>
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-sky-300 font-mono">
+                              {exp.cityId}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-300 mt-0.5">
+                            {exp.reason}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-xs font-black font-mono text-emerald-400 block bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-500">
+                            +{exp.addedSlots} SLOTS
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono block mt-1">
+                            New Cap: {exp.newTotalSlots}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

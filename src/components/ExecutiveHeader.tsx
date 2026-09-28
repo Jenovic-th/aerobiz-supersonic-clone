@@ -1,16 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { GameState, Airline } from '../types/game';
-import { Plane, DollarSign, Calendar, Flame, Globe2, AlertTriangle, Users, Trophy } from 'lucide-react';
+import {
+  Plane,
+  DollarSign,
+  Calendar,
+  Flame,
+  Globe2,
+  AlertTriangle,
+  Users,
+  Trophy,
+  Save,
+  Download,
+  Upload,
+  CheckCircle2,
+  X,
+  FileJson,
+} from 'lucide-react';
 import { ExecutiveRosterModal } from './ExecutiveRosterModal';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
 
 interface ExecutiveHeaderProps {
   gameState: GameState;
   playerAirline: Airline;
+  onQuickSave?: () => void;
+  onExportSave?: () => void;
+  onImportSave?: (file: File) => void;
 }
 
-export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({ gameState, playerAirline }) => {
+export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
+  gameState,
+  playerAirline,
+  onQuickSave,
+  onExportSave,
+  onImportSave,
+}) => {
   const [showRoster, setShowRoster] = useState(false);
+  const [showSaveMenu, setShowSaveMenu] = useState(false);
+  const [saveToast, setSaveToast] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const quarterNames = ['Q1 (Jan-Mar)', 'Q2 (Apr-Jun)', 'Q3 (Jul-Sep)', 'Q4 (Oct-Dec)'];
   const currentQuarterText = quarterNames[gameState.currentQuarter - 1];
 
@@ -137,11 +165,113 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({ gameState, pla
             ))}
           </div>
         </button>
+
+        {/* System Save / Load Button & Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setShowSaveMenu(!showSaveMenu)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl text-xs font-bold text-slate-200 transition cursor-pointer shadow active:scale-95"
+            title="Save / Export / Import Game State"
+          >
+            <Save className="w-4 h-4 text-emerald-400" />
+            <span className="hidden sm:inline">Save & Load</span>
+          </button>
+
+          {showSaveMenu && (
+            <div className="absolute right-0 top-12 w-64 bg-slate-900 border-2 border-slate-700 rounded-2xl shadow-2xl p-2 z-50 space-y-1 text-xs">
+              <div className="px-3 py-1.5 text-[10px] font-black uppercase text-slate-400 font-mono border-b border-slate-800 flex justify-between items-center">
+                <span>Game Data Management</span>
+                <button
+                  onClick={() => setShowSaveMenu(false)}
+                  className="text-slate-400 hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (onQuickSave) onQuickSave();
+                  setSaveToast('💾 Game Saved to Local Storage!');
+                  setTimeout(() => setSaveToast(null), 2500);
+                  setShowSaveMenu(false);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 text-left text-slate-200 font-bold transition cursor-pointer"
+              >
+                <Save className="w-4 h-4 text-emerald-400" />
+                <div>
+                  <div>Quick Save (บันทึกเซฟ)</div>
+                  <div className="text-[10px] text-slate-400">Save to browser / local storage</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  if (onExportSave) onExportSave();
+                  setShowSaveMenu(false);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 text-left text-slate-200 font-bold transition cursor-pointer"
+              >
+                <Download className="w-4 h-4 text-sky-400" />
+                <div>
+                  <div>Export Save File (.json)</div>
+                  <div className="text-[10px] text-slate-400">Download save to play on other PCs</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  fileInputRef.current?.click();
+                  setShowSaveMenu(false);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-800 text-left text-slate-200 font-bold transition cursor-pointer"
+              >
+                <Upload className="w-4 h-4 text-amber-400" />
+                <div>
+                  <div>Import Save File (.json)</div>
+                  <div className="text-[10px] text-slate-400">Load backup from file on disk</div>
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Hidden File Input for Importing Save */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".json"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && onImportSave) {
+            onImportSave(file);
+          }
+          e.target.value = '';
+        }}
+      />
+
+      {/* Toast Notification */}
+      {saveToast && (
+        <div className="fixed top-16 right-6 z-50 px-4 py-2 bg-emerald-950 border-2 border-emerald-400 text-emerald-200 rounded-xl shadow-2xl font-black text-xs flex items-center gap-2 animate-bounce">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{saveToast}</span>
+        </div>
+      )}
 
       {/* Active World Event Banner (if any) */}
       {gameState.activeEvents.length > 0 && (
-        <div className="flex items-center gap-2.5 bg-amber-950/90 border-2 border-amber-500 px-4 py-2 rounded-xl text-sm text-amber-200 shadow-md">
+        <div
+          className={`flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm shadow-md border-2 ${
+            gameState.activeEvents[0].type === 'WAR' ||
+            gameState.activeEvents[0].type === 'OIL_CRISIS' ||
+            gameState.activeEvents[0].type === 'EPIDEMIC' ||
+            gameState.activeEvents[0].type === 'ECONOMIC_CRISIS'
+              ? 'bg-rose-950/90 border-rose-500 text-rose-200 animate-pulse'
+              : 'bg-amber-950/90 border-amber-500 text-amber-200'
+          }`}
+        >
           <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
           <span className="font-bold truncate max-w-sm">{gameState.activeEvents[0].title}</span>
         </div>

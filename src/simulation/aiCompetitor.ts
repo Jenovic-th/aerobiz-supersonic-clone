@@ -601,63 +601,153 @@ export function simulateAITurn(
   }
 
   // ========================================================
-  // 2. DIPLOMATIC SLOT ACQUISITION
+  // 2. INTELLIGENT DIPLOMATIC SLOT ACQUISITION
   // ========================================================
   const freeFieldEnvoys = negotiators.filter((n) => n.role === 'FIELD' && n.status === 'AVAILABLE');
 
-  if (freeFieldEnvoys.length > 0 && currentCash >= safetyReserveK + 2000) {
-    const negotiatingCityIds = new Set(
-      negotiators
-        .filter((n) => n.status === 'DISPATCHED' && n.currentMission)
-        .map((n) => n.currentMission!.targetCityId)
+  // Check 1: Financial health (Must have enough cash above safety operational reserve)
+  if (freeFieldEnvoys.length > 0 && currentCash >= safetyReserveK + 3000) {
+    // Check 2: Anti-hoarding check: Do not grab new slots if AI already has >= 2 unserved cities with slots
+    const activeRouteCityIds = new Set(
+      survivingRoutes.flatMap((r) => [r.originCityId, r.destCityId])
     );
-
-    const candidateCities = CITIES.filter((c) => {
-      const slotsOwned = currentSlots[c.id] || 0;
-      return slotsOwned < 10 && !negotiatingCityIds.has(c.id);
+    const unservedSlotCities = Object.keys(currentSlots).filter((cityId) => {
+      return (
+        (currentSlots[cityId] || 0) >= 4 &&
+        !activeRouteCityIds.has(cityId) &&
+        cityId !== airline.homeCityId
+      );
     });
 
-    if (candidateCities.length > 0) {
-      candidateCities.sort((a, b) => {
-        let scoreA = a.population * 2 + a.businessIndex * 1.5 + a.tourismIndex;
-        let scoreB = b.population * 2 + b.businessIndex * 1.5 + b.tourismIndex;
-
-        if (a.region === homeCity.region) scoreA += 50;
-        if (b.region === homeCity.region) scoreB += 50;
-
-        const distA = calculateDistance(homeCity.lat, homeCity.lon, a.lat, a.lon);
-        const distB = calculateDistance(homeCity.lat, homeCity.lon, b.lat, b.lon);
-        scoreA -= distA * 0.005;
-        scoreB -= distB * 0.005;
-
-        return scoreB - scoreA;
+    if (unservedSlotCities.length < 2) {
+      const homeRegion = homeCity.region;
+      const homeRegionRoutes = survivingRoutes.filter((r) => {
+        const orig = cityMap.get(r.originCityId);
+        const dest = cityMap.get(r.destCityId);
+        return orig?.region === homeRegion && dest?.region === homeRegion;
       });
 
-      const targetCity = candidateCities[0];
-      const envoyToDispatch = freeFieldEnvoys[0];
+      // Check 3: Has long-haul aircraft in fleet
+      const hasLongHaulAircraft = currentFleet.some((f) => {
+        const m = aircraftMap.get(f.modelId);
+        return m && m.rangeKm >= 6500;
+      });
 
-      currentCash -= 2000;
+      // Strategic Phase Rule: AI stays strictly in its home continent until its regional
+      // base is solidly established (>= 3 routes), cash is abundant (>= $35M), and it has long-haul capabilities
+      const isReadyForIntercontinental =
+        homeRegionRoutes.length >= 3 &&
+        currentCash >= 35000 &&
+        (hasLongHaulAircraft || currentCash >= 50000);
 
-      negotiators = negotiators.map((neg) => {
-        if (neg.id === envoyToDispatch.id) {
-          return {
-            ...neg,
-            status: 'DISPATCHED' as const,
-            currentMission: {
-              type: 'SLOT_NEGOTIATION' as const,
-              targetCityId: targetCity.id,
-              targetCityName: targetCity.name,
-              requestedSlots: 10,
-              costK: 2000,
-              quartersRemaining: 2,
-              totalQuarters: 2,
-            },
-          };
+      const negotiatingCityIds = new Set(
+        negotiators
+          .filter((n) => n.status === 'DISPATCHED' && n.currentMission)
+          .map((n) => n.currentMission!.targetCityId)
+      );
+
+      const candidateCities = CITIES.filter((c) => {
+        if (c.id === airline.homeCityId) return false;
+        if (negotiatingCityIds.has(c.id)) return false;
+
+        const slotsOwned = currentSlots[c.id] || 0;
+        if (slotsOwned >= 14) return false; // Already has enough slots in this destination
+
+        // Check total airport capacity and congestion
+        const totalAirportSlots = gameState.airportSlots?.[c.id] ?? c.baseSlots;
+        const totalAllocated = (gameState.airlines || []).reduce(
+          (sum, a) => sum + (a.slots[c.id] || 0),
+          0
+        );
+        const remainingSlots = Math.max(0, totalAirportSlots - totalAllocated);
+        if (remainingSlots <= 0) return false; // Airport is 100% full, no slots available
+
+        const isSameRegion = c.region === homeRegion;
+
+        // If not ready for intercontinental expansion, STRICTLY stay in home continent!
+        if (!isReadyForIntercontinental) {
+          return isSameRegion;
         }
-        return neg;
+
+        // If ready for intercontinental, only consider Tier 1 Major Gateway Hubs overseas!
+        if (!isSameRegion) {
+          const primeCities = REGION_PRIME_CITIES[c.region] || [];
+          if (!primeCities.includes(c.id)) return false;
+
+          const distFromHome = calculateDistance(homeCity.lat, homeCity.lon, c.lat, c.lon);
+          if (distFromHome > 12500) return false;
+        }
+
+        return true;
       });
 
-      aiActions.push(`🏛️ Dispatched diplomatic envoy to ${targetCity.name} requesting 10 airport slots`);
+      if (candidateCities.length > 0) {
+        candidateCities.sort((a, b) => {
+          let scoreA = a.population * 2.5 + a.businessIndex * 2 + a.tourismIndex;
+          let scoreB = b.population * 2.5 + b.businessIndex * 2 + b.tourismIndex;
+
+          // Strong regional preference
+          if (a.region === homeRegion) scoreA += 120;
+          if (b.region === homeRegion) scoreB += 120;
+
+          const demandA = calculateRouteDemand(
+            homeCity,
+            a,
+            gameState.currentYear,
+            gameState.currentQuarter,
+            gameState.activeEvents || []
+          );
+          const demandB = calculateRouteDemand(
+            homeCity,
+            b,
+            gameState.currentYear,
+            gameState.currentQuarter,
+            gameState.activeEvents || []
+          );
+          scoreA += demandA * 0.01;
+          scoreB += demandB * 0.01;
+
+          const distA = calculateDistance(homeCity.lat, homeCity.lon, a.lat, a.lon);
+          const distB = calculateDistance(homeCity.lat, homeCity.lon, b.lat, b.lon);
+          scoreA -= distA * 0.004;
+          scoreB -= distB * 0.004;
+
+          return scoreB - scoreA;
+        });
+
+        const targetCity = candidateCities[0];
+        const envoyToDispatch = freeFieldEnvoys[0];
+
+        currentCash -= 2000;
+
+        negotiators = negotiators.map((neg) => {
+          if (neg.id === envoyToDispatch.id) {
+            return {
+              ...neg,
+              status: 'DISPATCHED' as const,
+              currentMission: {
+                type: 'SLOT_NEGOTIATION' as const,
+                targetCityId: targetCity.id,
+                targetCityName: targetCity.name,
+                requestedSlots: 10,
+                costK: 2000,
+                quartersRemaining: 2,
+                totalQuarters: 2,
+              },
+            };
+          }
+          return neg;
+        });
+
+        const isIntercontinental = targetCity.region !== homeRegion;
+        const phaseLabel = isIntercontinental
+          ? `Intercontinental trans-oceanic gateway expansion (${homeCity.name} ➔ ${targetCity.name})`
+          : `Domestic/regional hub network expansion in ${targetCity.name}`;
+
+        aiActions.push(
+          `🏛️ Dispatched diplomatic envoy to ${targetCity.name} requesting 10 airport slots [${phaseLabel}]`
+        );
+      }
     }
   }
 

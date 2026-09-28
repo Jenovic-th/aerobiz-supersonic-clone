@@ -210,6 +210,14 @@ export interface AirlineStanding {
   fleetCount: number;
 }
 
+export interface AirportExpansionNotice {
+  cityId: string;
+  cityName: string;
+  addedSlots: number;
+  newTotalSlots: number;
+  reason: string;
+}
+
 export interface GameState {
   gameMode: GameMode;
   era: 1 | 2 | 3;
@@ -242,6 +250,8 @@ export interface GameState {
   retiringAircraft?: AircraftModel[]; // Aircraft ceasing commercial production in 1 year (end-of-production advance notice!)
   retiredAircraft?: AircraftModel[]; // Aircraft that have ceased production this quarter
   activeDiscountDeal?: AircraftDiscountDeal; // Special flash manufacturer discount promotion
+  airportSlots?: Record<string, number>; // Dynamic total airport slot capacity per city
+  airportExpansions?: AirportExpansionNotice[]; // Airport expansion events this quarter
   lastQuarterClosedRoutes?: {
     airlineId: string;
     airlineName: string;
@@ -260,3 +270,4 @@ export interface GameState {
     incident: RouteIncident;
   }[];
 }
+
