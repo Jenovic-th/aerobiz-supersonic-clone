@@ -276,14 +276,51 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                       </button>
                     )}
 
-                    {currentSlots >= 10 && !isHub && (
-                      <button
-                        disabled={!canAffordHub}
-                        onClick={() => onEstablishHub(city.id, hubCostK)}
-                        className="px-3 py-1 bg-blue-700 hover:bg-blue-600 disabled:opacity-30 text-white rounded-lg font-bold text-xs shadow border border-sky-400 cursor-pointer"
-                      >
-                        Charter Hub ($15M)
-                      </button>
+                    {!isHome && (
+                      isHub ? (
+                        <div className="px-2.5 py-1 bg-sky-950/80 border border-sky-400 text-sky-300 rounded-lg text-xs font-bold flex items-center gap-1 shadow">
+                          <span>🌐</span>
+                          <span>Hub Active (+18%)</span>
+                        </div>
+                      ) : (() => {
+                        const hasInboundRoute = (gameState?.routes || []).some(
+                          (r) => r.airlineId === playerAirline.id && (r.originCityId === city.id || r.destCityId === city.id)
+                        );
+                        const hasEnoughSlots = currentSlots >= 10;
+                        const canCharter = hasInboundRoute && hasEnoughSlots && canAffordHub;
+
+                        const tooltipMsg = !hasInboundRoute
+                          ? `Requires an active flight route connecting to ${city.name} before chartering a Regional Hub`
+                          : !hasEnoughSlots
+                          ? `Requires at least 10 slots (currently ${currentSlots}/10)`
+                          : !canAffordHub
+                          ? `Requires $15,000K (currently have $${playerAirline.cashK.toLocaleString()}K)`
+                          : 'Charter Regional Hub ($15M • +15 Bonus Slots & Unlock Spoke Routes across this continent)';
+
+                        const buttonLabel = !hasInboundRoute
+                          ? 'Hub: Need Route'
+                          : !hasEnoughSlots
+                          ? `Hub: ${currentSlots}/10 Slots`
+                          : !canAffordHub
+                          ? 'Hub: Need $15M'
+                          : 'Charter Hub ($15M • +15 Slots)';
+
+                        return (
+                          <button
+                            disabled={!canCharter}
+                            onClick={() => onEstablishHub(city.id, hubCostK)}
+                            title={tooltipMsg}
+                            className={`px-3 py-1 rounded-lg font-bold text-xs shadow border flex items-center gap-1 transition ${
+                              canCharter
+                                ? 'bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white border-sky-400 cursor-pointer active:scale-95'
+                                : 'bg-slate-900 text-slate-400 border-slate-700 cursor-not-allowed opacity-75'
+                            }`}
+                          >
+                            <span>🌐</span>
+                            <span>{buttonLabel}</span>
+                          </button>
+                        );
+                      })()
                     )}
                   </div>
                 </div>

@@ -28,24 +28,44 @@ export const RouteModal: React.FC<RouteModalProps> = ({
   currentYear,
   currentQuarter,
 }) => {
+  // Authorized Departure Bases: Corporate HQ + Established Regional Hubs
+  const authorizedBases = useMemo(() => {
+    const baseIds = new Set([playerAirline.homeCityId, ...(playerAirline.hubCityIds || [])]);
+    return CITIES.filter((c) => baseIds.has(c.id) && (playerAirline.slots[c.id] || 0) >= 1);
+  }, [playerAirline]);
+
   // Cities where player has at least 1 slot
   const accessibleCities = useMemo(() => {
     return CITIES.filter((c) => (playerAirline.slots[c.id] || 0) > 0);
   }, [playerAirline]);
 
-  const defaultOrigin = initialOriginCity?.id || playerAirline.homeCityId;
+  const isInitialBase = initialOriginCity && authorizedBases.some((b) => b.id === initialOriginCity.id);
+  const defaultOrigin = isInitialBase ? initialOriginCity.id : playerAirline.homeCityId;
   const [originId, setOriginId] = useState<string>(defaultOrigin);
 
-  useEffect(() => {
-    if (initialOriginCity) {
-      setOriginId(initialOriginCity.id);
-    }
-  }, [initialOriginCity]);
-
   const [destId, setDestId] = useState<string>(() => {
+    if (initialOriginCity && !isInitialBase && (playerAirline.slots[initialOriginCity.id] || 0) > 0) {
+      return initialOriginCity.id;
+    }
     const candidate = accessibleCities.find((c) => c.id !== defaultOrigin);
     return candidate ? candidate.id : (accessibleCities[1]?.id || 'TYO');
   });
+
+  useEffect(() => {
+    if (initialOriginCity) {
+      if (authorizedBases.some((b) => b.id === initialOriginCity.id)) {
+        setOriginId(initialOriginCity.id);
+      } else if ((playerAirline.slots[initialOriginCity.id] || 0) > 0) {
+        setDestId(initialOriginCity.id);
+        const regionalHub = authorizedBases.find((b) => b.region === initialOriginCity.region);
+        if (regionalHub) {
+          setOriginId(regionalHub.id);
+        } else {
+          setOriginId(playerAirline.homeCityId);
+        }
+      }
+    }
+  }, [initialOriginCity, authorizedBases, playerAirline.homeCityId]);
 
   // Handle changing Origin: Ensure destination never matches origin
   const handleOriginChange = (newOrigin: string) => {
@@ -223,20 +243,28 @@ export const RouteModal: React.FC<RouteModalProps> = ({
           {/* Origin & Destination Selectors */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-800/90 p-4 rounded-2xl border border-slate-700 shadow-md">
             <div>
-              <label className="block text-slate-300 font-bold mb-1.5 text-xs md:text-sm font-mono flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-sky-400" />
-                Departure (Origin Hub)
+              <label className="block text-slate-300 font-bold mb-1.5 text-xs md:text-sm font-mono flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-sky-400" />
+                  Departure Base (HQ / Hub)
+                </span>
+                <span className="text-[10px] text-sky-400 font-bold">
+                  {originCity.id === playerAirline.homeCityId ? '🏛️ Corporate HQ' : '🌐 Regional Hub'}
+                </span>
               </label>
               <select
                 value={originId}
                 onChange={(e) => handleOriginChange(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-600 rounded-xl px-3.5 py-2.5 text-slate-100 font-bold text-sm focus:outline-none focus:border-sky-500 cursor-pointer"
               >
-                {accessibleCities.map((city) => (
-                  <option key={city.id} value={city.id}>
-                    {city.name} ({city.id}) — Slots: {playerAirline.slots[city.id] || 0}
-                  </option>
-                ))}
+                {authorizedBases.map((city) => {
+                  const isHQ = city.id === playerAirline.homeCityId;
+                  return (
+                    <option key={city.id} value={city.id}>
+                      {city.name} ({city.id}) — {isHQ ? 'Corporate HQ' : 'Regional Hub'} [Slots: {playerAirline.slots[city.id] || 0}]
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -267,6 +295,23 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                   })}
               </select>
             </div>
+
+            {/* Aerobiz Hub & Spoke System Info Banner */}
+            {originCity.id !== playerAirline.homeCityId ? (
+              <div className="col-span-1 md:col-span-2 px-3.5 py-2 rounded-xl bg-sky-950/80 border border-sky-400/80 text-sky-200 text-xs flex items-center gap-2">
+                <span className="text-base">🌐</span>
+                <span>
+                  <strong>Regional Hub Spoke Service:</strong> Flights radiating from <strong>{originCity.name} Hub</strong> enjoy <strong>+18% Transit Passenger Boost</strong> from your connected trunk network!
+                </span>
+              </div>
+            ) : authorizedBases.length === 1 ? (
+              <div className="col-span-1 md:col-span-2 px-3.5 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-300 text-xs flex items-center gap-2">
+                <span className="text-base">💡</span>
+                <span>
+                  <strong>Aerobiz Hub & Spoke Rule:</strong> Routes depart from your Corporate HQ ({originCity.name}). To branch out within another continent (e.g. Europe or America), fly into that region and charter a Regional Hub ($15M • +15 Slots)!
+                </span>
+              </div>
+            ) : null}
 
             {/* Flight Metrics Summary Bar */}
             <div className="col-span-1 md:col-span-2 flex flex-wrap justify-between items-center text-xs md:text-sm text-slate-300 border-t border-slate-700/80 pt-3 gap-2 font-mono">

@@ -275,12 +275,26 @@ export function App() {
   const handleEstablishHub = (cityId: string, costK: number) => {
     if (playerAirline.cashK < costK) return;
 
+    const bonusSlots = 15;
+    const currentSlots = playerAirline.slots[cityId] || 0;
+    const newSlots = currentSlots + bonusSlots;
+
+    const currentAirportCap = gameState.airportSlots?.[cityId] ?? 100;
+    const updatedAirportSlots = {
+      ...(gameState.airportSlots || {}),
+      [cityId]: currentAirportCap + bonusSlots,
+    };
+
     const updatedAirlines = gameState.airlines.map((a) => {
       if (a.id === playerAirline.id) {
         return {
           ...a,
           cashK: a.cashK - costK,
           hubCityIds: [...a.hubCityIds, cityId],
+          slots: {
+            ...a.slots,
+            [cityId]: newSlots,
+          },
         };
       }
       return a;
@@ -289,6 +303,7 @@ export function App() {
     setGameState({
       ...gameState,
       airlines: updatedAirlines,
+      airportSlots: updatedAirportSlots,
     });
   };
 
@@ -487,6 +502,7 @@ export function App() {
           onDispatchNegotiator={handleDispatchNegotiator}
           onInstantReturnSlots={handleInstantReturnSlots}
           onInstantSellBusiness={handleInstantSellBusiness}
+          onEstablishHub={handleEstablishHub}
           gameState={gameState}
         />
       )}

@@ -193,11 +193,6 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({ onStartGam
         [homeCityId]: 25,
         [partnerCity1]: 14,
         [partnerCity2]: 14,
-        TYO: 8,
-        LON: 8,
-        NYC: 8,
-        SIN: 8,
-        DXB: 8,
       },
       fleet: [
         {

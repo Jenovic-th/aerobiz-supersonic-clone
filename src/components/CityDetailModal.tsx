@@ -30,6 +30,7 @@ interface CityDetailModalProps {
   onDispatchNegotiator: (negotiatorId: string, mission: NegotiatorMission) => void;
   onInstantReturnSlots?: (cityId: string, count: number) => void;
   onInstantSellBusiness?: (businessId: string, refundK: number) => void;
+  onEstablishHub?: (cityId: string, costK: number) => void;
   gameState?: GameState;
 }
 
@@ -42,6 +43,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
   onDispatchNegotiator,
   onInstantReturnSlots,
   onInstantSellBusiness,
+  onEstablishHub,
   gameState,
 }) => {
   const visualData = getCityVisual(city.id);
@@ -495,6 +497,54 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                     : `Negotiate 10 Slots ($${slotCostK.toLocaleString()}K • ${requiredQuarters}Q)`}
                 </span>
               </button>
+            )}
+
+            {/* Charter Regional Hub Button: Always visible for non-HQ cities! */}
+            {!isHQ && !isHub && (() => {
+              const hasInboundRoute = cityRoutes.length > 0;
+              const hasEnoughSlots = slotsOwned >= 10;
+              const hasEnoughCash = playerAirline.cashK >= 15000;
+              const canCharter = hasInboundRoute && hasEnoughSlots && hasEnoughCash;
+
+              const tooltipMsg = !hasInboundRoute
+                ? `Charter Hub: Requires at least 1 active flight connecting to ${city.name} from your network.`
+                : !hasEnoughSlots
+                ? `Charter Hub: Requires holding at least 10 landing slots (currently ${slotsOwned}/10). Negotiate more slots first.`
+                : !hasEnoughCash
+                ? `Charter Hub: Requires $15,000K treasury funds (currently have $${playerAirline.cashK.toLocaleString()}K).`
+                : `Charter ${city.name} as an Official Regional Hub ($15M). Grants +15 bonus landing slots and unlocks spoke routes across this continent with +18% connecting transit bonus!`;
+
+              const buttonLabel = !hasInboundRoute
+                ? 'Hub: Need Inbound Flight'
+                : !hasEnoughSlots
+                ? `Hub: Need 10 Slots (${slotsOwned}/10)`
+                : !hasEnoughCash
+                ? 'Hub: Need $15M'
+                : 'Charter Hub ($15M • +15 Slots)';
+
+              return (
+                <button
+                  type="button"
+                  disabled={!canCharter}
+                  onClick={() => onEstablishHub?.(city.id, 15000)}
+                  title={tooltipMsg}
+                  className={`px-4 py-2 rounded-xl font-black text-xs md:text-sm shadow-xl transition-all border flex items-center gap-1.5 ${
+                    canCharter
+                      ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white border-sky-400 cursor-pointer active:scale-95 shadow-[0_0_15px_rgba(56,189,248,0.35)]'
+                      : 'bg-slate-900/90 text-slate-400 border-slate-700/80 cursor-not-allowed opacity-80'
+                  }`}
+                >
+                  <span>🌐</span>
+                  <span>{buttonLabel}</span>
+                </button>
+              );
+            })()}
+
+            {isHub && !isHQ && (
+              <div className="px-3 py-1.5 rounded-xl bg-sky-950/90 border border-sky-400 text-sky-300 text-xs font-bold flex items-center gap-1.5 shadow-[0_0_12px_rgba(56,189,248,0.25)]">
+                <span>🌐</span>
+                <span>Regional Hub (+18% Transit Boost)</span>
+              </div>
             )}
 
             {/* HQ Operations Button (David Sterling) */}

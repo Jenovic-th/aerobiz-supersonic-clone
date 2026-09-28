@@ -536,7 +536,32 @@ export function advanceQuarter(currentState: GameState): GameState {
 
     if (!model) return route;
 
-    const baseDemand = calculateRouteDemand(origin, dest, nextYear, nextQuarter, newActiveEvents);
+    const owningAirline = intermediateAirlines.find((a) => a.id === route.airlineId);
+    let baseDemand = calculateRouteDemand(origin, dest, nextYear, nextQuarter, newActiveEvents);
+
+    // Hub Transit / Connecting Passenger Bonus:
+    // If route touches an established Regional Hub of the owning airline,
+    // and that Hub has an active feeder route connecting back to HQ or other network nodes,
+    // grant an +18% passenger demand bonus representing connecting transit passengers!
+    if (owningAirline && (owningAirline.hubCityIds || []).length > 1) {
+      const hubSet = new Set(owningAirline.hubCityIds);
+      const isOriginHub = hubSet.has(origin.id) && origin.id !== owningAirline.homeCityId;
+      const isDestHub = hubSet.has(dest.id) && dest.id !== owningAirline.homeCityId;
+
+      if (isOriginHub || isDestHub) {
+        const hubId = isOriginHub ? origin.id : dest.id;
+        const hasFeeder = allRoutes.some(
+          (r) =>
+            r.airlineId === owningAirline.id &&
+            r.id !== route.id &&
+            (r.originCityId === hubId || r.destCityId === hubId) &&
+            (r.originCityId === owningAirline.homeCityId || r.destCityId === owningAirline.homeCityId)
+        );
+        if (hasFeeder) {
+          baseDemand = Math.round(baseDemand * 1.18); // +18% connecting transit passengers
+        }
+      }
+    }
 
     // Competing routes on same pair from other airlines
     const competingRoutesOnPair = allRoutes.filter(
@@ -662,23 +687,38 @@ export function advanceQuarter(currentState: GameState): GameState {
               0
             );
             const remainingFreeSlots = Math.max(0, cityCap - usedSlotsAcrossAirlines);
-            const slotsToAdd = Math.min(requested, Math.max(2, remainingFreeSlots));
-            updatedSlots[mission.targetCityId] = (updatedSlots[mission.targetCityId] || 0) + slotsToAdd;
+            const slotsToAdd = Math.min(requested, remainingFreeSlots);
+            if (slotsToAdd > 0) {
+              updatedSlots[mission.targetCityId] = (updatedSlots[mission.targetCityId] || 0) + slotsToAdd;
+            }
 
             if (airline.isHuman) {
-              const isCongested = slotsToAdd < requested;
-              diplomaticReports.push({
-                id: `DIP_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-                negotiatorName: neg.name,
-                avatarId: neg.avatarId,
-                targetCityName: mission.targetCityName,
-                type: 'SLOT_NEGOTIATION',
-                success: true,
-                slotsGranted: slotsToAdd,
-                message: isCongested
-                  ? `Bilateral treaty concluded! Due to heavy airport congestion in ${mission.targetCityName}, civil aviation authorities awarded ${slotsToAdd} landing slots (Total capacity: ${cityCap}).`
-                  : `Treaty negotiations concluded with civil aviation officials in ${mission.targetCityName}! Officially awarded ${slotsToAdd} landing slots (Total airport capacity: ${cityCap}).`,
-              });
+              if (slotsToAdd <= 0) {
+                diplomaticReports.push({
+                  id: `DIP_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+                  negotiatorName: neg.name,
+                  avatarId: neg.avatarId,
+                  targetCityName: mission.targetCityName,
+                  type: 'SLOT_NEGOTIATION',
+                  success: false,
+                  slotsGranted: 0,
+                  message: `Bilateral negotiations stalled in ${mission.targetCityName}! The airport has reached absolute capacity (0 free slots available out of ${cityCap}). No landing slots could be awarded.`,
+                });
+              } else {
+                const isCongested = slotsToAdd < requested;
+                diplomaticReports.push({
+                  id: `DIP_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+                  negotiatorName: neg.name,
+                  avatarId: neg.avatarId,
+                  targetCityName: mission.targetCityName,
+                  type: 'SLOT_NEGOTIATION',
+                  success: true,
+                  slotsGranted: slotsToAdd,
+                  message: isCongested
+                    ? `Bilateral treaty concluded! Due to heavy airport congestion in ${mission.targetCityName}, civil aviation authorities awarded ${slotsToAdd} landing slots (Total capacity: ${cityCap}).`
+                    : `Treaty negotiations concluded with civil aviation officials in ${mission.targetCityName}! Officially awarded ${slotsToAdd} landing slots (Total airport capacity: ${cityCap}).`,
+                });
+              }
             }
           } else if (mission.type === 'SUBSIDIARY_ACQUISITION') {
             const visual = getCityVisual(mission.targetCityId);
