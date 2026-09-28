@@ -3,14 +3,14 @@ import { Airline, AircraftModel, AircraftDiscountDeal } from '../types/game';
 import { AIRCRAFTS } from '../data/aircrafts';
 import { CITIES } from '../data/cities';
 import { calculateDistance } from '../simulation/engine';
-import { X, ShoppingCart, Plane, CheckCircle2, AlertCircle, Sparkles, Filter, Flame, Tag, AlertTriangle, Wrench, Compass } from 'lucide-react';
+import { X, ShoppingCart, Plane, CheckCircle2, AlertCircle, Sparkles, Filter, Flame, Tag, AlertTriangle, Wrench, Compass, Plus, Minus, Receipt } from 'lucide-react';
 import { AircraftBlueprintViewer } from './AircraftBlueprintViewer';
 import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
 
 interface AircraftShopModalProps {
   playerAirline: Airline;
   onClose: () => void;
-  onBuyAircraft: (model: AircraftModel, effectivePriceK?: number) => void;
+  onBuyAircraft: (model: AircraftModel, effectivePriceK?: number, quantity?: number) => void;
   onSellAircraft: (instanceId: string, sellPriceK: number) => void;
   currentYear: number;
   currentEra: 1 | 2 | 3;
@@ -105,9 +105,43 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
     availableModels[0] ||
     AIRCRAFTS[0];
 
+  // Batch purchase quantity & confirmation modal
+  const [orderQuantity, setOrderQuantity] = useState<number>(1);
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
+  const [toastNotification, setToastNotification] = useState<string | null>(null);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (toastNotification) {
+      const timer = setTimeout(() => setToastNotification(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastNotification]);
+
+  // Keyboard shortcut listener (ESC to cancel confirm modal first, otherwise close shop)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showConfirmModal) {
+          setShowConfirmModal(false);
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showConfirmModal, onClose]);
+
   const selectedPriceInfo = selectedModel ? getModelPriceInfo(selectedModel) : { priceK: 0, originalPriceK: 0, hasDiscount: false, discountPct: 0 };
-  const canAfford = selectedModel ? playerAirline.cashK >= selectedPriceInfo.priceK : false;
-  const remainingCash = selectedModel ? playerAirline.cashK - selectedPriceInfo.priceK : 0;
+  const unitPriceK = selectedPriceInfo.priceK;
+  const maxAffordableQuantity = unitPriceK > 0 ? Math.floor(playerAirline.cashK / unitPriceK) : 0;
+  const safeQuantity = Math.max(1, orderQuantity);
+  const totalCostK = unitPriceK * safeQuantity;
+  const totalOriginalCostK = selectedPriceInfo.originalPriceK * safeQuantity;
+  const totalSavingsK = (selectedPriceInfo.originalPriceK - unitPriceK) * safeQuantity;
+  const canAfford = selectedModel ? playerAirline.cashK >= totalCostK && safeQuantity > 0 : false;
+  const remainingCash = selectedModel ? playerAirline.cashK - totalCostK : 0;
   const ownedCount = selectedModel
     ? playerAirline.fleet.filter((p) => p.modelId === selectedModel.id).length
     : 0;
@@ -327,7 +361,10 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                     <div
                       key={model.id}
                       data-model-id={model.id}
-                      onClick={() => setSelectedModelId(model.id)}
+                      onClick={() => {
+                        setSelectedModelId(model.id);
+                        setOrderQuantity(1);
+                      }}
                       className={`p-3 rounded-xl border transition-all cursor-pointer select-none group ${
                         isSelected
                           ? 'bg-sky-950/80 border-2 border-sky-400 shadow-[0_0_18px_rgba(56,189,248,0.3)]'
@@ -425,7 +462,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
 
               {/* Bottom Order Execution Strip */}
               {selectedModel && (
-                <div className="shrink-0 mt-3 p-3.5 bg-slate-950 border-2 border-sky-800/70 rounded-xl flex flex-wrap items-center justify-between gap-4 shadow-xl">
+                <div className="shrink-0 mt-3 p-3.5 bg-slate-950 border-2 border-sky-800/70 rounded-xl flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-xl">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-mono text-xs text-slate-400">ORDERING UNIT:</span>
@@ -454,7 +491,28 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-slate-400 font-mono mt-0.5">
+                    <div className="text-xs text-slate-400 font-mono mt-1 flex items-center gap-2.5 flex-wrap">
+                      <span>
+                        Unit Price:{' '}
+                        {selectedPriceInfo.hasDiscount ? (
+                          <span>
+                            <span className="line-through text-slate-500 mr-1">
+                              ${selectedPriceInfo.originalPriceK.toLocaleString()}K
+                            </span>
+                            <span className="text-amber-300 font-bold">${unitPriceK.toLocaleString()}K</span>
+                          </span>
+                        ) : (
+                          <span className="text-white font-bold">${unitPriceK.toLocaleString()}K</span>
+                        )}
+                      </span>
+                      <span>•</span>
+                      <span>
+                        Order Total:{' '}
+                        <strong className="text-emerald-400 font-bold text-sm">
+                          ${totalCostK.toLocaleString()}K
+                        </strong>
+                      </span>
+                      <span>•</span>
                       {canAfford ? (
                         <span className="text-emerald-400 font-bold">
                           Cash balance after delivery: ${remainingCash.toLocaleString()}K
@@ -462,26 +520,88 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                       ) : (
                         <span className="text-rose-400 font-bold flex items-center gap-1">
                           <AlertCircle className="w-3.5 h-3.5" />
-                          Short by ${(selectedPriceInfo.priceK - playerAirline.cashK).toLocaleString()}K
+                          Short by ${(totalCostK - playerAirline.cashK).toLocaleString()}K
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3 shrink-0">
+                    {/* Quantity Stepper & Quick Presets */}
+                    <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-700 p-1 rounded-xl">
+                      <span className="text-[11px] font-mono text-slate-400 px-2 font-bold uppercase">
+                        QTY:
+                      </span>
+                      <button
+                        type="button"
+                        disabled={safeQuantity <= 1}
+                        onClick={() => setOrderQuantity((prev) => Math.max(1, prev - 1))}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 hover:text-white font-mono font-black cursor-pointer border border-slate-600 transition"
+                        title="Decrease quantity by 1"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+
+                      <div className="px-2.5 py-0.5 bg-slate-950 border border-slate-700 rounded-lg text-center min-w-[58px]">
+                        <span className="font-mono font-black text-white text-base leading-none">
+                          {safeQuantity}
+                        </span>
+                        <span className="text-[9px] font-mono text-slate-400 block -mt-0.5">
+                          {safeQuantity === 1 ? 'airframe' : 'airframes'}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setOrderQuantity((prev) => prev + 1)}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-mono font-black cursor-pointer border border-slate-600 transition"
+                        title="Increase quantity by 1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Quick preset chips */}
+                      <div className="flex items-center gap-1 ml-1 border-l border-slate-700/80 pl-1.5">
+                        {[1, 2, 3, 5].map((qty) => (
+                          <button
+                            key={qty}
+                            type="button"
+                            onClick={() => setOrderQuantity(qty)}
+                            className={`px-2 py-1 rounded-md text-[11px] font-mono font-bold transition cursor-pointer ${
+                              safeQuantity === qty
+                                ? 'bg-sky-500 text-slate-950 font-black'
+                                : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white'
+                            }`}
+                          >
+                            {qty}x
+                          </button>
+                        ))}
+                        {maxAffordableQuantity > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setOrderQuantity(maxAffordableQuantity)}
+                            className={`px-2 py-1 rounded-md text-[11px] font-mono font-bold transition cursor-pointer border ${
+                              safeQuantity === maxAffordableQuantity
+                                ? 'bg-amber-500 text-slate-950 border-amber-300 font-black'
+                                : 'bg-amber-950/40 text-amber-300 border-amber-500/50 hover:bg-amber-900/60'
+                            }`}
+                            title={`Order maximum affordable quantity (${maxAffordableQuantity})`}
+                          >
+                            Max ({maxAffordableQuantity})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Review & Place Order Button */}
                     <button
                       disabled={!canAfford}
-                      onClick={() => onBuyAircraft(selectedModel, selectedPriceInfo.priceK)}
-                      className="px-6 py-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-30 disabled:pointer-events-none text-white font-black text-sm md:text-base rounded-xl shadow-xl transition-all active:scale-95 border-2 border-emerald-400 cursor-pointer flex items-center gap-2"
+                      onClick={() => setShowConfirmModal(true)}
+                      className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-30 disabled:pointer-events-none text-white font-black text-sm md:text-base rounded-xl shadow-xl transition-all active:scale-95 border-2 border-emerald-400 cursor-pointer flex items-center gap-2"
                     >
-                      <CheckCircle2 className="w-5 h-5 text-emerald-200" />
+                      <Receipt className="w-4 h-4 text-emerald-200" />
                       <span>
-                        Order Aircraft for ${selectedPriceInfo.priceK.toLocaleString()}K
-                        {selectedPriceInfo.hasDiscount && (
-                          <span className="text-xs text-amber-200 ml-1.5 font-mono">
-                            (Save ${(selectedPriceInfo.originalPriceK - selectedPriceInfo.priceK).toLocaleString()}K)
-                          </span>
-                        )}
+                        Review & Order {safeQuantity}x (${totalCostK.toLocaleString()}K)
                       </span>
                     </button>
                   </div>
@@ -670,6 +790,261 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
           </div>
         )}
       </div>
+
+      {/* PROCUREMENT CONTRACT REVIEW & CONFIRMATION MODAL */}
+      {showConfirmModal && selectedModel && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-150">
+          <div className="bg-slate-900 border-2 border-sky-500/80 rounded-2xl shadow-[0_0_60px_rgba(14,165,233,0.35)] w-full max-w-2xl overflow-hidden text-slate-100 flex flex-col animate-in zoom-in-95 duration-150 max-h-[92vh]">
+            {/* Contract Header */}
+            <div className="shrink-0 bg-gradient-to-r from-sky-950 via-slate-900 to-indigo-950 px-5 py-3.5 border-b border-sky-800/80 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-sky-900/80 border border-sky-400 shadow">
+                  <Receipt className="w-5 h-5 text-sky-300" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-white tracking-wide font-mono flex items-center gap-2">
+                    AIRCRAFT PROCUREMENT CONTRACT REVIEW
+                  </h3>
+                  <div className="text-xs text-sky-300/80 font-mono">
+                    ใบตรวจสอบและยืนยันสัญญาจัดซื้ออากาศยานพาณิชย์ • Review before final commitment
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/70 border border-slate-700 hover:border-rose-500 text-slate-400 hover:text-white transition cursor-pointer"
+                title="Cancel and close review"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Contract Body */}
+            <div className="p-5 space-y-4 overflow-y-auto">
+              {/* Aircraft Summary with Realistic Photo */}
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center gap-4">
+                <div className="w-24 h-16 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 shrink-0 shadow relative">
+                  <img
+                    src={getAircraftPhotoInfo(selectedModel).photoUrl}
+                    alt={selectedModel.model}
+                    className="w-full h-full object-cover object-center filter brightness-105"
+                  />
+                  {selectedModel.isSupersonic && (
+                    <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black font-mono text-[8px]">
+                      SST
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-mono text-xs text-sky-400 font-bold uppercase tracking-wider">
+                    {selectedModel.manufacturer} AEROSPACE
+                  </div>
+                  <h4 className="text-base sm:text-lg font-black text-white font-mono truncate">
+                    {selectedModel.model}
+                  </h4>
+                  <div className="text-xs text-slate-400 font-mono flex items-center gap-3 mt-1 flex-wrap">
+                    <span>{selectedModel.capacity} Passengers</span>
+                    <span>•</span>
+                    <span className="text-emerald-400 font-bold">{selectedModel.rangeKm.toLocaleString()} km Range</span>
+                    <span>•</span>
+                    <span>{selectedModel.speedKmh} km/h Cruise</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* In-Modal Quantity Adjustment */}
+              <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-mono font-bold text-slate-300 block">
+                    NUMBER OF AIRFRAMES TO PROCURE (จำนวนลำที่สั่งซื้อ):
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    Adjust quantity before finalizing the contract
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={safeQuantity <= 1}
+                    onClick={() => setOrderQuantity((prev) => Math.max(1, prev - 1))}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 hover:text-white font-mono font-black border border-slate-600 transition cursor-pointer"
+                    title="Decrease quantity by 1"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+
+                  <div className="px-3 py-1 bg-slate-900 border border-slate-700 rounded-lg text-center min-w-[64px]">
+                    <span className="font-mono font-black text-white text-lg leading-none">
+                      {safeQuantity}
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400 block -mt-0.5">
+                      {safeQuantity === 1 ? 'airframe' : 'airframes'}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setOrderQuantity((prev) => prev + 1)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-mono font-black border border-slate-600 transition cursor-pointer"
+                    title="Increase quantity by 1"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+
+                  <div className="flex items-center gap-1 ml-1 border-l border-slate-700/80 pl-2">
+                    {[1, 2, 3, 5].map((qty) => (
+                      <button
+                        key={qty}
+                        type="button"
+                        onClick={() => setOrderQuantity(qty)}
+                        className={`px-2 py-1 rounded-md text-xs font-mono font-bold transition cursor-pointer ${
+                          safeQuantity === qty
+                            ? 'bg-sky-500 text-slate-950 font-black'
+                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                        }`}
+                      >
+                        {qty}x
+                      </button>
+                    ))}
+                    {maxAffordableQuantity > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setOrderQuantity(maxAffordableQuantity)}
+                        className={`px-2 py-1 rounded-md text-xs font-mono font-bold transition cursor-pointer border ${
+                          safeQuantity === maxAffordableQuantity
+                            ? 'bg-amber-500 text-slate-950 border-amber-300 font-black'
+                            : 'bg-amber-950/40 text-amber-300 border-amber-500/50 hover:bg-amber-900/60'
+                        }`}
+                      >
+                        Max ({maxAffordableQuantity})
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Financial Breakdown Table / Invoice */}
+              <div className="bg-slate-950 rounded-xl border border-slate-800 p-4 space-y-2.5 font-mono text-sm">
+                <div className="flex justify-between items-center text-slate-300">
+                  <span>Unit Base Price:</span>
+                  <span className="font-bold text-white">
+                    ${selectedPriceInfo.originalPriceK.toLocaleString()}K per unit
+                  </span>
+                </div>
+
+                {selectedPriceInfo.hasDiscount && (
+                  <div className="flex justify-between items-center text-amber-400">
+                    <span className="flex items-center gap-1.5">
+                      <Flame className="w-3.5 h-3.5" />
+                      <span>Promotional Rebate ({selectedPriceInfo.discountPct}% OFF):</span>
+                    </span>
+                    <span className="font-bold">
+                      -${totalSavingsK.toLocaleString()}K
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center text-slate-300">
+                  <span>Effective Unit Acquisition Price:</span>
+                  <span className="font-bold text-emerald-400">
+                    ${unitPriceK.toLocaleString()}K
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center text-slate-300">
+                  <span>Order Quantity (จำนวนลำ):</span>
+                  <span className="font-bold text-sky-400">
+                    × {safeQuantity} {safeQuantity === 1 ? 'Airframe' : 'Airframes'}
+                  </span>
+                </div>
+
+                <div className="pt-2.5 border-t border-slate-800 flex justify-between items-center text-base">
+                  <span className="font-bold text-white">Total Acquisition Cost (ยอดรวมชำระ):</span>
+                  <span className="font-black text-xl text-emerald-400">
+                    ${totalCostK.toLocaleString()}K
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-dashed border-slate-800/80 space-y-1 text-xs">
+                  <div className="flex justify-between items-center text-slate-400">
+                    <span>Current Company Cash (ยอดเงินปัจจุบัน):</span>
+                    <span className="font-bold text-slate-200">${playerAirline.cashK.toLocaleString()}K</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">Projected Balance After Delivery (เงินคงเหลือหลังจ่าย):</span>
+                    {canAfford ? (
+                      <span className="font-bold text-emerald-400">
+                        ${remainingCash.toLocaleString()}K
+                      </span>
+                    ) : (
+                      <span className="font-bold text-rose-400 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Insufficient Cash (Short by ${(totalCostK - playerAirline.cashK).toLocaleString()}K)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Working Capital Warning */}
+              {canAfford && remainingCash < 15000 && (
+                <div className="p-3 bg-amber-950/60 border border-amber-500/70 rounded-xl flex items-center gap-3 text-xs font-mono text-amber-200">
+                  <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+                  <div>
+                    <span className="font-bold block">Low Working Capital Advisory:</span>
+                    Your airline will have less than $15,000K remaining after this order. Keep sufficient liquidity for route maintenance and operating overhead!
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Contract Footer: Explicit Cancel & Confirm Buttons */}
+            <div className="shrink-0 bg-slate-950 px-5 py-3.5 border-t border-slate-800 flex items-center justify-between gap-4">
+              <button
+                type="button"
+                onClick={() => setShowConfirmModal(false)}
+                className="px-5 py-2.5 bg-slate-800 hover:bg-rose-950/80 border border-slate-700 hover:border-rose-500 rounded-xl text-slate-300 hover:text-white font-mono font-bold text-sm transition cursor-pointer flex items-center gap-2"
+              >
+                <X className="w-4 h-4 text-rose-400" />
+                <span>Cancel Order (ยกเลิก)</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={!canAfford}
+                onClick={() => {
+                  onBuyAircraft(selectedModel, unitPriceK, safeQuantity);
+                  setShowConfirmModal(false);
+                  setToastNotification(
+                    `Acquired ${safeQuantity}x ${selectedModel.model} for $${totalCostK.toLocaleString()}K into your fleet hangar!`
+                  );
+                  setOrderQuantity(1);
+                }}
+                className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-35 disabled:pointer-events-none text-white font-black text-sm sm:text-base rounded-xl shadow-xl transition-all active:scale-95 border-2 border-emerald-400 cursor-pointer flex items-center gap-2"
+              >
+                <CheckCircle2 className="w-5 h-5 text-emerald-200" />
+                <span>
+                  Confirm & Finalize Purchase (${totalCostK.toLocaleString()}K)
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST SUCCESS NOTIFICATION */}
+      {toastNotification && (
+        <div className="fixed top-16 right-6 z-60 bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 border-2 border-emerald-400 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-200">
+          <div className="p-1.5 rounded-full bg-emerald-500 text-slate-950">
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
+          <div className="font-mono text-xs md:text-sm font-bold">
+            {toastNotification}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -96,26 +96,28 @@ export function App() {
     });
   };
 
-  // Buy new aircraft (supports promotional discount deals)
-  const handleBuyAircraft = (model: AircraftModel, effectivePriceK?: number) => {
-    const finalPriceK = effectivePriceK !== undefined ? effectivePriceK : model.priceK;
-    if (playerAirline.cashK < finalPriceK) return;
+  // Buy new aircraft (supports promotional discount deals and batch quantity)
+  const handleBuyAircraft = (model: AircraftModel, effectivePriceK?: number, quantity: number = 1) => {
+    const unitPriceK = effectivePriceK !== undefined ? effectivePriceK : model.priceK;
+    const count = Math.max(1, Math.floor(quantity));
+    const totalCostK = unitPriceK * count;
+    if (playerAirline.cashK < totalCostK) return;
 
-    const newInstance = {
-      instanceId: `PLANE_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+    const newInstances = Array.from({ length: count }, (_, idx) => ({
+      instanceId: `PLANE_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 4)}`,
       modelId: model.id,
       ageYears: 0,
       purchaseYear: gameState.currentYear,
       conditionPct: 100,
       assignedRouteId: null,
-    };
+    }));
 
     const updatedAirlines = gameState.airlines.map((a) => {
       if (a.id === playerAirline.id) {
         return {
           ...a,
-          cashK: a.cashK - finalPriceK,
-          fleet: [...a.fleet, newInstance],
+          cashK: a.cashK - totalCostK,
+          fleet: [...a.fleet, ...newInstances],
         };
       }
       return a;
