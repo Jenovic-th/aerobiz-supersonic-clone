@@ -2,7 +2,10 @@ const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
-const artifactDir = 'C:/Users/jenov/.gemini/antigravity/brain/63562c7a-0932-4d51-a25b-3cbf9a2c46f1';
+const artifactDir = process.env.ARTIFACT_DIR || path.join(__dirname, '../screenshots');
+if (!fs.existsSync(artifactDir)) {
+  fs.mkdirSync(artifactDir, { recursive: true });
+}
 
 async function run() {
   await app.whenReady();
