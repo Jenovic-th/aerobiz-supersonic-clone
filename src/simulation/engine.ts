@@ -121,6 +121,14 @@ export function simulateRoutePerformance(
   else if (ageYears > 10) mechRisk += 0.025;
   if (distance > 8000) mechRisk += 0.02;
 
+  // Impact of route maintenance & service budget
+  const serviceMultiplier = route.serviceQuality !== undefined ? route.serviceQuality : 1.0;
+  if (serviceMultiplier >= 1.2) {
+    mechRisk *= 0.5; // Rigorous maintenance cuts breakdown risk by half
+  } else if (serviceMultiplier < 1.0) {
+    mechRisk *= 1.75; // Budget cost-cutting increases mechanical fault risk significantly
+  }
+
   const rollMech = Math.random();
   if (rollMech < mechRisk) {
     const flightLossRatio = 0.12 + Math.random() * 0.15; // 12% - 27% flights grounded
@@ -243,7 +251,8 @@ export function simulateRoutePerformance(
     0.65 * Math.log(Math.max(1, route.weeklyFrequency)) +
     0.015 * effectiveComfort;
   if (aircraft.isSupersonic) utility += 0.8; // High-paying business travelers love Supersonic
-  if (route.serviceQuality > 1.0) utility += 0.25;
+  if (serviceMultiplier >= 1.2) utility += 0.30;
+  else if (serviceMultiplier < 1.0) utility -= 0.25;
 
   // Market share resolver against competing airlines
   let share = 1.0;
@@ -271,7 +280,7 @@ export function simulateRoutePerformance(
   const fuelCostK = Math.round((totalDistance * aircraft.fuelBurnPerKm * 0.85 * fuelPriceIndex) / 1000);
 
   const flightHours = totalDistance / aircraft.speedKmh;
-  const maintCostK = Math.round((flightHours * aircraft.maintCostPerHour * maintMultiplier) / 1000);
+  const maintCostK = Math.round((flightHours * aircraft.maintCostPerHour * maintMultiplier * serviceMultiplier) / 1000);
 
   const airportFeesK = Math.round((actualFlights * (distance * 0.035 + 450)) / 1000);
 
@@ -541,10 +550,28 @@ export function advanceQuarter(currentState: GameState): GameState {
     const airlineRoutes = updatedRoutes.filter((r) => r.airlineId === airline.id);
     let netRouteProfitK = 0;
 
-    // Increment aircraft age and update condition on new calendar year
+    // Increment aircraft age and update condition on new calendar year or quarterly route wear
     const updatedFleet = airline.fleet.map((plane) => {
       const newAge = isNewYear ? (plane.ageYears || 0) + 1 : (plane.ageYears || 0);
-      const newCondition = Math.max(35, Math.round(100 - newAge * 2.5));
+      let conditionDelta = isNewYear ? 2.5 : 0;
+
+      // Maintenance service quality impact on airframe condition
+      if (plane.assignedRouteId) {
+        const assignedRoute = updatedRoutes.find((r) => r.id === plane.assignedRouteId);
+        if (assignedRoute && assignedRoute.status === 'ACTIVE') {
+          const sq = assignedRoute.serviceQuality ?? 1.0;
+          if (sq < 1.0) {
+            // Budget maintenance (0.8x): cuts costs but causes extra quarterly wear (+1.5% condition loss)
+            conditionDelta += 1.5;
+          } else if (sq >= 1.2) {
+            // Rigorous preventative maintenance (1.25x): repairs & preserves airframe (-1% wear reduction)
+            conditionDelta = Math.max(-0.5, conditionDelta - 1.0);
+          }
+        }
+      }
+
+      const currentCond = plane.conditionPct ?? Math.max(35, Math.round(100 - (plane.ageYears || 0) * 2.5));
+      const newCondition = Math.max(25, Math.min(100, Math.round(currentCond - conditionDelta)));
       return {
         ...plane,
         ageYears: newAge,

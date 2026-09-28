@@ -62,10 +62,38 @@ export function App() {
     });
   };
 
-  // Update existing route (pause/resume)
-  const handleUpdateRoute = (updatedRoute: Route) => {
+  // Update existing route (pause/resume or operational modification)
+  const handleUpdateRoute = (updatedRoute: Route, prevAssignedIds?: string[]) => {
+    const oldRoute = gameState.routes.find((r) => r.id === updatedRoute.id);
+    const oldAssignedIds = prevAssignedIds || oldRoute?.assignedAircraftIds || [];
+    const newAssignedIds = updatedRoute.assignedAircraftIds;
+
+    const hasAircraftChanged =
+      oldAssignedIds.length !== newAssignedIds.length ||
+      oldAssignedIds.some((id) => !newAssignedIds.includes(id));
+
+    let updatedAirlines = gameState.airlines;
+    if (hasAircraftChanged) {
+      updatedAirlines = gameState.airlines.map((a) => {
+        if (a.id === updatedRoute.airlineId) {
+          const updatedFleet = a.fleet.map((plane) => {
+            if (oldAssignedIds.includes(plane.instanceId) && !newAssignedIds.includes(plane.instanceId)) {
+              return { ...plane, assignedRouteId: null };
+            }
+            if (newAssignedIds.includes(plane.instanceId)) {
+              return { ...plane, assignedRouteId: updatedRoute.id };
+            }
+            return plane;
+          });
+          return { ...a, fleet: updatedFleet };
+        }
+        return a;
+      });
+    }
+
     setGameState({
       ...gameState,
+      airlines: updatedAirlines,
       routes: gameState.routes.map((r) => (r.id === updatedRoute.id ? updatedRoute : r)),
     });
   };
@@ -338,6 +366,7 @@ export function App() {
           onClose={() => setShowManageRoutes(false)}
           onUpdateRoute={handleUpdateRoute}
           onDeleteRoute={handleDeleteRoute}
+          gameState={gameState}
         />
       )}
 
