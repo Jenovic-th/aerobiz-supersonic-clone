@@ -220,7 +220,12 @@ export function createAIAirline(
         : profile.personality === 'LUXURY'
         ? 10
         : 0,
-    serviceQuality: profile.personality === 'LUXURY' ? 1.2 : 1.0,
+    serviceQuality:
+      profile.personality === 'LUXURY'
+        ? 1.25
+        : profile.personality === 'BUDGET_DISCOUNTER'
+        ? 0.8
+        : 1.0,
     status: 'ACTIVE',
     consecutiveLossQuarters: 0,
     lastQuarterStats: {
@@ -246,7 +251,12 @@ export function createAIAirline(
         : profile.personality === 'LUXURY'
         ? 15
         : 0,
-    serviceQuality: profile.personality === 'LUXURY' ? 1.2 : 1.0,
+    serviceQuality:
+      profile.personality === 'LUXURY'
+        ? 1.25
+        : profile.personality === 'BUDGET_DISCOUNTER'
+        ? 0.8
+        : 1.0,
     status: 'ACTIVE',
     consecutiveLossQuarters: 0,
     lastQuarterStats: {
@@ -317,7 +327,7 @@ export function simulateAITurn(
 ): AISimulationResult {
   let currentCash = airline.cashK;
   const currentSlots = { ...airline.slots };
-  const currentFleet = [...airline.fleet];
+  const currentFleet: AircraftInstance[] = airline.fleet.map((f) => ({ ...f }));
   const currentBusinesses = [...airline.businesses];
   const currentHubs = [...airline.hubCityIds];
   let negotiators = [...(airline.negotiators || createDefaultNegotiators())];
@@ -334,26 +344,40 @@ export function simulateAITurn(
   const safetyReserveK = 15000; // Minimum cash buffer to prevent bankruptcy
 
   // ========================================================
-  // 1. ROUTE HEALTH MANAGEMENT & LOSS-CUTTING TERMINATION
+  // 1. ROUTE HEALTH MANAGEMENT & DYNAMIC STRATEGIC ADAPTATION
   // ========================================================
   const survivingRoutes: Route[] = [];
 
   for (let i = 0; i < updatedExistingRoutes.length; i++) {
-    const route = updatedExistingRoutes[i];
+    const route: Route = { ...updatedExistingRoutes[i] };
     const origCity = cityMap.get(route.originCityId);
     const destCity = cityMap.get(route.destCityId);
-    const origName = origCity?.name || route.originCityId;
-    const destName = destCity?.name || route.destCityId;
+    if (!origCity || !destCity) {
+      survivingRoutes.push(route);
+      continue;
+    }
+    const origName = origCity.name;
+    const destName = destCity.name;
+    const routeDistance = calculateDistance(origCity.lat, origCity.lon, destCity.lat, destCity.lon);
+    const personality = airline.personality || 'BALANCED';
+    const isRegionalRoute = origCity.region === homeCity.region && destCity.region === homeCity.region;
+
+    const currentPlane = currentFleet.find((f) => route.assignedAircraftIds.includes(f.instanceId));
+    const currentModel = currentPlane ? aircraftMap.get(currentPlane.modelId) : null;
 
     if (route.lastQuarterStats) {
-      if (route.lastQuarterStats.profitK < 0) {
+      const stats = route.lastQuarterStats;
+      const profitK = stats.profitK;
+      const lf = stats.loadFactorPct;
+
+      if (profitK < 0) {
         // Track consecutive loss quarters
         route.consecutiveLossQuarters = (route.consecutiveLossQuarters || 0) + 1;
 
         // CUT LOSSES: If route is bleeding cash for 2+ quarters, or lost > $1,500K with low load factor
         if (
-          (route.consecutiveLossQuarters >= 2 && route.lastQuarterStats.profitK < -400) ||
-          route.lastQuarterStats.profitK < -1500
+          (route.consecutiveLossQuarters >= 2 && profitK < -350) ||
+          profitK < -1500
         ) {
           // Terminate route and release aircraft back to hangar
           for (const planeId of route.assignedAircraftIds) {
@@ -369,38 +393,210 @@ export function simulateAITurn(
             airlineColor: airline.color,
             originCityId: route.originCityId,
             destCityId: route.destCityId,
-            lossK: Math.abs(route.lastQuarterStats.profitK),
+            lossK: Math.abs(profitK),
           });
 
           aiActions.push(
             `⚠️ Terminated loss-making route ${origName} ➔ ${destName} to stop bleeding cash (-$${Math.abs(
-              route.lastQuarterStats.profitK
+              profitK
             ).toLocaleString()}K)`
           );
           // Omit from surviving routes -> closed!
           continue;
         }
-
-        // Attempt rescue if not yet ready to close
-        if (route.lastQuarterStats.loadFactorPct < 55) {
-          if (route.priceModifierPct > -15) {
-            route.priceModifierPct -= 10;
-          } else {
-            route.weeklyFrequency = Math.max(3, route.weeklyFrequency - 2);
-          }
-        }
       } else {
         // Profitable route: reset loss counter
         route.consecutiveLossQuarters = 0;
-        if (route.lastQuarterStats.loadFactorPct > 90 && route.lastQuarterStats.profitK > 1000) {
-          if (route.weeklyFrequency < 12) {
-            route.weeklyFrequency = Math.min(12, route.weeklyFrequency + 1);
-          } else if (route.priceModifierPct < 15) {
-            route.priceModifierPct += 5;
+      }
+
+      // ----------------------------------------------------
+      // A. AIRCRAFT SWAPPING & FLEET RIGHTSIZING
+      // ----------------------------------------------------
+      // Check idle aircraft in the fleet that have certified range >= routeDistance
+      const idleAircraftPool = currentFleet.filter((f) => f.assignedRouteId === null);
+      const capableIdlePlanes = idleAircraftPool.filter((f) => {
+        const m = aircraftMap.get(f.modelId);
+        return m && m.rangeKm >= routeDistance;
+      });
+
+      if (capableIdlePlanes.length > 0 && currentModel && currentPlane) {
+        // High load factor (>88%): look for a larger capacity aircraft to capture overflow
+        if (lf >= 88) {
+          const largerPlanes = capableIdlePlanes.filter((f) => {
+            const m = aircraftMap.get(f.modelId);
+            return m && m.capacity > currentModel.capacity * 1.15;
+          });
+
+          if (largerPlanes.length > 0) {
+            largerPlanes.sort((a, b) => {
+              const mA = aircraftMap.get(a.modelId)!;
+              const mB = aircraftMap.get(b.modelId)!;
+              if (personality === 'LUXURY') {
+                return (mB.comfortRating + (mB.isSupersonic ? 50 : 0)) - (mA.comfortRating + (mA.isSupersonic ? 50 : 0));
+              }
+              return mB.capacity - mA.capacity;
+            });
+
+            const bestSwap = largerPlanes[0];
+            const bestModel = aircraftMap.get(bestSwap.modelId)!;
+
+            // Release current plane and assign new plane
+            currentPlane.assignedRouteId = null;
+            bestSwap.assignedRouteId = route.id;
+            route.assignedAircraftIds = [bestSwap.instanceId];
+
+            aiActions.push(
+              `🔄 Upgraded aircraft on ${origName} ➔ ${destName} from ${currentModel.model} to ${bestModel.model} (${bestModel.capacity} seats) due to heavy passenger demand (LF ${lf}%)`
+            );
+          }
+        } else if (lf < 50 && profitK < 200 && currentModel.capacity > 150) {
+          // Low load factor (<50%): downsize to a smaller, more economical aircraft to cut fuel/maint
+          const smallerPlanes = capableIdlePlanes.filter((f) => {
+            const m = aircraftMap.get(f.modelId);
+            return (
+              m &&
+              m.capacity < currentModel.capacity * 0.8 &&
+              m.capacity >= Math.round((stats.passengers / (route.weeklyFrequency * 12)) * 1.1)
+            );
+          });
+
+          if (smallerPlanes.length > 0) {
+            smallerPlanes.sort((a, b) => {
+              const mA = aircraftMap.get(a.modelId)!;
+              const mB = aircraftMap.get(b.modelId)!;
+              return mA.fuelBurnPerKm - mB.fuelBurnPerKm; // Pick most fuel-efficient
+            });
+
+            const bestSwap = smallerPlanes[0];
+            const bestModel = aircraftMap.get(bestSwap.modelId)!;
+
+            currentPlane.assignedRouteId = null;
+            bestSwap.assignedRouteId = route.id;
+            route.assignedAircraftIds = [bestSwap.instanceId];
+
+            aiActions.push(
+              `🔄 Downsized aircraft on ${origName} ➔ ${destName} to ${bestModel.model} (${bestModel.capacity} seats) to trim fuel and operating expenses (LF ${lf}%)`
+            );
           }
         }
       }
+
+      // ----------------------------------------------------
+      // B. MAINTENANCE & SERVICE QUALITY MANAGEMENT
+      // ----------------------------------------------------
+      let targetServiceQuality = route.serviceQuality ?? 1.0;
+
+      if (profitK < 0 || currentCash < safetyReserveK + 10000 || personality === 'BUDGET_DISCOUNTER') {
+        // Cut maintenance overhead by 20% to stem losses or maintain low-cost model
+        targetServiceQuality = 0.8;
+      } else if (
+        (personality === 'LUXURY' && profitK > 200) ||
+        (personality === 'GLOBAL_FLAGSHIP' && profitK > 600) ||
+        (personality === 'BALANCED' && profitK > 1200 && currentCash >= safetyReserveK + 25000)
+      ) {
+        // Upgrade to Rigorous Maintenance (1.25x) to boost prestige and protect airframe
+        targetServiceQuality = 1.25;
+      } else if (profitK >= 0 && targetServiceQuality === 0.8) {
+        // Restore standard maintenance once profitable
+        targetServiceQuality = 1.0;
+      }
+
+      if (targetServiceQuality !== route.serviceQuality) {
+        const qualityName =
+          targetServiceQuality === 0.8
+            ? 'Budget (0.8x, cuts maintenance costs 20%)'
+            : targetServiceQuality === 1.25
+            ? 'Rigorous Premium (1.25x, preserves airframe & boosts brand appeal)'
+            : 'Standard (1.0x)';
+        const motive =
+          targetServiceQuality === 0.8
+            ? 'to stop financial bleed'
+            : targetServiceQuality === 1.25
+            ? 'to enhance premium traveler utility'
+            : 'as normal profitability returned';
+        aiActions.push(`⚙️ Adjusted maintenance on ${origName} ➔ ${destName} to ${qualityName} ${motive}`);
+        route.serviceQuality = targetServiceQuality;
+      }
+
+      // ----------------------------------------------------
+      // C. DYNAMIC YIELD MANAGEMENT & TICKET PRICING
+      // ----------------------------------------------------
+      let priceChange = 0;
+      const currentPrice = route.priceModifierPct;
+
+      if (lf >= 88) {
+        // High load factor: raise fares to harvest high margin
+        let maxAllowed = 15;
+        if (personality === 'LUXURY') maxAllowed = 25;
+        else if (personality === 'GLOBAL_FLAGSHIP') maxAllowed = 20;
+        else if (personality === 'AGGRESSIVE') maxAllowed = 5;
+        else if (personality === 'BUDGET_DISCOUNTER') maxAllowed = 0;
+
+        if (currentPrice < maxAllowed) {
+          priceChange = +5;
+        }
+      } else if (lf < 65 || profitK < 0) {
+        // Soft load factor or deficit: discount fares to stimulate demand
+        let minAllowed = -15;
+        if (personality === 'BUDGET_DISCOUNTER') minAllowed = -25;
+        else if (personality === 'AGGRESSIVE') minAllowed = -20;
+        else if (personality === 'LUXURY') minAllowed = 0;
+
+        if (currentPrice > minAllowed) {
+          priceChange = -5;
+        }
+      }
+
+      if (priceChange !== 0) {
+        route.priceModifierPct = Math.max(-50, Math.min(50, route.priceModifierPct + priceChange));
+        const sign = route.priceModifierPct > 0 ? '+' : '';
+        const actionVerb = priceChange > 0 ? '📈 Raised airfares' : '📉 Discounted airfares';
+        const reasonStr =
+          priceChange > 0
+            ? `surging passenger demand (LF ${lf}%)`
+            : `stimulate passenger volume and fill seats (LF ${lf}%)`;
+        aiActions.push(
+          `${actionVerb} on ${origName} ➔ ${destName} to ${sign}${route.priceModifierPct}% due to ${reasonStr}`
+        );
+      }
+
+      // ----------------------------------------------------
+      // D. WEEKLY FREQUENCY & AIRPORT SLOT SCALING
+      // ----------------------------------------------------
+      const origSlots = currentSlots[route.originCityId] || 0;
+      const destSlots = currentSlots[route.destCityId] || 0;
+      const maxSlotsAllowed = Math.min(14, origSlots, destSlots);
+      let freqChange = 0;
+
+      if (lf >= 85 && route.weeklyFrequency < maxSlotsAllowed) {
+        // High demand and slots available: increase weekly departures
+        if (personality === 'AGGRESSIVE' || (personality === 'REGIONAL' && isRegionalRoute)) {
+          freqChange = Math.min(2, maxSlotsAllowed - route.weeklyFrequency);
+        } else {
+          freqChange = 1;
+        }
+      } else if (
+        (lf < 50 || (profitK < 0 && lf < 60)) &&
+        route.weeklyFrequency > 2
+      ) {
+        // Low demand or losses: reduce frequency to save fuel and airport fees
+        freqChange = -1;
+      }
+
+      if (route.weeklyFrequency > maxSlotsAllowed) {
+        // Cap to slots if slots were reduced
+        route.weeklyFrequency = Math.max(1, maxSlotsAllowed);
+      } else if (freqChange !== 0) {
+        route.weeklyFrequency = Math.max(1, Math.min(maxSlotsAllowed, route.weeklyFrequency + freqChange));
+        const dir = freqChange > 0 ? '🛫 Expanded flight frequency' : '🛬 Reduced frequency';
+        const rationale =
+          freqChange > 0
+            ? `capture excess passenger volume (LF ${lf}%)`
+            : `curb empty flight rotations (LF ${lf}%)`;
+        aiActions.push(`${dir} on ${origName} ➔ ${destName} to ${route.weeklyFrequency} flt/wk to ${rationale}`);
+      }
     }
+
     survivingRoutes.push(route);
   }
 
@@ -645,7 +841,11 @@ export function simulateAITurn(
       candidatePairs.sort((a, b) => b.score - a.score);
       const bestPair = candidatePairs[0];
 
-      const desiredFlights = Math.min(10, Math.max(3, Math.round(bestPair.demand / (model.capacity * 12 * 0.8))));
+      const maxSlotsForNew = Math.min(14, currentSlots[bestPair.origin.id] || 0, currentSlots[bestPair.dest.id] || 0);
+      const desiredFlights = Math.min(
+        maxSlotsForNew,
+        Math.max(2, Math.round(bestPair.demand / (model.capacity * 12 * 0.8)))
+      );
       const routeId = `ROUTE_${airline.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
 
       const priceMod =
@@ -655,6 +855,13 @@ export function simulateAITurn(
           ? 10
           : 0;
 
+      const initialServiceQuality =
+        airline.personality === 'LUXURY'
+          ? 1.25
+          : airline.personality === 'BUDGET_DISCOUNTER'
+          ? 0.8
+          : 1.0;
+
       const newRoute: Route = {
         id: routeId,
         airlineId: airline.id,
@@ -663,7 +870,7 @@ export function simulateAITurn(
         assignedAircraftIds: [plane.instanceId],
         weeklyFrequency: desiredFlights,
         priceModifierPct: priceMod,
-        serviceQuality: airline.personality === 'LUXURY' ? 1.2 : 1.0,
+        serviceQuality: initialServiceQuality,
         status: 'ACTIVE',
         consecutiveLossQuarters: 0,
       };
