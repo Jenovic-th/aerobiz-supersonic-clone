@@ -93,6 +93,16 @@ export function saveGameToLocalStorage(
     const key = isAutoSave ? AUTOSAVE_KEY : MANUAL_SAVE_KEY;
     const metaKey = isAutoSave ? AUTOSAVE_META_KEY : MANUAL_META_KEY;
 
+    // Ensure all arrays are initialized before saving
+    if (!Array.isArray(state.aircraftDeliveries)) {
+      state.aircraftDeliveries = [];
+    }
+    state.airlines.forEach((airline) => {
+      if (!Array.isArray(airline.pendingOrders)) {
+        airline.pendingOrders = [];
+      }
+    });
+
     const json = JSON.stringify(state);
     localStorage.setItem(key, json);
 

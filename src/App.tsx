@@ -447,6 +447,7 @@ export function App() {
       {showRouteModal && (
         <RouteModal
           playerAirline={playerAirline}
+          existingRoutes={gameState.routes}
           onClose={() => setShowRouteModal(false)}
           onAddRoute={handleAddRoute}
           onOpenAircraftShop={() => {

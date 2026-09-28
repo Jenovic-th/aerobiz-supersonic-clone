@@ -9,6 +9,7 @@ import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
 
 interface RouteModalProps {
   playerAirline: Airline;
+  existingRoutes?: Route[];
   onClose: () => void;
   onAddRoute: (newRoute: Route, inceptionCostK?: number) => void;
   onOpenAircraftShop?: () => void;
@@ -20,6 +21,7 @@ interface RouteModalProps {
 
 export const RouteModal: React.FC<RouteModalProps> = ({
   playerAirline,
+  existingRoutes,
   onClose,
   onAddRoute,
   onOpenAircraftShop,
@@ -129,12 +131,47 @@ export const RouteModal: React.FC<RouteModalProps> = ({
   const isRangeValid = selectedModels.length > 0 && selectedModels.every((m) => m.rangeKm >= distance);
   const totalFleetSeats = selectedModels.reduce((sum, m) => sum + m.capacity, 0);
 
-  // Airport slots
-  const originSlots = playerAirline.slots[originId] || 0;
-  const destSlots = playerAirline.slots[destId] || 0;
-  const slotLimit = Math.min(14, originSlots, destSlots);
+  // Check if player already operates a route on this city pair
+  const isDuplicateRoute = useMemo(() => {
+    if (!existingRoutes) return false;
+    return existingRoutes.some(
+      (r) =>
+        r.airlineId === playerAirline.id &&
+        ((r.originCityId === originId && r.destCityId === destId) ||
+          (r.originCityId === destId && r.destCityId === originId))
+    );
+  }, [existingRoutes, playerAirline.id, originId, destId]);
+
+  // Airport available slots (total owned minus slots committed to other active routes)
+  const originUsedSlots = useMemo(() => {
+    if (!existingRoutes) return 0;
+    return existingRoutes
+      .filter(
+        (r) =>
+          r.airlineId === playerAirline.id &&
+          r.status !== 'SUSPENDED' &&
+          (r.originCityId === originId || r.destCityId === originId)
+      )
+      .reduce((sum, r) => sum + r.weeklyFrequency, 0);
+  }, [existingRoutes, playerAirline.id, originId]);
+
+  const destUsedSlots = useMemo(() => {
+    if (!existingRoutes) return 0;
+    return existingRoutes
+      .filter(
+        (r) =>
+          r.airlineId === playerAirline.id &&
+          r.status !== 'SUSPENDED' &&
+          (r.originCityId === destId || r.destCityId === destId)
+      )
+      .reduce((sum, r) => sum + r.weeklyFrequency, 0);
+  }, [existingRoutes, playerAirline.id, destId]);
+
+  const originFreeSlots = Math.max(0, (playerAirline.slots[originId] || 0) - originUsedSlots);
+  const destFreeSlots = Math.max(0, (playerAirline.slots[destId] || 0) - destUsedSlots);
+  const slotLimit = Math.min(14, originFreeSlots, destFreeSlots);
   const fleetMaxWeeklyFlights = Math.max(7, selectedInstanceIds.length * 7);
-  const maxWeeklyFlights = Math.min(slotLimit, fleetMaxWeeklyFlights);
+  const maxWeeklyFlights = isDuplicateRoute ? 0 : Math.min(slotLimit, fleetMaxWeeklyFlights);
 
   // Toggle plane selection
   const togglePlaneSelection = (instanceId: string) => {
@@ -216,7 +253,8 @@ export const RouteModal: React.FC<RouteModalProps> = ({
       selectedModels.length === 0 ||
       !isRangeValid ||
       maxWeeklyFlights <= 0 ||
-      !canAffordInception
+      !canAffordInception ||
+      isDuplicateRoute
     )
       return;
 
@@ -559,7 +597,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                   className="w-full accent-sky-500 cursor-pointer h-2.5 bg-slate-700 rounded-lg"
                 />
                 <div className="text-xs text-slate-400 mt-1.5 font-mono">
-                  Origin slots: {originSlots} • Dest slots: {destSlots} (Max permitted: {maxWeeklyFlights}/wk)
+                  Origin slots: {originFreeSlots} free • Dest slots: {destFreeSlots} free (Max permitted: {maxWeeklyFlights}/wk)
                 </div>
               </div>
 
@@ -631,12 +669,27 @@ export const RouteModal: React.FC<RouteModalProps> = ({
               </div>
             </div>
           )}
+          {/* Duplicate Route Warning */}
+          {isDuplicateRoute && (
+            <div className="p-3 bg-amber-950/70 border border-amber-500/80 rounded-xl flex items-center gap-3 text-xs font-mono text-amber-200">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+              <div>
+                <span className="font-bold block">Route Already Active (เส้นทางนี้เปิดทำการบินอยู่แล้ว):</span>
+                Your airline already operates flights between {originCity.name} and {destCity.name}. Use "My Routes" to adjust flight frequencies or assign additional airframes!
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer Actions */}
         <div className="bg-slate-900 border-t border-slate-700 px-6 py-4 flex justify-between items-center gap-3 shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs font-mono">
-            {capableFleet.length > 0 ? (
+            {isDuplicateRoute ? (
+              <span className="text-amber-400 font-bold flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>Route already active (Duplicate)</span>
+              </span>
+            ) : capableFleet.length > 0 ? (
               <span className="text-emerald-400 font-bold flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>Verified for {distance.toLocaleString()} km service</span>
@@ -667,9 +720,15 @@ export const RouteModal: React.FC<RouteModalProps> = ({
               Cancel
             </button>
             <button
-              disabled={selectedInstanceIds.length === 0 || !isRangeValid || maxWeeklyFlights <= 0 || capableFleet.length === 0 || !canAffordInception}
+              disabled={selectedInstanceIds.length === 0 || !isRangeValid || maxWeeklyFlights <= 0 || capableFleet.length === 0 || !canAffordInception || isDuplicateRoute}
               onClick={handleLaunch}
-              title={!canAffordInception ? `Requires $${inceptionCostK.toLocaleString()}K to establish station` : 'Launch commercial route'}
+              title={
+                isDuplicateRoute
+                  ? 'A commercial route already operates between these cities'
+                  : !canAffordInception
+                  ? `Requires $${inceptionCostK.toLocaleString()}K to establish station`
+                  : 'Launch commercial route'
+              }
               className="px-6 py-2.5 bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 hover:from-blue-500 hover:to-sky-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-xl font-black text-sm md:text-base shadow-xl transition border border-sky-400 cursor-pointer flex items-center gap-2"
             >
               <Plane className="w-4 h-4" />

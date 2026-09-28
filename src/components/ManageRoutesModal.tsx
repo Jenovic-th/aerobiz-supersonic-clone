@@ -136,10 +136,36 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
     ? Math.round(totalFleetSeats / assignedModels.length)
     : 0;
 
-  // Airport slots
-  const originSlots = editingOrigin ? playerAirline.slots[editingOrigin.id] || 0 : 0;
-  const destSlots = editingDest ? playerAirline.slots[editingDest.id] || 0 : 0;
-  const slotLimit = Math.max(1, Math.min(14, originSlots, destSlots));
+  // Airport slots (free slots available for this route)
+  const originSlotsFree = useMemo(() => {
+    if (!editingOrigin) return 0;
+    const usedByOthers = routes
+      .filter(
+        (r) =>
+          r.airlineId === playerAirline.id &&
+          r.status !== 'SUSPENDED' &&
+          r.id !== editingRoute?.id &&
+          (r.originCityId === editingOrigin.id || r.destCityId === editingOrigin.id)
+      )
+      .reduce((sum, r) => sum + r.weeklyFrequency, 0);
+    return Math.max(0, (playerAirline.slots[editingOrigin.id] || 0) - usedByOthers);
+  }, [routes, playerAirline.id, playerAirline.slots, editingOrigin, editingRoute]);
+
+  const destSlotsFree = useMemo(() => {
+    if (!editingDest) return 0;
+    const usedByOthers = routes
+      .filter(
+        (r) =>
+          r.airlineId === playerAirline.id &&
+          r.status !== 'SUSPENDED' &&
+          r.id !== editingRoute?.id &&
+          (r.originCityId === editingDest.id || r.destCityId === editingDest.id)
+      )
+      .reduce((sum, r) => sum + r.weeklyFrequency, 0);
+    return Math.max(0, (playerAirline.slots[editingDest.id] || 0) - usedByOthers);
+  }, [routes, playerAirline.id, playerAirline.slots, editingDest, editingRoute]);
+
+  const slotLimit = Math.max(1, Math.min(14, originSlotsFree, destSlotsFree));
   // Fleet flight capability (each assigned plane can operate up to 7 flights per week)
   const fleetMaxWeeklyFlights = Math.max(7, assignedInstances.length * 7);
   const maxWeeklyFlights = Math.min(slotLimit, fleetMaxWeeklyFlights);
@@ -887,7 +913,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     <span>FLIGHT FREQUENCY (เที่ยวบินต่อสัปดาห์):</span>
                   </span>
                   <span className="text-xs font-mono text-emerald-400 font-bold">
-                    Slot Limit: Min({originSlots}, {destSlots}) = {slotLimit} flights/wk
+                    Slot Limit: Min({originSlotsFree} free in {editingOrigin?.id}, {destSlotsFree} free in {editingDest?.id}) = {slotLimit} flt/wk
                   </span>
                 </div>
 

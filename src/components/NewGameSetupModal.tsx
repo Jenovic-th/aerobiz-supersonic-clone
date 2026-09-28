@@ -221,6 +221,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({ onStartGam
         },
       ],
       businesses: [],
+      pendingOrders: [],
       negotiators: createDefaultNegotiators(),
       ceoName: 'You (Chief Executive)',
       personality: 'BALANCED',

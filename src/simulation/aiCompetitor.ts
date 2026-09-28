@@ -286,6 +286,7 @@ export function createAIAirline(
     slots,
     fleet,
     businesses: [],
+    pendingOrders: [],
     negotiators: createDefaultNegotiators(),
     ceoName: profile.ceoName,
     personality: profile.personality,
