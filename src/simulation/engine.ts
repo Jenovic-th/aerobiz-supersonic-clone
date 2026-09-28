@@ -87,8 +87,8 @@ export function simulateRoutePerformance(
   route: Route,
   origin: City,
   dest: City,
-  aircraft: AircraftModel,
-  aircraftInstance: AircraftInstance | undefined,
+  aircraft: AircraftModel | AircraftModel[],
+  aircraftInstance: AircraftInstance | AircraftInstance[] | undefined,
   currentQuarter: 1 | 2 | 3 | 4,
   fuelPriceIndex: number,
   totalMarketDemand: number,
@@ -97,17 +97,43 @@ export function simulateRoutePerformance(
   stats: NonNullable<Route['lastQuarterStats']>;
   incident?: RouteIncident;
 } {
+  const models: AircraftModel[] = Array.isArray(aircraft) ? aircraft : [aircraft];
+  const instances: (AircraftInstance | undefined)[] = Array.isArray(aircraftInstance)
+    ? aircraftInstance
+    : [aircraftInstance];
+  const primaryModel = models[0];
+
+  if (!primaryModel) {
+    return {
+      stats: {
+        passengers: 0,
+        capacity: 0,
+        loadFactorPct: 0,
+        revenueK: 0,
+        expensesK: 0,
+        profitK: 0,
+        actualFlightsCompleted: 0,
+        scheduledFlights: 0,
+      },
+    };
+  }
+
   const distance = calculateDistance(origin.lat, origin.lon, dest.lat, dest.lon);
   const weeks = 12; // 12 weeks per quarter
   const scheduledFlights = route.weeklyFrequency * weeks;
+  const numAirframes = Math.max(1, models.length);
 
-  // 1. Aircraft Aging & Maintenance Cost Escalation
-  const ageYears = aircraftInstance?.ageYears || 0;
-  let maintMultiplier = 1.0;
-  if (ageYears > 24) maintMultiplier = 2.1;
-  else if (ageYears > 18) maintMultiplier = 1.65;
-  else if (ageYears > 12) maintMultiplier = 1.35;
-  else if (ageYears > 6) maintMultiplier = 1.15;
+  // Helper for age maintenance multiplier
+  const getMaintMultiplier = (age: number) => {
+    if (age > 24) return 2.1;
+    if (age > 18) return 1.65;
+    if (age > 12) return 1.35;
+    if (age > 6) return 1.15;
+    return 1.0;
+  };
+
+  const avgAgeYears =
+    instances.reduce((sum, inst) => sum + (inst?.ageYears || 0), 0) / Math.max(1, instances.length);
 
   // 2. Flight Disruption Simulation (Weather & Aging Mechanical Breakdowns)
   let incident: RouteIncident | undefined = undefined;
@@ -116,34 +142,36 @@ export function simulateRoutePerformance(
 
   // Mechanical fault probability (scales with airframe age and long-haul wear)
   let mechRisk = 0.015;
-  if (ageYears > 20) mechRisk += 0.08;
-  else if (ageYears > 15) mechRisk += 0.05;
-  else if (ageYears > 10) mechRisk += 0.025;
+  if (avgAgeYears > 20) mechRisk += 0.08;
+  else if (avgAgeYears > 15) mechRisk += 0.05;
+  else if (avgAgeYears > 10) mechRisk += 0.025;
   if (distance > 8000) mechRisk += 0.02;
 
   // Impact of route maintenance & service budget
   const serviceMultiplier = route.serviceQuality !== undefined ? route.serviceQuality : 1.0;
   if (serviceMultiplier >= 1.2) {
-    mechRisk *= 0.5; // Rigorous maintenance cuts breakdown risk by half
+    mechRisk *= 0.5;
   } else if (serviceMultiplier < 1.0) {
-    mechRisk *= 1.75; // Budget cost-cutting increases mechanical fault risk significantly
+    mechRisk *= 1.75;
   }
 
   const rollMech = Math.random();
   if (rollMech < mechRisk) {
-    const flightLossRatio = 0.12 + Math.random() * 0.15; // 12% - 27% flights grounded
+    const flightLossRatio = 0.12 + Math.random() * 0.15;
     lostFlights = Math.max(2, Math.round(scheduledFlights * flightLossRatio));
-    emergencyCostK = Math.round((aircraft.priceK * 0.007 + distance * 0.025) * (1 + ageYears * 0.035));
+    emergencyCostK = Math.round(
+      (primaryModel.priceK * 0.007 + distance * 0.025) * (1 + avgAgeYears * 0.035)
+    );
 
     incident = {
       type: 'MECHANICAL',
-      title: ageYears > 15 ? 'Engine & Airframe Fatigue Breakdown' : 'Hydraulic & Avionics System Fault',
-      description: `Aging ${ageYears}-year-old ${aircraft.model} suffered technical breakdown on ${origin.name} - ${dest.name}, grounding ${lostFlights} flights for emergency depot repairs.`,
+      title: avgAgeYears > 15 ? 'Engine & Airframe Fatigue Breakdown' : 'Hydraulic & Avionics System Fault',
+      description: `Aging (${Math.round(avgAgeYears)} yr avg) fleet on ${origin.name} - ${dest.name} suffered technical breakdown, grounding ${lostFlights} flights for emergency depot repairs.`,
       lostFlights,
       emergencyCostK,
     };
   } else {
-    // Seasonal Weather Incident (Typhoons in East Asia Q3, Blizzards in Europe/North America Q1/Q4, Monsoons in South Asia Q2/Q3)
+    // Seasonal Weather Incident
     let weatherRisk = 0.015;
     const isEastAsiaTyphoon =
       (origin.region === 'EAST_SOUTHEAST_ASIA' || dest.region === 'EAST_SOUTHEAST_ASIA') &&
@@ -162,9 +190,9 @@ export function simulateRoutePerformance(
 
     const rollWeather = Math.random();
     if (rollWeather < weatherRisk) {
-      const flightLossRatio = 0.08 + Math.random() * 0.12; // 8% - 20% cancelled
+      const flightLossRatio = 0.08 + Math.random() * 0.12;
       lostFlights = Math.max(2, Math.round(scheduledFlights * flightLossRatio));
-      emergencyCostK = Math.round(lostFlights * 12 + 80); // Passenger meals, hotel accommodation & de-icing fees
+      emergencyCostK = Math.round(lostFlights * 12 + 80);
 
       let weatherType = 'Severe Crosswind & Storm Warning';
       if (isEastAsiaTyphoon) weatherType = 'Tropical Typhoon Gale';
@@ -182,9 +210,8 @@ export function simulateRoutePerformance(
   }
 
   const actualFlights = Math.max(1, scheduledFlights - lostFlights);
-  const seatCapacity = actualFlights * aircraft.capacity;
 
-  // If route is explicitly suspended or paused, it operates 0 flights with 0 expenses
+  // If route is explicitly suspended or paused
   if (route.status === 'SUSPENDED' || (route.status as string) === 'PAUSED') {
     return {
       stats: {
@@ -200,19 +227,21 @@ export function simulateRoutePerformance(
     };
   }
 
-  // Safety range check: if distance exceeds aircraft capability, ground route and record incident
-  if (distance > aircraft.rangeKm) {
+  // Safety range check
+  const minRange = Math.min(...models.map((m) => m.rangeKm));
+  if (distance > minRange) {
+    const offendingModel = models.find((m) => m.rangeKm < distance) || primaryModel;
     const rangeIncident: RouteIncident = {
       type: 'RANGE_EXCEEDED',
       title: 'Route Grounded: Aircraft Range Exceeded',
-      description: `Flight rotation between ${origin.name} and ${dest.name} (${distance.toLocaleString()} km) grounded. The assigned ${aircraft.model} has a maximum certified range of ${aircraft.rangeKm.toLocaleString()} km. Please reassign a longer-range airframe.`,
+      description: `Flight rotation between ${origin.name} and ${dest.name} (${distance.toLocaleString()} km) grounded. The assigned ${offendingModel.model} has a maximum certified range of ${offendingModel.rangeKm.toLocaleString()} km. Please reassign a longer-range airframe.`,
       lostFlights: scheduledFlights,
       emergencyCostK: 0,
     };
     return {
       stats: {
         passengers: 0,
-        capacity: seatCapacity,
+        capacity: 0,
         loadFactorPct: 0,
         revenueK: 0,
         expensesK: 0,
@@ -222,6 +251,19 @@ export function simulateRoutePerformance(
       },
       incident: rangeIncident,
     };
+  }
+
+  // Seat Capacity Calculation:
+  // If weeklyFrequency <= 7 and numAirframes > 1: dual/multi-aircraft tandem operation
+  // Each departure carries sum of capacities of all assigned aircraft!
+  // If weeklyFrequency > 7: flights are distributed across airframes.
+  let seatCapacity = 0;
+  if (route.weeklyFrequency <= 7) {
+    const totalFleetSeats = models.reduce((sum, m) => sum + m.capacity, 0);
+    seatCapacity = actualFlights * totalFleetSeats;
+  } else {
+    const avgSeats = models.reduce((sum, m) => sum + m.capacity, 0) / numAirframes;
+    seatCapacity = Math.round(actualFlights * avgSeats);
   }
 
   if (seatCapacity <= 0) {
@@ -243,24 +285,24 @@ export function simulateRoutePerformance(
   const baseFare = calculateBaseFare(distance);
   const effectivePrice = Math.round(baseFare * (1 + route.priceModifierPct / 100));
 
-  // Utility calculation (aging aircraft slightly reduces comfort utility)
-  const effectiveComfort = Math.max(30, aircraft.comfortRating - Math.floor(ageYears * 0.7));
+  const avgComfort = Math.round(models.reduce((sum, m) => sum + m.comfortRating, 0) / numAirframes);
+  const effectiveComfort = Math.max(30, avgComfort - Math.floor(avgAgeYears * 0.7));
+  const hasSupersonic = models.some((m) => m.isSupersonic);
+
   const priceRatio = effectivePrice / baseFare;
   let utility =
     -2.0 * priceRatio +
     0.65 * Math.log(Math.max(1, route.weeklyFrequency)) +
     0.015 * effectiveComfort;
-  if (aircraft.isSupersonic) utility += 0.8; // High-paying business travelers love Supersonic
+  if (hasSupersonic) utility += 0.8;
   if (serviceMultiplier >= 1.2) utility += 0.30;
   else if (serviceMultiplier < 1.0) utility -= 0.25;
 
-  // Market share resolver against competing airlines
   let share = 1.0;
   if (competingRoutesOnPair.length > 0) {
     const totalExp = Math.exp(utility) + competingRoutesOnPair.length * Math.exp(-0.5);
     share = Math.exp(utility) / totalExp;
   } else {
-    // Single operator on route: price elasticity determines demand conversion
     if (route.priceModifierPct > 0) {
       share = Math.max(0.4, 1.0 - (route.priceModifierPct / 100) * 0.7);
     } else {
@@ -272,17 +314,33 @@ export function simulateRoutePerformance(
   const actualPassengers = Math.min(demandedPax, seatCapacity);
   const loadFactorPct = Math.round((actualPassengers / seatCapacity) * 100);
 
-  // Revenue in $K
   const revenueK = Math.round((actualPassengers * effectivePrice) / 1000);
 
-  // Expenses in $K (scaled by actual flights flown + age maintenance multiplier + emergency cost)
-  const totalDistance = actualFlights * distance;
-  const fuelCostK = Math.round((totalDistance * aircraft.fuelBurnPerKm * 0.85 * fuelPriceIndex) / 1000);
+  // Expenses: Fuel and Maintenance for each plane
+  const flightsPerPlane = route.weeklyFrequency <= 7 ? actualFlights : actualFlights / numAirframes;
+  let fuelCostK = 0;
+  let maintCostK = 0;
 
-  const flightHours = totalDistance / aircraft.speedKmh;
-  const maintCostK = Math.round((flightHours * aircraft.maintCostPerHour * maintMultiplier * serviceMultiplier) / 1000);
+  for (let i = 0; i < models.length; i++) {
+    const m = models[i];
+    const inst = instances[i];
+    const planeAge = inst?.ageYears || 0;
+    const planeMaintMult = getMaintMultiplier(planeAge);
 
-  const airportFeesK = Math.round((actualFlights * (distance * 0.035 + 450)) / 1000);
+    const planeDistance = flightsPerPlane * distance;
+    const planeFuelK = Math.round((planeDistance * m.fuelBurnPerKm * 0.85 * fuelPriceIndex) / 1000);
+    const planeHours = planeDistance / m.speedKmh;
+    const planeMaintK = Math.round(
+      (planeHours * m.maintCostPerHour * planeMaintMult * serviceMultiplier) / 1000
+    );
+
+    fuelCostK += planeFuelK;
+    maintCostK += planeMaintK;
+  }
+
+  const airportFeesK = Math.round(
+    (actualFlights * (distance * 0.035 + 450) * (route.weeklyFrequency <= 7 ? numAirframes : 1)) / 1000
+  );
 
   const expensesK = fuelCostK + maintCostK + airportFeesK + emergencyCostK;
   const profitK = revenueK - expensesK;
@@ -519,24 +577,20 @@ export function advanceQuarter(currentState: GameState): GameState {
     const dest = cityMap.get(route.destCityId);
     if (!origin || !dest) return route;
 
-    // Find assigned aircraft model
-    let instance = intermediateAirlines
-      .flatMap((a) => a.fleet)
-      .find((f) => route.assignedAircraftIds.includes(f.instanceId));
-    let model = instance ? aircraftMap.get(instance.modelId) : null;
-
-    // Safety fallback: If assignedAircraftIds became detached or unlinked, locate the owning airline's fleet
-    if (!model) {
-      const owningAirline = intermediateAirlines.find((a) => a.id === route.airlineId);
-      if (owningAirline && owningAirline.fleet.length > 0) {
-        instance = owningAirline.fleet[0];
-        model = aircraftMap.get(instance.modelId) || null;
-      }
-    }
-
-    if (!model) return route;
-
+    // Find all assigned aircraft models and instances
     const owningAirline = intermediateAirlines.find((a) => a.id === route.airlineId);
+    let assignedInstances = (owningAirline?.fleet || []).filter((f) =>
+      route.assignedAircraftIds.includes(f.instanceId)
+    );
+    if (assignedInstances.length === 0 && owningAirline && owningAirline.fleet.length > 0) {
+      assignedInstances = [owningAirline.fleet[0]];
+    }
+    const assignedModels = assignedInstances
+      .map((inst) => aircraftMap.get(inst.modelId))
+      .filter(Boolean) as AircraftModel[];
+
+    if (assignedModels.length === 0) return route;
+
     let baseDemand = calculateRouteDemand(origin, dest, nextYear, nextQuarter, newActiveEvents);
 
     // Hub Transit / Connecting Passenger Bonus:
@@ -575,8 +629,8 @@ export function advanceQuarter(currentState: GameState): GameState {
       route,
       origin,
       dest,
-      model,
-      instance,
+      assignedModels,
+      assignedInstances,
       nextQuarter,
       fuelMultiplier,
       baseDemand,

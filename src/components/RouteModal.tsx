@@ -96,32 +96,56 @@ export const RouteModal: React.FC<RouteModalProps> = ({
     });
   }, [idleFleet, distance]);
 
-  // Selected aircraft instance ID
-  const [selectedInstanceId, setSelectedInstanceId] = useState<string>(
-    capableFleet[0]?.instanceId || ''
+  // Selected aircraft instance IDs (support 1 or multiple planes)
+  const [selectedInstanceIds, setSelectedInstanceIds] = useState<string[]>(
+    capableFleet[0] ? [capableFleet[0].instanceId] : []
   );
 
   // Auto-synchronize selection whenever destination or distance changes
   useEffect(() => {
-    const isCurrentCapable = capableFleet.some((f) => f.instanceId === selectedInstanceId);
-    if (!isCurrentCapable) {
-      setSelectedInstanceId(capableFleet[0]?.instanceId || '');
+    const validIds = selectedInstanceIds.filter((id) => capableFleet.some((f) => f.instanceId === id));
+    if (validIds.length === 0) {
+      setSelectedInstanceIds(capableFleet[0] ? [capableFleet[0].instanceId] : []);
+    } else if (validIds.length !== selectedInstanceIds.length) {
+      setSelectedInstanceIds(validIds);
     }
-  }, [capableFleet, selectedInstanceId]);
+  }, [capableFleet]);
 
   const [weeklyFrequency, setWeeklyFrequency] = useState<number>(7);
   const [priceModifierPct, setPriceModifierPct] = useState<number>(0);
 
   const effectivePrice = Math.round(baseFare * (1 + priceModifierPct / 100));
 
-  const selectedInstance = playerAirline.fleet.find((f) => f.instanceId === selectedInstanceId);
-  const aircraftModel = selectedInstance ? AIRCRAFTS.find((a) => a.id === selectedInstance.modelId) : null;
-  const isRangeValid = aircraftModel ? aircraftModel.rangeKm >= distance : false;
+  const selectedInstances = useMemo(() => {
+    return playerAirline.fleet.filter((f) => selectedInstanceIds.includes(f.instanceId));
+  }, [playerAirline.fleet, selectedInstanceIds]);
 
-  // Max flights allowed by airport slots
+  const selectedModels = useMemo(() => {
+    return selectedInstances
+      .map((f) => AIRCRAFTS.find((a) => a.id === f.modelId))
+      .filter(Boolean) as (typeof AIRCRAFTS)[0][];
+  }, [selectedInstances]);
+
+  const isRangeValid = selectedModels.length > 0 && selectedModels.every((m) => m.rangeKm >= distance);
+  const totalFleetSeats = selectedModels.reduce((sum, m) => sum + m.capacity, 0);
+
+  // Airport slots
   const originSlots = playerAirline.slots[originId] || 0;
   const destSlots = playerAirline.slots[destId] || 0;
-  const maxWeeklyFlights = Math.min(14, originSlots, destSlots);
+  const slotLimit = Math.min(14, originSlots, destSlots);
+  const fleetMaxWeeklyFlights = Math.max(7, selectedInstanceIds.length * 7);
+  const maxWeeklyFlights = Math.min(slotLimit, fleetMaxWeeklyFlights);
+
+  // Toggle plane selection
+  const togglePlaneSelection = (instanceId: string) => {
+    if (selectedInstanceIds.includes(instanceId)) {
+      if (selectedInstanceIds.length > 1) {
+        setSelectedInstanceIds(selectedInstanceIds.filter((id) => id !== instanceId));
+      }
+    } else {
+      setSelectedInstanceIds([...selectedInstanceIds, instanceId]);
+    }
+  };
 
   // Maximum range among idle planes (for clear guidance when capableFleet is empty)
   const maxIdleFleetRange = useMemo(() => {
@@ -140,13 +164,13 @@ export const RouteModal: React.FC<RouteModalProps> = ({
 
   // Live simulation estimate
   const estimate = useMemo(() => {
-    if (!aircraftModel || !isRangeValid || maxWeeklyFlights <= 0) return null;
+    if (selectedModels.length === 0 || !isRangeValid || maxWeeklyFlights <= 0) return null;
     const dummyRoute: Route = {
       id: 'temp',
       airlineId: playerAirline.id,
       originCityId: originId,
       destCityId: destId,
-      assignedAircraftIds: [selectedInstanceId],
+      assignedAircraftIds: selectedInstanceIds,
       weeklyFrequency: Math.min(weeklyFrequency, maxWeeklyFlights),
       priceModifierPct,
       serviceQuality: 1.0,
@@ -157,8 +181,8 @@ export const RouteModal: React.FC<RouteModalProps> = ({
       dummyRoute,
       originCity,
       destCity,
-      aircraftModel,
-      selectedInstance,
+      selectedModels,
+      selectedInstances,
       currentQuarter,
       fuelPriceIndex,
       demand
@@ -167,8 +191,9 @@ export const RouteModal: React.FC<RouteModalProps> = ({
   }, [
     originCity,
     destCity,
-    aircraftModel,
-    selectedInstance,
+    selectedModels,
+    selectedInstances,
+    selectedInstanceIds,
     isRangeValid,
     weeklyFrequency,
     maxWeeklyFlights,
@@ -179,10 +204,10 @@ export const RouteModal: React.FC<RouteModalProps> = ({
   ]);
 
   const handleLaunch = () => {
-    if (!selectedInstance || !aircraftModel || !isRangeValid || maxWeeklyFlights <= 0) return;
+    if (selectedInstances.length === 0 || selectedModels.length === 0 || !isRangeValid || maxWeeklyFlights <= 0) return;
 
-    const basePax = estimate?.passengers ?? Math.round(aircraftModel.capacity * weeklyFrequency * 12 * 0.82);
-    const baseCap = estimate?.capacity ?? aircraftModel.capacity * weeklyFrequency * 12;
+    const basePax = estimate?.passengers ?? Math.round(totalFleetSeats * weeklyFrequency * 12 * 0.82);
+    const baseCap = estimate?.capacity ?? totalFleetSeats * weeklyFrequency * 12;
     const baseRev = estimate?.revenueK ?? Math.round((basePax * effectivePrice) / 1000);
     const baseExp = estimate?.expensesK ?? Math.round(baseRev * 0.55);
 
@@ -191,7 +216,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
       airlineId: playerAirline.id,
       originCityId: originId,
       destCityId: destId,
-      assignedAircraftIds: [selectedInstanceId],
+      assignedAircraftIds: selectedInstanceIds,
       weeklyFrequency: Math.min(weeklyFrequency, maxWeeklyFlights),
       priceModifierPct,
       serviceQuality: 1.0,
@@ -340,14 +365,14 @@ export const RouteModal: React.FC<RouteModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-slate-200 font-black text-sm md:text-base font-mono flex items-center gap-2">
-                <span>Assign Capable Aircraft from Available Fleet</span>
+                <span>Assign Aircraft from Available Fleet</span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-950 text-sky-300 border border-sky-500/60 font-bold">
-                  {capableFleet.length} Aircraft Qualified
+                  {selectedInstanceIds.length} Selected ({totalFleetSeats} Seats Total)
                 </span>
               </label>
 
               <span className="text-xs text-slate-400 font-mono hidden sm:inline">
-                Required Certified Range: ≥ {distance.toLocaleString()} km
+                Required Range: ≥ {distance.toLocaleString()} km • Click to toggle multiple aircraft
               </span>
             </div>
 
@@ -357,39 +382,40 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                 {capableFleet.map((plane) => {
                   const model = AIRCRAFTS.find((a) => a.id === plane.modelId);
                   if (!model) return null;
-                  const isSelected = plane.instanceId === selectedInstanceId;
+                  const isSelected = selectedInstanceIds.includes(plane.instanceId);
+                  const selectedIndex = selectedInstanceIds.indexOf(plane.instanceId);
+                  const planePhoto = getAircraftPhotoInfo(model);
 
-                      const planePhoto = getAircraftPhotoInfo(model);
-
-                      return (
-                        <div
-                          key={plane.instanceId}
-                          onClick={() => setSelectedInstanceId(plane.instanceId)}
-                          className={`p-3.5 rounded-2xl border-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 cursor-pointer transition-all ${
-                            isSelected
-                              ? 'bg-blue-950/80 border-sky-400 shadow-xl text-white'
-                              : 'bg-slate-800/90 border-slate-700 hover:border-slate-500'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3.5">
-                            <div className="w-20 h-14 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 relative shadow shrink-0">
-                              <img
-                                src={planePhoto.photoUrl}
-                                alt={model.model}
-                                className="w-full h-full object-cover object-center filter brightness-105"
-                              />
-                              {model.isSupersonic && (
-                                <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black font-mono text-[8px]">
-                                  SST
-                                </span>
-                              )}
-                            </div>
+                  return (
+                    <div
+                      key={plane.instanceId}
+                      onClick={() => togglePlaneSelection(plane.instanceId)}
+                      className={`p-3.5 rounded-2xl border-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-blue-950/80 border-sky-400 shadow-xl text-white ring-1 ring-sky-400'
+                          : 'bg-slate-800/90 border-slate-700 hover:border-slate-500 opacity-80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-20 h-14 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 relative shadow shrink-0">
+                          <img
+                            src={planePhoto.photoUrl}
+                            alt={model.model}
+                            className="w-full h-full object-cover object-center filter brightness-105"
+                          />
+                          {model.isSupersonic && (
+                            <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black font-mono text-[8px]">
+                              SST
+                            </span>
+                          )}
+                        </div>
                         <div>
                           <div className="font-black text-base text-slate-100 flex items-center gap-2">
                             <span>{model.model}</span>
                             {isSelected && (
-                              <span className="px-2 py-0.2 rounded bg-sky-500 text-slate-950 text-[10px] font-mono font-black">
-                                SELECTED
+                              <span className="px-2 py-0.2 rounded bg-sky-500 text-slate-950 text-[10px] font-mono font-black flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>ASSIGNED (#{selectedIndex + 1})</span>
                               </span>
                             )}
                           </div>
@@ -617,7 +643,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
               Cancel
             </button>
             <button
-              disabled={!selectedInstanceId || !isRangeValid || maxWeeklyFlights <= 0 || capableFleet.length === 0}
+              disabled={selectedInstanceIds.length === 0 || !isRangeValid || maxWeeklyFlights <= 0 || capableFleet.length === 0}
               onClick={handleLaunch}
               className="px-6 py-2.5 bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 hover:from-blue-500 hover:to-sky-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-xl font-black text-sm md:text-base shadow-xl transition border border-sky-400 cursor-pointer flex items-center gap-2"
             >

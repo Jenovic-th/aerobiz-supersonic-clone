@@ -54,7 +54,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
   const [editFrequency, setEditFrequency] = useState<number>(7);
   const [editPriceModifier, setEditPriceModifier] = useState<number>(0);
   const [editServiceQuality, setEditServiceQuality] = useState<number>(1.0);
-  const [editAircraftInstanceId, setEditAircraftInstanceId] = useState<string>('');
+  const [editAircraftInstanceIds, setEditAircraftInstanceIds] = useState<string[]>([]);
 
   // Confirmation for closing route
   const [routeToClose, setRouteToClose] = useState<Route | null>(null);
@@ -75,7 +75,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
       setEditFrequency(editingRoute.weeklyFrequency);
       setEditPriceModifier(editingRoute.priceModifierPct);
       setEditServiceQuality(editingRoute.serviceQuality ?? 1.0);
-      setEditAircraftInstanceId(editingRoute.assignedAircraftIds[0] || '');
+      setEditAircraftInstanceIds([...editingRoute.assignedAircraftIds]);
     }
   }, [editingRoute]);
 
@@ -90,46 +90,100 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
   const editingBaseFare = useMemo(() => calculateBaseFare(editingDistance), [editingDistance]);
   const editingEffectivePrice = Math.round(editingBaseFare * (1 + editPriceModifier / 100));
 
+  // Available capable aircraft for this route (current planes + any idle planes whose range >= distance)
+  const capableFleetForRoute = useMemo(() => {
+    if (!editingRoute) return [];
+    return playerAirline.fleet.filter((f) => {
+      const model = aircraftMap.get(f.modelId);
+      if (!model || model.rangeKm < editingDistance) return false;
+      return (
+        f.assignedRouteId === null ||
+        f.assignedRouteId === editingRoute.id ||
+        editingRoute.assignedAircraftIds.includes(f.instanceId)
+      );
+    });
+  }, [playerAirline.fleet, editingRoute, editingDistance, aircraftMap]);
+
+  // Assigned aircraft instances & models in editor
+  const assignedInstances = useMemo(() => {
+    return capableFleetForRoute.filter((f) => editAircraftInstanceIds.includes(f.instanceId));
+  }, [capableFleetForRoute, editAircraftInstanceIds]);
+
+  const assignedModels = useMemo(() => {
+    return assignedInstances.map((f) => aircraftMap.get(f.modelId)).filter(Boolean) as AircraftModel[];
+  }, [assignedInstances, aircraftMap]);
+
+  // Available idle planes in hangar that can be added into this route
+  const availableIdlePlanes = useMemo(() => {
+    return capableFleetForRoute.filter(
+      (f) =>
+        !editAircraftInstanceIds.includes(f.instanceId) &&
+        (f.assignedRouteId === null || f.assignedRouteId === editingRoute?.id)
+    );
+  }, [capableFleetForRoute, editAircraftInstanceIds, editingRoute]);
+
+  const primaryAssignedInstance = assignedInstances[0] || capableFleetForRoute[0];
+  const primaryAssignedModel = primaryAssignedInstance
+    ? aircraftMap.get(primaryAssignedInstance.modelId)
+    : null;
+
+  // Total seat capacity of currently assigned fleet
+  const totalFleetSeats = assignedModels.reduce((sum, m) => sum + m.capacity, 0);
+  const isDualFlightMode = editFrequency <= 7 && assignedInstances.length > 1;
+  const currentDepartureCapacity = isDualFlightMode
+    ? totalFleetSeats
+    : assignedModels.length > 0
+    ? Math.round(totalFleetSeats / assignedModels.length)
+    : 0;
+
   // Airport slots
   const originSlots = editingOrigin ? playerAirline.slots[editingOrigin.id] || 0 : 0;
   const destSlots = editingDest ? playerAirline.slots[editingDest.id] || 0 : 0;
-  const maxWeeklyFlights = Math.max(1, Math.min(14, originSlots, destSlots));
+  const slotLimit = Math.max(1, Math.min(14, originSlots, destSlots));
+  // Fleet flight capability (each assigned plane can operate up to 7 flights per week)
+  const fleetMaxWeeklyFlights = Math.max(7, assignedInstances.length * 7);
+  const maxWeeklyFlights = Math.min(slotLimit, fleetMaxWeeklyFlights);
 
-  // Cap frequency if slots changed
+  // Cap frequency if slots or fleet changed
   useEffect(() => {
     if (editFrequency > maxWeeklyFlights && maxWeeklyFlights > 0) {
       setEditFrequency(maxWeeklyFlights);
     }
   }, [editFrequency, maxWeeklyFlights]);
 
-  // Available capable aircraft for swapping (current plane + any idle planes in fleet whose range >= distance)
-  const availableFleetForRoute = useMemo(() => {
-    if (!editingRoute) return [];
-    return playerAirline.fleet.filter((f) => {
-      const model = aircraftMap.get(f.modelId);
-      if (!model || model.rangeKm < editingDistance) return false;
-      // Eligible if currently assigned to this route or idle in hangar
-      return f.assignedRouteId === null || f.assignedRouteId === editingRoute.id || editingRoute.assignedAircraftIds.includes(f.instanceId);
-    });
-  }, [playerAirline.fleet, editingRoute, editingDistance, aircraftMap]);
+  // Add plane to route
+  const handleAddAircraftToRoute = (instanceId: string) => {
+    if (!editAircraftInstanceIds.includes(instanceId)) {
+      setEditAircraftInstanceIds([...editAircraftInstanceIds, instanceId]);
+    }
+  };
 
-  // Active aircraft instance and model in editor
-  const currentAssignedInstance = playerAirline.fleet.find((f) => f.instanceId === editAircraftInstanceId) || availableFleetForRoute[0];
-  const currentAssignedModel = currentAssignedInstance ? aircraftMap.get(currentAssignedInstance.modelId) : null;
+  // Remove plane from route (cannot remove if only 1 plane left)
+  const handleRemoveAircraftFromRoute = (instanceId: string) => {
+    if (editAircraftInstanceIds.length <= 1) return;
+    const nextIds = editAircraftInstanceIds.filter((id) => id !== instanceId);
+    setEditAircraftInstanceIds(nextIds);
+    const nextMax = nextIds.length * 7;
+    if (editFrequency > nextMax) {
+      setEditFrequency(Math.max(1, nextMax));
+    }
+  };
 
   // Original aircraft model and historical stats prior to current modification session
-  const originalAssignedInstance = useMemo(() => {
-    if (!editingRoute) return null;
-    return playerAirline.fleet.find((f) => editingRoute.assignedAircraftIds.includes(f.instanceId)) || null;
+  const originalAssignedInstances = useMemo(() => {
+    if (!editingRoute) return [];
+    return playerAirline.fleet.filter((f) => editingRoute.assignedAircraftIds.includes(f.instanceId));
   }, [editingRoute, playerAirline.fleet]);
 
-  const originalAssignedModel = useMemo(() => {
-    if (!originalAssignedInstance) return null;
-    return aircraftMap.get(originalAssignedInstance.modelId) || null;
-  }, [originalAssignedInstance, aircraftMap]);
+  const originalAssignedModels = useMemo(() => {
+    return originalAssignedInstances.map((f) => aircraftMap.get(f.modelId)).filter(Boolean) as AircraftModel[];
+  }, [originalAssignedInstances, aircraftMap]);
 
   const originalStats = editingRoute?.lastQuarterStats;
-  const originalCapacityPerFlight = originalAssignedModel?.capacity || 160;
+  const originalCapacityPerFlight =
+    originalStats?.capacity && editingRoute?.weeklyFrequency
+      ? Math.round(originalStats.capacity / (editingRoute.weeklyFrequency * 12))
+      : originalAssignedModels[0]?.capacity || 160;
   const originalLoadFactorPct = originalStats?.loadFactorPct ?? 80;
   const originalPaxPerFlight = useMemo(() => {
     if (originalStats?.actualFlightsCompleted && originalStats.actualFlightsCompleted > 0) {
@@ -142,26 +196,25 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
   }, [originalStats, editingRoute, originalCapacityPerFlight, originalLoadFactorPct]);
 
   // Capacity difference between original model and currently selected model
-  const capDiffTotal = (currentAssignedModel?.capacity || 0) - originalCapacityPerFlight;
-  const capDiffPctTotal = originalCapacityPerFlight > 0
-    ? Math.round((capDiffTotal / originalCapacityPerFlight) * 100)
-    : 0;
+  const capDiffTotal = currentDepartureCapacity - originalCapacityPerFlight;
+  const capDiffPctTotal =
+    originalCapacityPerFlight > 0 ? Math.round((capDiffTotal / originalCapacityPerFlight) * 100) : 0;
 
   // Baseline load factor percentage if the exact same previous passenger volume flies on the new airframe
   const baselineLoadFactorPct = useMemo(() => {
-    if (!currentAssignedModel || currentAssignedModel.capacity === 0) return 0;
-    return Math.round((originalPaxPerFlight / currentAssignedModel.capacity) * 100);
-  }, [originalPaxPerFlight, currentAssignedModel]);
+    if (currentDepartureCapacity <= 0) return 0;
+    return Math.round((originalPaxPerFlight / currentDepartureCapacity) * 100);
+  }, [originalPaxPerFlight, currentDepartureCapacity]);
 
   // Real-time Simulation Preview
   const previewSimulation = useMemo(() => {
-    if (!editingRoute || !editingOrigin || !editingDest || !currentAssignedModel || !gameState) {
+    if (!editingRoute || !editingOrigin || !editingDest || assignedModels.length === 0 || !gameState) {
       return null;
     }
 
     const mockRoute: Route = {
       ...editingRoute,
-      assignedAircraftIds: [editAircraftInstanceId],
+      assignedAircraftIds: editAircraftInstanceIds,
       weeklyFrequency: editFrequency,
       priceModifierPct: editPriceModifier,
       serviceQuality: editServiceQuality,
@@ -187,8 +240,8 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
       mockRoute,
       editingOrigin,
       editingDest,
-      currentAssignedModel,
-      currentAssignedInstance,
+      assignedModels,
+      assignedInstances,
       gameState.currentQuarter,
       gameState.fuelPriceIndex,
       marketDemand,
@@ -198,9 +251,9 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
     editingRoute,
     editingOrigin,
     editingDest,
-    currentAssignedModel,
-    currentAssignedInstance,
-    editAircraftInstanceId,
+    assignedModels,
+    assignedInstances,
+    editAircraftInstanceIds,
     editFrequency,
     editPriceModifier,
     editServiceQuality,
@@ -209,18 +262,20 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
 
   // Save Route Edits
   const handleSaveRoute = () => {
-    if (!editingRoute) return;
+    if (!editingRoute || editAircraftInstanceIds.length === 0) return;
     const prevAssigned = editingRoute.assignedAircraftIds;
     const updated: Route = {
       ...editingRoute,
       weeklyFrequency: editFrequency,
       priceModifierPct: editPriceModifier,
       serviceQuality: editServiceQuality,
-      assignedAircraftIds: [editAircraftInstanceId],
+      assignedAircraftIds: editAircraftInstanceIds,
     };
     onUpdateRoute(updated, prevAssigned);
     setEditingRoute(null);
-    setToastMessage(`Saved changes for ${editingOrigin?.name} ➔ ${editingDest?.name}!`);
+    setToastMessage(
+      `Saved changes for ${editingOrigin?.name} ➔ ${editingDest?.name}! (${editAircraftInstanceIds.length} aircraft assigned)`
+    );
   };
 
   // Close Route Confirmation
@@ -271,11 +326,16 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
             playerRoutes.map((route) => {
               const origin = cityMap.get(route.originCityId);
               const dest = cityMap.get(route.destCityId);
-              const instance = playerAirline.fleet.find((f) =>
+              const assignedPlanesList = playerAirline.fleet.filter((f) =>
                 route.assignedAircraftIds.includes(f.instanceId)
               );
-              const model = instance ? aircraftMap.get(instance.modelId) : null;
-              const photoInfo = model ? getAircraftPhotoInfo(model) : null;
+              const assignedModelsList = assignedPlanesList
+                .map((f) => aircraftMap.get(f.modelId))
+                .filter(Boolean) as AircraftModel[];
+              const primaryModel = assignedModelsList[0] || null;
+              const photoInfo = primaryModel ? getAircraftPhotoInfo(primaryModel) : null;
+              const totalFleetSeats = assignedModelsList.reduce((sum, m) => sum + m.capacity, 0);
+              const isDualMode = route.weeklyFrequency <= 7 && assignedPlanesList.length > 1;
               const stats = route.lastQuarterStats;
               const maintTier =
                 (route.serviceQuality ?? 1.0) >= 1.2
@@ -295,10 +355,10 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       <div className="w-20 h-14 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 relative shadow shrink-0">
                         <img
                           src={photoInfo.photoUrl}
-                          alt={model?.model}
+                          alt={primaryModel?.model}
                           className="w-full h-full object-cover object-center filter brightness-105"
                         />
-                        {model?.isSupersonic && (
+                        {primaryModel?.isSupersonic && (
                           <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black font-mono text-[8px]">
                             SST
                           </span>
@@ -327,8 +387,18 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
 
                       <div className="text-xs text-slate-300 flex items-center gap-2.5 flex-wrap font-mono">
                         <span>
-                          Aircraft: <strong className="text-white">{model?.model || 'Unassigned'}</strong>
+                          Aircraft:{' '}
+                          <strong className="text-white">
+                            {assignedModelsList.length > 1
+                              ? `${assignedModelsList.length} Planes (${assignedModelsList.map(m => m.model).join(', ')}) • ${totalFleetSeats} Seats`
+                              : primaryModel?.model || 'Unassigned'}
+                          </strong>
                         </span>
+                        {isDualMode && (
+                          <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400 font-bold text-[10px]">
+                            ⚡ DUAL
+                          </span>
+                        )}
                         <span>•</span>
                         <span>
                           Frequency: <strong className="text-sky-300 font-mono">{route.weeklyFrequency} flights/wk</strong>
@@ -405,7 +475,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
       </div>
 
       {/* ROUTE MODIFICATION MODAL */}
-      {editingRoute && editingOrigin && editingDest && currentAssignedModel && (
+      {editingRoute && editingOrigin && editingDest && primaryAssignedModel && (
         <div className="fixed inset-0 z-[60] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-150">
           <div className="bg-slate-900 border-2 border-sky-500/90 rounded-2xl shadow-[0_0_60px_rgba(14,165,233,0.35)] w-full max-w-3xl overflow-hidden text-slate-100 flex flex-col animate-in zoom-in-95 duration-150 max-h-[94vh]">
             {/* Modal Header */}
@@ -433,111 +503,175 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
 
             {/* Modal Body */}
             <div className="p-5 space-y-4 overflow-y-auto">
-              {/* 1. Aircraft Assignment & Capacity (Swap or Keep) */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-sky-300 uppercase tracking-wider flex items-center gap-2">
-                    <Plane className="w-4 h-4 text-sky-400" />
-                    <span>ASSIGNED AIRCRAFT (เปลี่ยนเครื่องบิน / ความจุ):</span>
-                  </span>
+              {/* 1. Aircraft Assignment & Fleet Capacity (Add / Remove / Multi-Fleet) */}
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-800 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-sky-900/60 border border-sky-500">
+                      <Plane className="w-4 h-4 text-sky-300" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-mono font-bold text-sky-300 uppercase tracking-wider block">
+                        ASSIGNED ROUTE FLEET (ฝูงบินที่ประจำการในเส้นทาง):
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        {assignedInstances.length} ลำประจำการ • ความจุรวม {totalFleetSeats} ที่นั่ง/เที่ยว
+                        {isDualFlightMode && ' (โหมดออกบินคู่ เพิ่มความจุ 2 เท่า)'}
+                      </span>
+                    </div>
+                  </div>
                   <span className="text-[11px] font-mono text-slate-400">
-                    Route Range Required: ≥ {editingDistance.toLocaleString()} km
+                    ระยะทางเส้นทาง: <strong className="text-white">{editingDistance.toLocaleString()} km</strong>
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {availableFleetForRoute.map((plane) => {
-                    const model = aircraftMap.get(plane.modelId);
-                    if (!model) return null;
-                    const isSelected = plane.instanceId === editAircraftInstanceId;
-                    const photo = getAircraftPhotoInfo(model);
-                    const cond = plane.conditionPct ?? 100;
+                {/* 1.1 Currently Assigned Aircraft */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-mono text-slate-300">
+                    <span className="font-bold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      เครื่องบินที่บินอยู่ในเส้นทางนี้ ({assignedInstances.length} ลำ):
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {assignedInstances.length === 1
+                        ? '1 ลำบินได้สูงสุด 7 เที่ยว/สัปดาห์ (เพิ่มเครื่องบินเพื่อบิน 14 เที่ยวหรือบินคู่)'
+                        : `ฝูงบิน ${assignedInstances.length} ลำ (รองรับได้สูงสุด ${assignedInstances.length * 7} เที่ยว/สัปดาห์)`}
+                    </span>
+                  </div>
 
-                    return (
-                      <div
-                        key={plane.instanceId}
-                        onClick={() => setEditAircraftInstanceId(plane.instanceId)}
-                        className={`p-3 rounded-xl border flex items-center gap-3 transition cursor-pointer ${
-                          isSelected
-                            ? 'bg-sky-950/80 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.25)]'
-                            : 'bg-slate-900/80 border-slate-800 hover:border-slate-600'
-                        }`}
-                      >
-                        <div className="w-16 h-12 rounded-lg overflow-hidden border border-slate-700 bg-slate-950 relative shrink-0 shadow">
-                          <img
-                            src={photo.photoUrl}
-                            alt={model.model}
-                            className="w-full h-full object-cover object-center filter brightness-105"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-mono font-black text-sm text-white truncate flex items-center justify-between">
-                            <span>{model.model}</span>
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {model.capacity !== originalCapacityPerFlight && (
-                                <span
-                                  className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${
-                                    model.capacity > originalCapacityPerFlight
-                                      ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/60'
-                                      : 'bg-amber-950/80 text-amber-300 border-amber-500/60'
-                                  }`}
-                                >
-                                  {model.capacity > originalCapacityPerFlight
-                                    ? `+${model.capacity - originalCapacityPerFlight}`
-                                    : model.capacity - originalCapacityPerFlight}{' '}
-                                  seats
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {assignedInstances.map((plane, idx) => {
+                      const model = aircraftMap.get(plane.modelId);
+                      if (!model) return null;
+                      const photo = getAircraftPhotoInfo(model);
+                      const cond = plane.conditionPct ?? 100;
+                      const canRemove = assignedInstances.length > 1;
+
+                      return (
+                        <div
+                          key={plane.instanceId}
+                          data-testid="assigned-plane-card"
+                          className="p-3 rounded-xl border border-sky-500/80 bg-sky-950/40 shadow flex items-center gap-3 justify-between"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-14 h-11 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 shrink-0">
+                              <img
+                                src={photo.photoUrl}
+                                alt={model.model}
+                                className="w-full h-full object-cover object-center"
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-mono font-bold text-xs text-white truncate flex items-center gap-1.5">
+                                <span>{model.model}</span>
+                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-400">
+                                  #{idx + 1}
                                 </span>
-                              )}
-                              {isSelected && (
-                                <span className="text-[10px] text-sky-400 bg-sky-900/50 px-1.5 py-0.2 rounded border border-sky-500">
-                                  ASSIGNED
-                                </span>
-                              )}
+                              </div>
+                              <div className="text-[10px] font-mono text-slate-300 mt-0.5">
+                                {model.capacity} ที่นั่ง • พิสัย {model.rangeKm.toLocaleString()} km
+                              </div>
+                              <div className="text-[10px] font-mono text-emerald-400">
+                                สภาพ: {cond}%
+                              </div>
                             </div>
                           </div>
-                          <div className="text-[11px] font-mono text-slate-300 mt-0.5 flex items-center gap-2">
-                            <span>{model.capacity} Seats</span>
-                            <span>•</span>
-                            <span>{model.rangeKm.toLocaleString()} km</span>
-                            <span>•</span>
-                            <span className="text-emerald-400">{cond}% Health</span>
-                          </div>
 
-                          {/* Baseline passenger utilization on this candidate card */}
-                          <div className="text-[10px] font-mono mt-1 pt-1 border-t border-slate-800/80 flex items-center justify-between text-slate-400">
-                            <span>
-                              สัดส่วนผู้โดยสารเดิม ({originalPaxPerFlight} คน):{' '}
-                              <strong
-                                className={
-                                  Math.round((originalPaxPerFlight / model.capacity) * 100) > 100
-                                    ? 'text-rose-400 font-bold'
-                                    : Math.round((originalPaxPerFlight / model.capacity) * 100) >= 70
-                                    ? 'text-emerald-300 font-bold'
-                                    : 'text-indigo-300 font-bold'
-                                }
+                          <div className="shrink-0">
+                            {canRemove ? (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveAircraftFromRoute(plane.instanceId)}
+                                className="px-2.5 py-1.5 bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-600 rounded-lg text-[10px] font-mono font-bold transition cursor-pointer flex items-center gap-1"
+                                title="ปลดเครื่องบินลำนี้ออกจากเส้นทาง กลับเข้าสู่โรงเก็บ"
                               >
-                                {Math.round((originalPaxPerFlight / model.capacity) * 100)}%
-                              </strong>
-                              {model.capacity !== originalCapacityPerFlight && (
-                                <span className="text-slate-500 ml-1">
-                                  (จากเดิม {originalLoadFactorPct}%)
-                                </span>
-                              )}
-                            </span>
-                            {Math.round((originalPaxPerFlight / model.capacity) * 100) > 100 && (
-                              <span className="text-[9px] text-rose-400 font-bold">
-                                ⚠️ ล้น {originalPaxPerFlight - model.capacity} ที่
+                                <X className="w-3 h-3" />
+                                <span>ปลดออก</span>
+                              </button>
+                            ) : (
+                              <span className="text-[9px] font-mono px-2 py-1 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                                ลำหลัก
                               </span>
                             )}
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* 1.1 Dedicated Capacity & Passenger Utilization Analysis Card */}
-                {originalAssignedModel && currentAssignedModel && (
+                {/* 1.2 Available Idle Aircraft in Hangar to Add */}
+                <div className="space-y-2 pt-2 border-t border-slate-800/80">
+                  <div className="flex items-center justify-between text-xs font-mono text-slate-300">
+                    <span className="font-bold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-sky-400" />
+                      เครื่องบินว่างในโรงเก็บที่สามารถเพิ่มเข้ามาได้ ({availableIdlePlanes.length} ลำ):
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      (พิสัยบินต้อง ≥ {editingDistance.toLocaleString()} km)
+                    </span>
+                  </div>
+
+                  {availableIdlePlanes.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      {availableIdlePlanes.map((plane) => {
+                        const model = aircraftMap.get(plane.modelId);
+                        if (!model) return null;
+                        const photo = getAircraftPhotoInfo(model);
+                        const cond = plane.conditionPct ?? 100;
+
+                        return (
+                          <div
+                            key={plane.instanceId}
+                            data-testid="idle-plane-card"
+                            className="p-3 rounded-xl border border-slate-700 bg-slate-900/80 hover:border-slate-600 flex items-center justify-between gap-3 transition"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-14 h-11 rounded-lg overflow-hidden border border-slate-700 bg-slate-950 shrink-0">
+                                <img
+                                  src={photo.photoUrl}
+                                  alt={model.model}
+                                  className="w-full h-full object-cover object-center"
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-mono font-bold text-xs text-white truncate">
+                                  {model.model}
+                                </div>
+                                <div className="text-[10px] font-mono text-slate-300 mt-0.5">
+                                  +{model.capacity} ที่นั่ง • พิสัย {model.rangeKm.toLocaleString()} km
+                                </div>
+                                <div className="text-[10px] font-mono text-emerald-400">
+                                  สภาพ: {cond}%
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleAddAircraftToRoute(plane.instanceId)}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400 rounded-lg text-xs font-mono font-bold shadow transition cursor-pointer active:scale-95 shrink-0 flex items-center gap-1"
+                              title="เพิ่มเครื่องบินลำนี้เข้าไปบินร่วมในเส้นทาง"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>เพิ่มเข้าเส้นทาง</span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 font-mono flex items-center gap-2">
+                      <span className="text-base">ℹ</span>
+                      <span>
+                        ไม่มีเครื่องบินว่างในโรงเก็บที่พิสัยบินถึง {editingDistance.toLocaleString()} km (หากต้องการเพิ่มเครื่องบิน สามารถสั่งซื้อเพิ่มได้ที่ Aircraft Shop)
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* 1.3 Dedicated Capacity & Passenger Utilization Analysis Card */}
+                {originalAssignedModels.length > 0 && assignedModels.length > 0 && (
                   <div className="bg-slate-900/90 border border-indigo-500/50 rounded-xl p-4 space-y-3 font-mono shadow-lg mt-3">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
                       <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-2">
@@ -547,7 +681,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
                         <ArrowRightLeft className="w-3 h-3 text-slate-500" />
                         <span>
-                          {originalAssignedModel.model} ({originalAssignedModel.capacity} seats) ➔ {currentAssignedModel.model} ({currentAssignedModel.capacity} seats)
+                          เดิม {originalCapacityPerFlight} ที่นั่ง/เที่ยว ➔ ใหม่ {currentDepartureCapacity} ที่นั่ง/เที่ยว ({assignedInstances.length} ลำ)
                         </span>
                       </span>
                     </div>
@@ -558,14 +692,14 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
                         <div className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5 mb-1">
                           <span className="w-2 h-2 rounded-full bg-slate-500" />
-                          <span>เครื่องบินเดิม (Previous Airframe)</span>
+                          <span>สถิติเดิม (Previous Baseline)</span>
                         </div>
                         <div className="font-bold text-slate-200 text-xs truncate">
-                          {originalAssignedModel.model}
+                          {originalAssignedModels.map(m => m.model).join(', ')}
                         </div>
                         <div className="text-[11px] text-slate-300 mt-1 flex items-center justify-between">
-                          <span>ความจุที่นั่งเดิม:</span>
-                          <strong className="text-white">{originalAssignedModel.capacity} ที่นั่ง</strong>
+                          <span>ความจุเดิม:</span>
+                          <strong className="text-white">{originalCapacityPerFlight} ที่นั่ง/เที่ยว</strong>
                         </div>
                         <div className="text-[11px] text-slate-300 flex items-center justify-between">
                           <span>ผู้โดยสารเฉลี่ยเดิม:</span>
@@ -577,18 +711,18 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                         </div>
                       </div>
 
-                      {/* Card 2: Baseline Conversion on New Airframe */}
+                      {/* Card 2: Baseline Conversion on New Fleet */}
                       <div className="bg-slate-950 p-2.5 rounded-lg border border-indigo-500/50 shadow">
                         <div className="text-[10px] text-indigo-300 uppercase font-bold flex items-center gap-1.5 mb-1">
                           <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-                          <span>สัดส่วนผู้โดยสารเดิมเทียบกับลำใหม่</span>
+                          <span>สัดส่วนผู้โดยสารเดิมเทียบกับฝูงบินใหม่</span>
                         </div>
                         <div className="font-bold text-indigo-200 text-xs truncate">
-                          {currentAssignedModel.model}
+                          {assignedModels.map(m => m.model).join(', ')} ({assignedInstances.length} ลำ)
                         </div>
                         <div className="text-[11px] text-slate-300 mt-1 flex items-center justify-between">
-                          <span>ความจุที่นั่งใหม่:</span>
-                          <strong className="text-white">{currentAssignedModel.capacity} ที่นั่ง</strong>
+                          <span>ความจุเที่ยวบินใหม่:</span>
+                          <strong className="text-white">{currentDepartureCapacity} ที่นั่ง/เที่ยว</strong>
                         </div>
                         <div className="text-[11px] text-slate-300 flex items-center justify-between">
                           <span>ส่วนต่างความจุ:</span>
@@ -660,7 +794,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       <div className="flex items-center justify-between text-[11px] text-slate-300">
                         <span>แผนภาพสัดส่วนที่นั่ง (Visual Capacity Fill):</span>
                         <span className="text-slate-400 text-[10px]">
-                          100% = {currentAssignedModel.capacity} ที่นั่ง
+                          100% = {currentDepartureCapacity} ที่นั่ง/เที่ยว
                         </span>
                       </div>
 
@@ -673,7 +807,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                           {baselineLoadFactorPct >= 18 && `ผู้โดยสารเดิม ${baselineLoadFactorPct}%`}
                         </div>
 
-                        {/* Segment 2: Projected Growth from Market Demand (if projected > baseline) */}
+                        {/* Segment 2: Projected Growth from Market Demand */}
                         {previewSimulation && previewSimulation.stats.loadFactorPct > baselineLoadFactorPct && (
                           <div
                             className="bg-emerald-500 h-full flex items-center justify-center text-[10px] text-slate-950 font-black transition-all"
@@ -697,7 +831,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                               ที่ว่างเหลือ{' '}
                               {Math.max(
                                 0,
-                                currentAssignedModel.capacity -
+                                currentDepartureCapacity -
                                   (previewSimulation
                                     ? Math.round(previewSimulation.stats.passengers / (editFrequency * 12))
                                     : originalPaxPerFlight)
@@ -713,8 +847,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                         <div className="flex items-center gap-1.5">
                           <span className="w-2.5 h-2.5 rounded-sm bg-indigo-600 inline-block" />
                           <span>
-                            ผู้โดยสารเดิม ({originalPaxPerFlight} คน คิดเป็น <strong>{baselineLoadFactorPct}%</strong>{' '}
-                            ของลำนี้)
+                            ผู้โดยสารเดิม ({originalPaxPerFlight} คน คิดเป็น <strong>{baselineLoadFactorPct}%</strong> ของเที่ยวบิน)
                           </span>
                         </div>
                         {previewSimulation && previewSimulation.stats.loadFactorPct > baselineLoadFactorPct && (
@@ -744,12 +877,6 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     </div>
                   </div>
                 )}
-
-                {availableFleetForRoute.length === 1 && (
-                  <div className="text-[11px] font-mono text-slate-400 italic">
-                    ℹ Currently assigned {currentAssignedModel.model}. Other aircraft in your fleet are active on other routes or have insufficient range. Procure more aircraft in the Market to swap.
-                  </div>
-                )}
               </div>
 
               {/* 2. Flight Frequency & Slot Capacity */}
@@ -760,7 +887,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     <span>FLIGHT FREQUENCY (เที่ยวบินต่อสัปดาห์):</span>
                   </span>
                   <span className="text-xs font-mono text-emerald-400 font-bold">
-                    Slot Limit: Min({originSlots}, {destSlots}) = {maxWeeklyFlights} flights/wk
+                    Slot Limit: Min({originSlots}, {destSlots}) = {slotLimit} flights/wk
                   </span>
                 </div>
 
@@ -795,7 +922,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
 
                     {/* Presets */}
                     <div className="flex items-center gap-1.5 ml-2 border-l border-slate-800 pl-3">
-                      {[3, 7, 14].map((qty) => (
+                      {[3, 7, 10, 14].map((qty) => (
                         <button
                           key={qty}
                           type="button"
@@ -814,10 +941,42 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                   </div>
 
                   <div className="text-xs font-mono text-slate-400 text-right">
-                    <div>Weekly Seats: <strong className="text-white">{(editFrequency * currentAssignedModel.capacity).toLocaleString()} seats/wk</strong></div>
-                    <div>Quarterly Rotations: <strong className="text-sky-300">{editFrequency * 12} flights</strong></div>
+                    <div>
+                      ความจุต่อสัปดาห์:{' '}
+                      <strong className="text-white">
+                        {previewSimulation
+                          ? Math.round(previewSimulation.stats.capacity / 12).toLocaleString()
+                          : (editFrequency * currentDepartureCapacity).toLocaleString()}{' '}
+                        ที่นั่ง/สัปดาห์
+                      </strong>
+                    </div>
+                    <div>
+                      รอบบินต่อไตรมาส:{' '}
+                      <strong className="text-sky-300">
+                        {editFrequency * 12} flights ({assignedInstances.length} เครื่องบิน)
+                      </strong>
+                    </div>
                   </div>
                 </div>
+
+                {/* Explanatory Operational Banners */}
+                {slotLimit > 7 && assignedInstances.length === 1 && (
+                  <div className="p-2.5 rounded-lg bg-indigo-950/40 border border-indigo-500/40 text-[11px] font-mono text-indigo-300 flex items-center gap-2">
+                    <span className="text-sm">💡</span>
+                    <span>
+                      สล็อตสนามบินรองรับได้ถึง <strong>{slotLimit} เที่ยว/สัปดาห์</strong>! แต่เครื่องบิน 1 ลำบินได้สูงสุด 7 เที่ยว/สัปดาห์ — หากต้องการขยายเที่ยวบินเป็น 8–{slotLimit} เที่ยว กรุณากดปุ่ม <strong>[+ เพิ่มเข้าเส้นทาง]</strong> ด้านบนเพื่อใส่เครื่องบินเพิ่มอีก 1 ลำ
+                    </span>
+                  </div>
+                )}
+
+                {isDualFlightMode && (
+                  <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-[11px] font-mono text-emerald-300 flex items-center gap-2">
+                    <span className="text-sm">⚡</span>
+                    <span>
+                      <strong>โหมดออกบินคู่ (Dual-Aircraft Operations):</strong> เครื่องบินทั้ง {assignedInstances.length} ลำออกบินพร้อมกันในรอบสัปดาห์ เพิ่มความจุเป็น <strong>{totalFleetSeats} ที่นั่ง/เที่ยว</strong> (+{(assignedInstances.length - 1) * 100}%) รองรับผู้โดยสารหนาแน่นได้เต็มที่แม้ในเมืองที่มีสล็อตจำกัด!
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* 3. Ticket Price Modifier (% Markup / Discount) */}
