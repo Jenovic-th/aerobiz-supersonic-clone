@@ -3,7 +3,7 @@ import { Airline, AircraftModel, AircraftDiscountDeal } from '../types/game';
 import { AIRCRAFTS } from '../data/aircrafts';
 import { CITIES } from '../data/cities';
 import { calculateDistance } from '../simulation/engine';
-import { X, ShoppingCart, Plane, CheckCircle2, AlertCircle, Sparkles, Filter, Flame, Tag, AlertTriangle, Wrench, Compass, Plus, Minus, Receipt } from 'lucide-react';
+import { X, ShoppingCart, Plane, CheckCircle2, AlertCircle, Sparkles, Filter, Flame, Tag, AlertTriangle, Wrench, Compass, Plus, Minus, Receipt, Clock } from 'lucide-react';
 import { AircraftBlueprintViewer } from './AircraftBlueprintViewer';
 import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
 
@@ -13,6 +13,7 @@ interface AircraftShopModalProps {
   onBuyAircraft: (model: AircraftModel, effectivePriceK?: number, quantity?: number) => void;
   onSellAircraft: (instanceId: string, sellPriceK: number) => void;
   currentYear: number;
+  currentQuarter?: number;
   currentEra: 1 | 2 | 3;
   activeDiscountDeal?: AircraftDiscountDeal;
 }
@@ -23,10 +24,15 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
   onBuyAircraft,
   onSellAircraft,
   currentYear,
+  currentQuarter = 1,
   activeDiscountDeal,
 }) => {
-  const [activeTab, setActiveTab] = useState<'DEPOT' | 'FLEET'>('DEPOT');
+  const [activeTab, setActiveTab] = useState<'DEPOT' | 'FLEET' | 'PENDING'>('DEPOT');
   const [filterMfg, setFilterMfg] = useState<string>('ALL');
+
+  const pendingOrders = playerAirline.pendingOrders || [];
+  const nextDeliveryQuarter = currentQuarter === 4 ? 1 : currentQuarter + 1;
+  const nextDeliveryYear = currentQuarter === 4 ? currentYear + 1 : currentYear;
 
   // Filter available aircraft models for current era & year
   const availableModels = useMemo(() => {
@@ -197,7 +203,20 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               }`}
             >
               <Sparkles className="w-4 h-4 text-sky-400" />
-              <span>Acquire New Aircraft ({availableModels.length} Models Available)</span>
+              <span>Catalog ({availableModels.length} Models)</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('PENDING')}
+              className={`py-3 px-6 text-sm md:text-base font-black border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+                activeTab === 'PENDING'
+                  ? 'border-amber-400 text-amber-400 bg-amber-950/30'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Clock className="w-4 h-4 text-amber-400" />
+              <span>
+                Factory Order Book ({pendingOrders.reduce((sum, o) => sum + o.quantity, 0)} on Order)
+              </span>
             </button>
             <button
               onClick={() => setActiveTab('FLEET')}
@@ -208,15 +227,23 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               }`}
             >
               <Plane className="w-4 h-4 text-sky-400" />
-              <span>Company Fleet Hangar ({playerAirline.fleet.length} Aircraft Owned)</span>
+              <span>Fleet Hangar ({playerAirline.fleet.length} Owned)</span>
             </button>
           </div>
 
           {/* Quick Stats Pill */}
           <div className="hidden md:flex items-center gap-2 text-xs font-mono text-sky-300">
-            <span>ACTIVE FLEET: {playerAirline.fleet.filter((f) => f.assignedRouteId).length}</span>
+            <span>ACTIVE: {playerAirline.fleet.filter((f) => f.assignedRouteId).length}</span>
             <span>•</span>
-            <span>IDLE IN HANGAR: {playerAirline.fleet.filter((f) => !f.assignedRouteId).length}</span>
+            <span>HANGAR: {playerAirline.fleet.filter((f) => !f.assignedRouteId).length}</span>
+            {pendingOrders.length > 0 && (
+              <>
+                <span>•</span>
+                <span className="text-amber-300 font-bold">
+                  PENDING DELIVERY: {pendingOrders.reduce((sum, o) => sum + o.quantity, 0)}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -609,6 +636,152 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               )}
             </div>
           </div>
+        ) : activeTab === 'PENDING' ? (
+          /* FACTORY ORDER BOOK (PENDING & DELAYED ORDERS) */
+          <div className="flex-1 min-h-0 p-6 overflow-y-auto bg-slate-950">
+            {pendingOrders.length === 0 ? (
+              <div className="max-w-2xl mx-auto text-center py-20 bg-slate-900/60 border border-slate-800 rounded-2xl p-8 space-y-4 shadow-xl">
+                <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-950/60 border border-amber-500/50 flex items-center justify-center text-amber-400">
+                  <Clock className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white font-mono">No Outstanding Factory Aircraft Orders</h3>
+                  <p className="text-sm text-slate-400 font-mono mt-1">
+                    When you order commercial airliners from the market, they are queued here with the manufacturer for assembly and scheduled for delivery in the next quarter.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    onClick={() => setActiveTab('DEPOT')}
+                    className="px-6 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold font-mono text-sm rounded-xl transition cursor-pointer shadow-lg inline-flex items-center gap-2"
+                  >
+                    <Sparkles className="w-4 h-4 text-sky-200" />
+                    <span>Browse Commercial Aircraft Catalog</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="max-w-5xl mx-auto space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800">
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-white font-mono flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-amber-400" />
+                      MANUFACTURER FACTORY ORDER BOOK
+                    </h3>
+                    <div className="text-xs text-slate-400 font-mono">
+                      Orders queued at aerospace assembly lines • Delivered next quarter (5% delay risk)
+                    </div>
+                  </div>
+                  <div className="text-xs font-mono px-3 py-1.5 rounded-lg bg-amber-950/70 border border-amber-500/50 text-amber-300 font-bold self-start sm:self-auto">
+                    Total on Order: {pendingOrders.reduce((sum, o) => sum + o.quantity, 0)} Airframes
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {pendingOrders.map((order, idx) => {
+                    const model = AIRCRAFTS.find((a) => a.id === order.modelId);
+                    const photoInfo = model ? getAircraftPhotoInfo(model) : null;
+                    const isDelayed = order.status === 'DELAYED';
+
+                    return (
+                      <div
+                        key={order.orderId || idx}
+                        className={`p-4 rounded-xl border flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-lg transition ${
+                          isDelayed
+                            ? 'bg-gradient-to-r from-rose-950/30 via-slate-900 to-slate-900 border-rose-500/60'
+                            : 'bg-slate-900/90 border-slate-700/80 hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="flex items-start gap-4 flex-1 min-w-0">
+                          {photoInfo && (
+                            <div className="w-24 h-16 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 relative shadow shrink-0">
+                              <img
+                                src={photoInfo.photoUrl}
+                                alt={order.modelName}
+                                className="w-full h-full object-cover object-center filter brightness-105"
+                              />
+                              <span className="absolute bottom-0.5 left-0.5 bg-slate-950/85 px-1.5 py-0.2 rounded font-mono text-[9px] text-amber-300 font-bold border border-slate-700">
+                                {order.quantity}x
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-mono text-xs font-bold text-sky-400 uppercase tracking-wider">
+                                {order.manufacturer}
+                              </span>
+                              <h4 className="text-base md:text-lg font-black text-white font-mono">
+                                {order.modelName}
+                              </h4>
+                              <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/50">
+                                {order.quantity} {order.quantity === 1 ? 'Airframe' : 'Airframes'}
+                              </span>
+                              {isDelayed ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-rose-950 border border-rose-500 text-rose-300 animate-pulse flex items-center gap-1">
+                                  <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+                                  Factory Delay (+1 Qtr)
+                                </span>
+                              ) : (
+                                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-sky-950 border border-sky-600 text-sky-300 flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5 text-sky-400" />
+                                  In Assembly (On Schedule)
+                                </span>
+                              )}
+                            </div>
+
+                            {model && (
+                              <div className="text-xs text-slate-300 font-mono mt-0.5">
+                                {model.capacity} Seats • {model.rangeKm.toLocaleString()} km Range • {model.speedKmh} km/h Cruise
+                              </div>
+                            )}
+
+                            {isDelayed && order.delayReason && (
+                              <div className="mt-2 text-xs font-mono p-2 bg-rose-950/50 border border-rose-500/50 rounded-lg text-rose-200">
+                                <span className="font-bold text-rose-300">Notice from Manufacturer: </span>
+                                {order.delayReason}
+                              </div>
+                            )}
+
+                            <div className="mt-2.5 p-2 bg-slate-950/80 rounded-lg border border-slate-800 flex flex-wrap items-center gap-4 text-xs font-mono">
+                              <div>
+                                <span className="text-slate-400">Order Placed: </span>
+                                <span className="font-bold text-white">Year {order.orderYear} Q{order.orderQuarter}</span>
+                              </div>
+                              <div className="text-slate-600">•</div>
+                              <div>
+                                <span className="text-slate-400">Scheduled Handover: </span>
+                                <span className={`font-bold ${isDelayed ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                  Year {order.deliveryYear} Q{order.deliveryQuarter}
+                                </span>
+                              </div>
+                              <div className="text-slate-600">•</div>
+                              <div>
+                                <span className="text-slate-400">Delivery Status: </span>
+                                <span className="font-semibold text-slate-200">
+                                  {isDelayed ? 'Postponed to target quarter' : 'Expected Next Quarter Handover'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 text-left lg:text-right pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800 font-mono">
+                          <span className="text-[11px] text-slate-400 block">Total Contract Value:</span>
+                          <span className="font-black text-base md:text-lg text-emerald-400">
+                            ${order.totalCostK.toLocaleString()}K
+                          </span>
+                          <span className="text-[10px] text-slate-500 block">
+                            (${order.unitPriceK.toLocaleString()}K/unit • Paid in Full)
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
           /* FLEET HANGAR / RESALE DEPOT */
           <div className="flex-1 min-h-0 p-6 overflow-y-auto bg-slate-950">
@@ -988,6 +1161,22 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 </div>
               </div>
 
+              {/* Lead Time & Delivery Terms Advisory */}
+              <div className="p-3 bg-sky-950/50 border border-sky-600/60 rounded-xl flex items-start gap-3 text-xs font-mono text-sky-200">
+                <Clock className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="font-bold text-sky-300 block">
+                    Manufacturing Lead Time & Delivery Terms (กำหนดการส่งมอบอากาศยาน):
+                  </span>
+                  <p className="text-slate-300">
+                    Airliners are ordered directly from the factory. Scheduled handover is set for <span className="font-bold text-white">Year {nextDeliveryYear} Quarter {nextDeliveryQuarter}</span> (Next Quarter).
+                  </p>
+                  <p className="text-slate-400 text-[11px]">
+                    ※ Realistic aviation production factor: 95% on-time delivery rate, 5% supply-chain/certification postponement risk.
+                  </p>
+                </div>
+              </div>
+
               {/* Working Capital Warning */}
               {canAfford && remainingCash < 15000 && (
                 <div className="p-3 bg-amber-950/60 border border-amber-500/70 rounded-xl flex items-center gap-3 text-xs font-mono text-amber-200">
@@ -1018,7 +1207,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                   onBuyAircraft(selectedModel, unitPriceK, safeQuantity);
                   setShowConfirmModal(false);
                   setToastNotification(
-                    `Acquired ${safeQuantity}x ${selectedModel.model} for $${totalCostK.toLocaleString()}K into your fleet hangar!`
+                    `Contract signed! Ordered ${safeQuantity}x ${selectedModel.model} for $${totalCostK.toLocaleString()}K. Scheduled delivery: Year ${nextDeliveryYear} Q${nextDeliveryQuarter}!`
                   );
                   setOrderQuantity(1);
                 }}
@@ -1026,7 +1215,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               >
                 <CheckCircle2 className="w-5 h-5 text-emerald-200" />
                 <span>
-                  Confirm & Finalize Purchase (${totalCostK.toLocaleString()}K)
+                  Confirm & Place Factory Order (${totalCostK.toLocaleString()}K)
                 </span>
               </button>
             </div>

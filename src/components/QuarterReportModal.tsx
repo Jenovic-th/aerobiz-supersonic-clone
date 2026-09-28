@@ -435,6 +435,37 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 </div>
               )}
 
+              {/* COMMERCIAL AIRCRAFT FACTORY DELIVERIES EXECUTIVE ALERT BANNER */}
+              {gameState.aircraftDeliveries && gameState.aircraftDeliveries.length > 0 && (
+                <div
+                  onClick={() => setActiveTab('NEWS')}
+                  className="p-4 bg-gradient-to-r from-emerald-950 via-slate-900 to-sky-950 border-2 border-emerald-400 rounded-2xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:border-emerald-300 transition group select-none"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-emerald-300 shadow group-hover:scale-105 transition shrink-0">
+                      <Plane className="w-6 h-6 animate-pulse text-emerald-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-400 uppercase tracking-wide">
+                          ✈️ Factory Order Handover & Delivery Report
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-mono hidden md:inline">
+                          Aerospace Manufacturing Log
+                        </span>
+                      </div>
+                      <div className="text-white font-black text-sm md:text-base mt-0.5">
+                        {gameState.aircraftDeliveries.length} factory order{gameState.aircraftDeliveries.length > 1 ? 's' : ''} processed: {gameState.aircraftDeliveries.map(d => `${d.quantity}x ${d.modelName} (${d.status})`).join(', ')}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-emerald-400 font-black text-xs md:text-sm shrink-0 font-mono bg-emerald-950/80 px-3.5 py-1.5 rounded-xl border border-emerald-500/40 group-hover:bg-emerald-900/60 transition self-end sm:self-auto">
+                    <span>Inspect Delivery Notices</span>
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+                  </div>
+                </div>
+              )}
+
               {/* ROUTE DISRUPTIONS ALERT BANNER (If Player Was Impacted) */}
               {gameState.routeIncidents &&
                 gameState.routeIncidents.some((i) => i.airlineId === playerAirline.id) && (
@@ -1540,6 +1571,63 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 5.1 COMMERCIAL AIRCRAFT FACTORY DELIVERIES & PRODUCTION NOTICES */}
+              {gameState.aircraftDeliveries && gameState.aircraftDeliveries.length > 0 && (
+                <div className="space-y-3 bg-gradient-to-r from-sky-950/70 via-slate-900 to-indigo-950/70 border-2 border-sky-500/80 p-4 md:p-5 rounded-2xl shadow-xl">
+                  <h3 className="font-black text-sky-300 text-xs md:text-sm flex items-center gap-2 font-mono uppercase">
+                    <Plane className="w-4 h-4 text-sky-400" />
+                    <span>Commercial Aircraft Factory Deliveries ({gameState.aircraftDeliveries.length}):</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {gameState.aircraftDeliveries.map((delivery, dIdx) => {
+                      const isDelivered = delivery.status === 'DELIVERED';
+                      return (
+                        <div
+                          key={delivery.orderId + dIdx}
+                          className={`p-3.5 rounded-xl border flex items-center gap-3 shadow-md ${
+                            isDelivered
+                              ? 'bg-slate-900/90 border-emerald-500/60'
+                              : 'bg-amber-950/40 border-amber-500/70'
+                          }`}
+                        >
+                          <div
+                            className={`p-2.5 rounded-xl border shrink-0 ${
+                              isDelivered
+                                ? 'bg-emerald-950 border-emerald-500 text-emerald-300'
+                                : 'bg-amber-950 border-amber-500 text-amber-300'
+                            }`}
+                          >
+                            <Plane className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-black text-white text-xs md:text-sm truncate">
+                                {delivery.quantity}x {delivery.modelName}
+                              </span>
+                              <span
+                                className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
+                                  isDelivered
+                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500'
+                                    : 'bg-amber-500/20 text-amber-300 border-amber-500 animate-pulse'
+                                }`}
+                              >
+                                {isDelivered ? 'DELIVERED' : 'DELAYED (+1Q)'}
+                              </span>
+                            </div>
+                            <div className="text-[11px] font-mono text-sky-300 mt-0.5">
+                              {delivery.airlineName}
+                            </div>
+                            <p className="text-xs text-slate-200 mt-1 leading-snug font-sans">
+                              {delivery.message}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

@@ -67,6 +67,18 @@ export function sanitizeLoadedState(loadedState: any): GameState {
     loadedState.activeEvents = [];
   }
 
+  // Ensure aircraftDeliveries exists
+  if (!Array.isArray(loadedState.aircraftDeliveries)) {
+    loadedState.aircraftDeliveries = [];
+  }
+
+  // Ensure pendingOrders exists on all airlines
+  loadedState.airlines.forEach((airline: any) => {
+    if (!Array.isArray(airline.pendingOrders)) {
+      airline.pendingOrders = [];
+    }
+  });
+
   return loadedState as GameState;
 }
 

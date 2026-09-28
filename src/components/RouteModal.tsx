@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { City, Airline, Route } from '../types/game';
 import { CITIES } from '../data/cities';
 import { AIRCRAFTS } from '../data/aircrafts';
-import { calculateDistance, calculateBaseFare, calculateRouteDemand, simulateRoutePerformance } from '../simulation/engine';
+import { calculateDistance, calculateBaseFare, calculateRouteInceptionCostK, calculateRouteDemand, simulateRoutePerformance } from '../simulation/engine';
 import { X, Plane, AlertCircle, AlertTriangle, CheckCircle2, ShoppingCart, ArrowRight, Compass } from 'lucide-react';
 import { AircraftVisual } from './AircraftVisual';
 import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
@@ -10,7 +10,7 @@ import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
 interface RouteModalProps {
   playerAirline: Airline;
   onClose: () => void;
-  onAddRoute: (newRoute: Route) => void;
+  onAddRoute: (newRoute: Route, inceptionCostK?: number) => void;
   onOpenAircraftShop?: () => void;
   initialOriginCity?: City | null;
   fuelPriceIndex: number;
@@ -203,8 +203,22 @@ export const RouteModal: React.FC<RouteModalProps> = ({
     currentQuarter,
   ]);
 
+  const inceptionCostK = useMemo(() => {
+    if (!originCity || !destCity) return 0;
+    return calculateRouteInceptionCostK(originCity, destCity, distance);
+  }, [originCity, destCity, distance]);
+
+  const canAffordInception = playerAirline.cashK >= inceptionCostK;
+
   const handleLaunch = () => {
-    if (selectedInstances.length === 0 || selectedModels.length === 0 || !isRangeValid || maxWeeklyFlights <= 0) return;
+    if (
+      selectedInstances.length === 0 ||
+      selectedModels.length === 0 ||
+      !isRangeValid ||
+      maxWeeklyFlights <= 0 ||
+      !canAffordInception
+    )
+      return;
 
     const basePax = estimate?.passengers ?? Math.round(totalFleetSeats * weeklyFrequency * 12 * 0.82);
     const baseCap = estimate?.capacity ?? totalFleetSeats * weeklyFrequency * 12;
@@ -233,7 +247,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
       },
     };
 
-    onAddRoute(newRoute);
+    onAddRoute(newRoute, inceptionCostK);
     onClose();
   };
 
@@ -621,18 +635,28 @@ export const RouteModal: React.FC<RouteModalProps> = ({
 
         {/* Footer Actions */}
         <div className="bg-slate-900 border-t border-slate-700 px-6 py-4 flex justify-between items-center gap-3 shrink-0">
-          <div className="text-xs text-slate-400 font-mono">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs font-mono">
             {capableFleet.length > 0 ? (
               <span className="text-emerald-400 font-bold flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                Airframe verified for {distance.toLocaleString()} km non-stop service
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Verified for {distance.toLocaleString()} km service</span>
               </span>
             ) : (
               <span className="text-rose-400 font-bold flex items-center gap-1.5">
-                <AlertCircle className="w-4 h-4 text-rose-400" />
-                Select or acquire a certified airframe to establish this route
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>Select certified airframe to establish route</span>
               </span>
             )}
+
+            <div className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 flex items-center gap-2">
+              <span className="text-slate-400">ค่าจัดตั้งสถานี (Inception Fee):</span>
+              <strong className={canAffordInception ? 'text-amber-400 font-bold' : 'text-rose-400 font-bold'}>
+                ${inceptionCostK.toLocaleString()}K
+              </strong>
+              {!canAffordInception && (
+                <span className="text-[10px] text-rose-400 font-bold">(เงินทุนไม่พอ)</span>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -643,12 +667,13 @@ export const RouteModal: React.FC<RouteModalProps> = ({
               Cancel
             </button>
             <button
-              disabled={selectedInstanceIds.length === 0 || !isRangeValid || maxWeeklyFlights <= 0 || capableFleet.length === 0}
+              disabled={selectedInstanceIds.length === 0 || !isRangeValid || maxWeeklyFlights <= 0 || capableFleet.length === 0 || !canAffordInception}
               onClick={handleLaunch}
+              title={!canAffordInception ? `Requires $${inceptionCostK.toLocaleString()}K to establish station` : 'Launch commercial route'}
               className="px-6 py-2.5 bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 hover:from-blue-500 hover:to-sky-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-xl font-black text-sm md:text-base shadow-xl transition border border-sky-400 cursor-pointer flex items-center gap-2"
             >
               <Plane className="w-4 h-4" />
-              <span>Launch Route</span>
+              <span>Launch Route (${inceptionCostK.toLocaleString()}K)</span>
             </button>
           </div>
         </div>

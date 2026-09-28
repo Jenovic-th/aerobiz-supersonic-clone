@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GameState, City, Route, AircraftModel, BusinessVenture, NegotiatorMission } from './types/game';
+import { GameState, City, Route, AircraftModel, BusinessVenture, NegotiatorMission, PendingAircraftOrder } from './types/game';
 import { advanceQuarter } from './simulation/engine';
 import { createDefaultNegotiators } from './data/negotiators';
 import { saveGameToLocalStorage, exportSaveFile, importSaveFile } from './utils/saveLoad';
@@ -47,7 +47,12 @@ export function App() {
   const playerAirline = gameState.airlines.find((a) => a.isHuman)!;
 
   // Add new route
-  const handleAddRoute = (newRoute: Route) => {
+  const handleAddRoute = (newRoute: Route, inceptionCostK: number = 0) => {
+    if (playerAirline.cashK < inceptionCostK) {
+      showToast(`Cannot inaugurate route: Insufficient treasury ($${inceptionCostK.toLocaleString()}K required)`);
+      return;
+    }
+
     // Mark aircraft as assigned
     const updatedFleet = playerAirline.fleet.map((plane) => {
       if (newRoute.assignedAircraftIds.includes(plane.instanceId)) {
@@ -58,7 +63,11 @@ export function App() {
 
     const updatedAirlines = gameState.airlines.map((a) => {
       if (a.id === playerAirline.id) {
-        return { ...a, fleet: updatedFleet };
+        return {
+          ...a,
+          cashK: a.cashK - inceptionCostK,
+          fleet: updatedFleet,
+        };
       }
       return a;
     });
@@ -68,6 +77,12 @@ export function App() {
       airlines: updatedAirlines,
       routes: [...gameState.routes, newRoute],
     });
+
+    if (inceptionCostK > 0) {
+      showToast(
+        `Commercial route inaugurated! Paid $${inceptionCostK.toLocaleString()}K station setup fee.`
+      );
+    }
   };
 
   // Update existing route (pause/resume or operational modification)
@@ -132,28 +147,43 @@ export function App() {
     });
   };
 
-  // Buy new aircraft (supports promotional discount deals and batch quantity)
+  // Order new aircraft (1 quarter lead time factory delivery with 5% delay risk)
   const handleBuyAircraft = (model: AircraftModel, effectivePriceK?: number, quantity: number = 1) => {
     const unitPriceK = effectivePriceK !== undefined ? effectivePriceK : model.priceK;
     const count = Math.max(1, Math.floor(quantity));
     const totalCostK = unitPriceK * count;
-    if (playerAirline.cashK < totalCostK) return;
+    if (playerAirline.cashK < totalCostK) {
+      showToast(`Cannot order aircraft: Insufficient treasury ($${totalCostK.toLocaleString()}K required)`);
+      return;
+    }
 
-    const newInstances = Array.from({ length: count }, (_, idx) => ({
-      instanceId: `PLANE_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 4)}`,
+    const delivYear = gameState.currentQuarter === 4 ? gameState.currentYear + 1 : gameState.currentYear;
+    const delivQuarter = gameState.currentQuarter === 4 ? 1 : ((gameState.currentQuarter + 1) as 1 | 2 | 3 | 4);
+
+    const newOrder: PendingAircraftOrder = {
+      orderId: `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      airlineId: playerAirline.id,
       modelId: model.id,
-      ageYears: 0,
-      purchaseYear: gameState.currentYear,
-      conditionPct: 100,
-      assignedRouteId: null,
-    }));
+      modelName: model.model,
+      manufacturer: model.manufacturer,
+      quantity: count,
+      unitPriceK,
+      totalCostK,
+      orderYear: gameState.currentYear,
+      orderQuarter: gameState.currentQuarter,
+      deliveryYear: delivYear,
+      deliveryQuarter: delivQuarter,
+      status: 'PENDING',
+    };
+
+    const currentPending = playerAirline.pendingOrders || [];
 
     const updatedAirlines = gameState.airlines.map((a) => {
       if (a.id === playerAirline.id) {
         return {
           ...a,
           cashK: a.cashK - totalCostK,
-          fleet: [...a.fleet, ...newInstances],
+          pendingOrders: [...currentPending, newOrder],
         };
       }
       return a;
@@ -163,6 +193,10 @@ export function App() {
       ...gameState,
       airlines: updatedAirlines,
     });
+
+    showToast(
+      `Placed order for ${count}x ${model.model}! Scheduled factory delivery: ${delivYear} Q${delivQuarter}.`
+    );
   };
 
   // Sell idle aircraft
@@ -224,6 +258,10 @@ export function App() {
       ...gameState,
       airlines: updatedAirlines,
     });
+
+    showToast(
+      `Dispatched diplomatic envoy to ${mission.targetCityName}! (Treaty fee: $${mission.costK.toLocaleString()}K)`
+    );
   };
 
   // Instant HQ Action by David Sterling: Surrender unused slots
@@ -440,6 +478,7 @@ export function App() {
           onBuyAircraft={handleBuyAircraft}
           onSellAircraft={handleSellAircraft}
           currentYear={gameState.currentYear}
+          currentQuarter={gameState.currentQuarter}
           currentEra={gameState.era}
           activeDiscountDeal={gameState.activeDiscountDeal}
         />

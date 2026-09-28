@@ -1,9 +1,9 @@
-import { Airline, Route, GameState, AircraftModel, City, BusinessVenture, AircraftInstance } from '../types/game';
+import { Airline, Route, GameState, AircraftModel, City, BusinessVenture, AircraftInstance, PendingAircraftOrder } from '../types/game';
 import { CITIES } from '../data/cities';
 import { AIRCRAFTS } from '../data/aircrafts';
 import { createDefaultNegotiators, calculateNegotiationCostK, calculateNegotiationQuarters } from '../data/negotiators';
 import { getCityVisual } from '../data/cityVisuals';
-import { calculateDistance, calculateRouteDemand } from './engine';
+import { calculateDistance, calculateRouteDemand, calculateRouteInceptionCostK } from './engine';
 
 export interface AIRivalProfile {
   id: string;
@@ -322,6 +322,7 @@ export function simulateAITurn(
   let currentCash = airline.cashK;
   const currentSlots = { ...airline.slots };
   const currentFleet: AircraftInstance[] = airline.fleet.map((f) => ({ ...f }));
+  const currentPendingOrders: PendingAircraftOrder[] = [...(airline.pendingOrders || [])];
   const currentBusinesses = [...airline.businesses];
   const currentHubs = [...airline.hubCityIds];
   let negotiators = [...(airline.negotiators || createDefaultNegotiators())];
@@ -993,22 +994,34 @@ export function simulateAITurn(
 
       currentCash -= purchasePrice;
 
-      const newPlane: AircraftInstance = {
-        instanceId: `PLANE_${airline.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      const delivYear = gameState.currentQuarter === 4 ? gameState.currentYear + 1 : gameState.currentYear;
+      const delivQuarter = gameState.currentQuarter === 4 ? 1 : ((gameState.currentQuarter + 1) as 1 | 2 | 3 | 4);
+      const pendingOrder: PendingAircraftOrder = {
+        orderId: `ORDER_${airline.id}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        airlineId: airline.id,
         modelId: chosenModel.id,
-        ageYears: 0,
-        assignedRouteId: null,
+        modelName: chosenModel.model,
+        manufacturer: chosenModel.manufacturer,
+        quantity: 1,
+        unitPriceK: purchasePrice,
+        totalCostK: purchasePrice,
+        orderYear: gameState.currentYear,
+        orderQuarter: gameState.currentQuarter,
+        deliveryYear: delivYear,
+        deliveryQuarter: delivQuarter,
+        status: 'PENDING',
       };
 
-      currentFleet.push(newPlane);
-      idleAircraft.push(newPlane);
+      currentPendingOrders.push(pendingOrder);
 
       if (hasDiscount && activeDeal) {
         aiActions.push(
-          `✈️ Seized ${activeDeal.discountPct}% OFF promotion to purchase 1x ${chosenModel.model} ($${purchasePrice.toLocaleString()}K)`
+          `✈️ Seized ${activeDeal.discountPct}% OFF deal to order 1x ${chosenModel.model} ($${purchasePrice.toLocaleString()}K from ${chosenModel.manufacturer} - Delivery: ${delivYear} Q${delivQuarter})`
         );
       } else {
-        aiActions.push(`✈️ Purchased 1x ${chosenModel.model} ($${purchasePrice.toLocaleString()}K)`);
+        aiActions.push(
+          `✈️ Placed order for 1x ${chosenModel.model} ($${purchasePrice.toLocaleString()}K from ${chosenModel.manufacturer} - Delivery: ${delivYear} Q${delivQuarter})`
+        );
       }
     }
   }
@@ -1130,6 +1143,12 @@ export function simulateAITurn(
           ? 0.8
           : 1.0;
 
+      const inceptionCostK = calculateRouteInceptionCostK(bestPair.origin, bestPair.dest, bestPair.distance);
+      if (currentCash < safetyReserveK + inceptionCostK) {
+        break; // Conserve cash if cannot afford route inception setup fees
+      }
+      currentCash -= inceptionCostK;
+
       const newRoute: Route = {
         id: routeId,
         airlineId: airline.id,
@@ -1148,7 +1167,7 @@ export function simulateAITurn(
       allAirlineRoutes.push(newRoute);
 
       aiActions.push(
-        `🌐 Opened flight route ${bestPair.origin.name} ➔ ${bestPair.dest.name} (${desiredFlights} flt/wk with ${model.model})`
+        `🌐 Opened flight route ${bestPair.origin.name} ➔ ${bestPair.dest.name} (${desiredFlights} flt/wk with ${model.model} - Station inception fee: $${inceptionCostK.toLocaleString()}K)`
       );
     }
   }
@@ -1223,6 +1242,7 @@ export function simulateAITurn(
     cashK: currentCash,
     slots: currentSlots,
     fleet: currentFleet,
+    pendingOrders: currentPendingOrders,
     businesses: currentBusinesses,
     hubCityIds: currentHubs,
     negotiators,

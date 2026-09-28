@@ -171,6 +171,33 @@ export interface DiplomaticReport {
   message: string;
 }
 
+export interface PendingAircraftOrder {
+  orderId: string;
+  airlineId: string;
+  modelId: string;
+  modelName: string;
+  manufacturer: Manufacturer;
+  quantity: number;
+  unitPriceK: number;
+  totalCostK: number;
+  orderYear: number;
+  orderQuarter: 1 | 2 | 3 | 4;
+  deliveryYear: number;
+  deliveryQuarter: 1 | 2 | 3 | 4;
+  status: 'PENDING' | 'DELAYED' | 'DELIVERED';
+  delayReason?: string;
+}
+
+export interface AircraftDeliveryReport {
+  orderId: string;
+  airlineId: string;
+  airlineName: string;
+  modelName: string;
+  quantity: number;
+  status: 'DELIVERED' | 'DELAYED';
+  message: string;
+}
+
 export interface Airline {
   id: string;
   name: string;
@@ -181,6 +208,7 @@ export interface Airline {
   cashK: number;
   slots: Record<string, number>; // cityId -> count of slots owned
   fleet: AircraftInstance[];
+  pendingOrders?: PendingAircraftOrder[]; // Factory orders awaiting delivery in next quarter
   businesses: BusinessVenture[];
   negotiators: Negotiator[];
   ceoName?: string;
@@ -269,5 +297,6 @@ export interface GameState {
     destCityName: string;
     incident: RouteIncident;
   }[];
+  aircraftDeliveries?: AircraftDeliveryReport[]; // Aircraft delivered or delayed this quarter
 }
 

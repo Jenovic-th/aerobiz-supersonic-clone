@@ -1,4 +1,4 @@
-import { City, AircraftModel, AircraftInstance, Route, RouteIncident, Airline, WorldEvent, GameState, DiplomaticReport, BusinessVenture, AirlineStanding, AircraftDiscountDeal } from '../types/game';
+import { City, AircraftModel, AircraftInstance, Route, RouteIncident, Airline, WorldEvent, GameState, DiplomaticReport, BusinessVenture, AirlineStanding, AircraftDiscountDeal, PendingAircraftOrder, AircraftDeliveryReport } from '../types/game';
 import { CITIES } from '../data/cities';
 import { AIRCRAFTS } from '../data/aircrafts';
 import { HISTORICAL_EVENTS } from '../data/events';
@@ -28,6 +28,21 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
  */
 export function calculateBaseFare(distanceKm: number): number {
   return Math.round(distanceKm * 0.11 + 65);
+}
+
+/**
+ * Calculates Route Inception & Station Establishment Cost in $K
+ * Realistic breakdown: Station setup + bilateral licensing + ground handling contracts + launch marketing
+ */
+export function calculateRouteInceptionCostK(
+  origin: City,
+  dest: City,
+  distanceKm: number
+): number {
+  const baseStationCostK = 1200; // Base airport counter, ground handling contracts & station license
+  const distanceFactorK = Math.round((distanceKm / 1000) * 150); // $150K per 1,000 km for crew dispatch & long-haul slots
+  const destScaleK = Math.round(dest.population * 25 + dest.businessIndex * 12); // Major hub terminal fees
+  return Math.round(baseStationCostK + distanceFactorK + destScaleK);
 }
 
 /**
@@ -662,6 +677,7 @@ export function advanceQuarter(currentState: GameState): GameState {
   let humanRevenue = 0;
   let humanPassengers = 0;
   const diplomaticReports: DiplomaticReport[] = [];
+  const allAircraftDeliveries: AircraftDeliveryReport[] = [];
   const isNewYear = nextQuarter === 1 && nextYear !== currentState.currentYear;
 
   const updatedAirlines: Airline[] = intermediateAirlines.map((airline) => {
@@ -841,9 +857,76 @@ export function advanceQuarter(currentState: GameState): GameState {
       return neg;
     });
 
+    // Process Factory Aircraft Orders & Deliveries (Next-Quarter lead time with 5% delay risk)
+    const pendingOrders = airline.pendingOrders || [];
+    const remainingPendingOrders: PendingAircraftOrder[] = [];
+    const newlyDeliveredPlanes: AircraftInstance[] = [];
+
+    for (const order of pendingOrders) {
+      const isDue =
+        order.deliveryYear < nextYear ||
+        (order.deliveryYear === nextYear && order.deliveryQuarter <= nextQuarter);
+
+      if (isDue) {
+        // 5% chance of manufacturer delay (only roll once if not already delayed)
+        const isDelayed = Math.random() < 0.05;
+
+        if (isDelayed && order.status !== 'DELAYED') {
+          const nextDelivQ = order.deliveryQuarter === 4 ? 1 : ((order.deliveryQuarter + 1) as 1 | 2 | 3 | 4);
+          const nextDelivY = order.deliveryQuarter === 4 ? order.deliveryYear + 1 : order.deliveryYear;
+          const delayReason = `${order.manufacturer} Factory Notice: Supply chain bottlenecks and avionics quality inspections have postponed delivery of ${order.quantity}x ${order.modelName} to ${nextDelivY} Q${nextDelivQ}!`;
+
+          remainingPendingOrders.push({
+            ...order,
+            deliveryYear: nextDelivY,
+            deliveryQuarter: nextDelivQ,
+            status: 'DELAYED',
+            delayReason,
+          });
+
+          allAircraftDeliveries.push({
+            orderId: order.orderId,
+            airlineId: airline.id,
+            airlineName: airline.name,
+            modelName: order.modelName,
+            quantity: order.quantity,
+            status: 'DELAYED',
+            message: delayReason,
+          });
+        } else {
+          // Delivered!
+          for (let i = 0; i < order.quantity; i++) {
+            newlyDeliveredPlanes.push({
+              instanceId: `PLANE_${airline.id}_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 4)}`,
+              modelId: order.modelId,
+              ageYears: 0,
+              purchaseYear: nextYear,
+              conditionPct: 100,
+              assignedRouteId: null, // Ready in hangar
+            });
+          }
+
+          allAircraftDeliveries.push({
+            orderId: order.orderId,
+            airlineId: airline.id,
+            airlineName: airline.name,
+            modelName: order.modelName,
+            quantity: order.quantity,
+            status: 'DELIVERED',
+            message: `Factory Delivery Complete! ${order.quantity}x ${order.modelName} delivered from ${order.manufacturer} to ${airline.name}'s fleet hangar ready for service!`,
+          });
+        }
+      } else {
+        remainingPendingOrders.push(order);
+      }
+    }
+
+    const finalFleet = [...updatedFleet, ...newlyDeliveredPlanes];
+
     return {
       ...airline,
-      fleet: updatedFleet,
+      fleet: finalFleet,
+      pendingOrders: remainingPendingOrders,
       cashK: newCash,
       slots: updatedSlots,
       businesses: updatedBusinesses,
@@ -933,6 +1016,12 @@ export function advanceQuarter(currentState: GameState): GameState {
   const eventTitles = [
     ...newActiveEvents.map((e) => e.title),
     ...airportExpansionNotices.map((n) => `🏗️ Airport Expansion: ${n.cityName} (+${n.addedSlots} slots)`),
+    ...allAircraftDeliveries
+      .filter((d) => d.status === 'DELIVERED')
+      .map((d) => `✈️ Factory Delivery: ${d.airlineName} received ${d.quantity}x ${d.modelName}`),
+    ...allAircraftDeliveries
+      .filter((d) => d.status === 'DELAYED')
+      .map((d) => `⚠️ Delivery Delay: ${d.airlineName}'s order of ${d.quantity}x ${d.modelName} postponed by manufacturer`),
   ];
 
   return {
@@ -945,6 +1034,7 @@ export function advanceQuarter(currentState: GameState): GameState {
     airlines: updatedAirlines,
     routes: updatedRoutes,
     diplomaticReports,
+    aircraftDeliveries: allAircraftDeliveries,
     airlineStandings: standings,
     isGameOver,
     winnerAirlineId,
