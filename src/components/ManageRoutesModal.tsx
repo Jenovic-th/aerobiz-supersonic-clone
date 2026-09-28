@@ -22,6 +22,10 @@ import {
   DollarSign,
   Plus,
   Minus,
+  BarChart3,
+  Users,
+  TrendingUp,
+  ArrowRightLeft,
 } from 'lucide-react';
 
 interface ManageRoutesModalProps {
@@ -112,6 +116,42 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
   // Active aircraft instance and model in editor
   const currentAssignedInstance = playerAirline.fleet.find((f) => f.instanceId === editAircraftInstanceId) || availableFleetForRoute[0];
   const currentAssignedModel = currentAssignedInstance ? aircraftMap.get(currentAssignedInstance.modelId) : null;
+
+  // Original aircraft model and historical stats prior to current modification session
+  const originalAssignedInstance = useMemo(() => {
+    if (!editingRoute) return null;
+    return playerAirline.fleet.find((f) => editingRoute.assignedAircraftIds.includes(f.instanceId)) || null;
+  }, [editingRoute, playerAirline.fleet]);
+
+  const originalAssignedModel = useMemo(() => {
+    if (!originalAssignedInstance) return null;
+    return aircraftMap.get(originalAssignedInstance.modelId) || null;
+  }, [originalAssignedInstance, aircraftMap]);
+
+  const originalStats = editingRoute?.lastQuarterStats;
+  const originalCapacityPerFlight = originalAssignedModel?.capacity || 160;
+  const originalLoadFactorPct = originalStats?.loadFactorPct ?? 80;
+  const originalPaxPerFlight = useMemo(() => {
+    if (originalStats?.actualFlightsCompleted && originalStats.actualFlightsCompleted > 0) {
+      return Math.round(originalStats.passengers / originalStats.actualFlightsCompleted);
+    }
+    if (originalStats?.passengers && editingRoute?.weeklyFrequency) {
+      return Math.round(originalStats.passengers / (editingRoute.weeklyFrequency * 12));
+    }
+    return Math.round(originalCapacityPerFlight * (originalLoadFactorPct / 100));
+  }, [originalStats, editingRoute, originalCapacityPerFlight, originalLoadFactorPct]);
+
+  // Capacity difference between original model and currently selected model
+  const capDiffTotal = (currentAssignedModel?.capacity || 0) - originalCapacityPerFlight;
+  const capDiffPctTotal = originalCapacityPerFlight > 0
+    ? Math.round((capDiffTotal / originalCapacityPerFlight) * 100)
+    : 0;
+
+  // Baseline load factor percentage if the exact same previous passenger volume flies on the new airframe
+  const baselineLoadFactorPct = useMemo(() => {
+    if (!currentAssignedModel || currentAssignedModel.capacity === 0) return 0;
+    return Math.round((originalPaxPerFlight / currentAssignedModel.capacity) * 100);
+  }, [originalPaxPerFlight, currentAssignedModel]);
 
   // Real-time Simulation Preview
   const previewSimulation = useMemo(() => {
@@ -366,7 +406,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
 
       {/* ROUTE MODIFICATION MODAL */}
       {editingRoute && editingOrigin && editingDest && currentAssignedModel && (
-        <div className="fixed inset-0 z-60 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[60] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-150">
           <div className="bg-slate-900 border-2 border-sky-500/90 rounded-2xl shadow-[0_0_60px_rgba(14,165,233,0.35)] w-full max-w-3xl overflow-hidden text-slate-100 flex flex-col animate-in zoom-in-95 duration-150 max-h-[94vh]">
             {/* Modal Header */}
             <div className="shrink-0 bg-gradient-to-r from-sky-950 via-slate-900 to-indigo-950 px-5 py-3.5 border-b border-sky-800/80 flex items-center justify-between">
@@ -433,7 +473,27 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                         <div className="min-w-0 flex-1">
                           <div className="font-mono font-black text-sm text-white truncate flex items-center justify-between">
                             <span>{model.model}</span>
-                            {isSelected && <span className="text-[10px] text-sky-400 bg-sky-900/50 px-1.5 py-0.2 rounded border border-sky-500">ASSIGNED</span>}
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {model.capacity !== originalCapacityPerFlight && (
+                                <span
+                                  className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${
+                                    model.capacity > originalCapacityPerFlight
+                                      ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/60'
+                                      : 'bg-amber-950/80 text-amber-300 border-amber-500/60'
+                                  }`}
+                                >
+                                  {model.capacity > originalCapacityPerFlight
+                                    ? `+${model.capacity - originalCapacityPerFlight}`
+                                    : model.capacity - originalCapacityPerFlight}{' '}
+                                  seats
+                                </span>
+                              )}
+                              {isSelected && (
+                                <span className="text-[10px] text-sky-400 bg-sky-900/50 px-1.5 py-0.2 rounded border border-sky-500">
+                                  ASSIGNED
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="text-[11px] font-mono text-slate-300 mt-0.5 flex items-center gap-2">
                             <span>{model.capacity} Seats</span>
@@ -442,11 +502,248 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                             <span>•</span>
                             <span className="text-emerald-400">{cond}% Health</span>
                           </div>
+
+                          {/* Baseline passenger utilization on this candidate card */}
+                          <div className="text-[10px] font-mono mt-1 pt-1 border-t border-slate-800/80 flex items-center justify-between text-slate-400">
+                            <span>
+                              สัดส่วนผู้โดยสารเดิม ({originalPaxPerFlight} คน):{' '}
+                              <strong
+                                className={
+                                  Math.round((originalPaxPerFlight / model.capacity) * 100) > 100
+                                    ? 'text-rose-400 font-bold'
+                                    : Math.round((originalPaxPerFlight / model.capacity) * 100) >= 70
+                                    ? 'text-emerald-300 font-bold'
+                                    : 'text-indigo-300 font-bold'
+                                }
+                              >
+                                {Math.round((originalPaxPerFlight / model.capacity) * 100)}%
+                              </strong>
+                              {model.capacity !== originalCapacityPerFlight && (
+                                <span className="text-slate-500 ml-1">
+                                  (จากเดิม {originalLoadFactorPct}%)
+                                </span>
+                              )}
+                            </span>
+                            {Math.round((originalPaxPerFlight / model.capacity) * 100) > 100 && (
+                              <span className="text-[9px] text-rose-400 font-bold">
+                                ⚠️ ล้น {originalPaxPerFlight - model.capacity} ที่
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
+
+                {/* 1.1 Dedicated Capacity & Passenger Utilization Analysis Card */}
+                {originalAssignedModel && currentAssignedModel && (
+                  <div className="bg-slate-900/90 border border-indigo-500/50 rounded-xl p-4 space-y-3 font-mono shadow-lg mt-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
+                      <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-indigo-400" />
+                        <span>CAPACITY & PASSENGER UTILIZATION ANALYSIS (วิเคราะห์สัดส่วนที่นั่งและผู้โดยสาร):</span>
+                      </span>
+                      <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                        <ArrowRightLeft className="w-3 h-3 text-slate-500" />
+                        <span>
+                          {originalAssignedModel.model} ({originalAssignedModel.capacity} seats) ➔ {currentAssignedModel.model} ({currentAssignedModel.capacity} seats)
+                        </span>
+                      </span>
+                    </div>
+
+                    {/* 3 Metric Comparison Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      {/* Card 1: Previous Baseline */}
+                      <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                        <div className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5 mb-1">
+                          <span className="w-2 h-2 rounded-full bg-slate-500" />
+                          <span>เครื่องบินเดิม (Previous Airframe)</span>
+                        </div>
+                        <div className="font-bold text-slate-200 text-xs truncate">
+                          {originalAssignedModel.model}
+                        </div>
+                        <div className="text-[11px] text-slate-300 mt-1 flex items-center justify-between">
+                          <span>ความจุที่นั่งเดิม:</span>
+                          <strong className="text-white">{originalAssignedModel.capacity} ที่นั่ง</strong>
+                        </div>
+                        <div className="text-[11px] text-slate-300 flex items-center justify-between">
+                          <span>ผู้โดยสารเฉลี่ยเดิม:</span>
+                          <strong className="text-sky-300">{originalPaxPerFlight} คน/เที่ยว</strong>
+                        </div>
+                        <div className="text-[11px] text-slate-300 flex items-center justify-between pt-1 border-t border-slate-800/80 mt-1">
+                          <span>อัตราบรรทุกเดิม (Prev LF):</span>
+                          <strong className="text-amber-300 font-bold">{originalLoadFactorPct}%</strong>
+                        </div>
+                      </div>
+
+                      {/* Card 2: Baseline Conversion on New Airframe */}
+                      <div className="bg-slate-950 p-2.5 rounded-lg border border-indigo-500/50 shadow">
+                        <div className="text-[10px] text-indigo-300 uppercase font-bold flex items-center gap-1.5 mb-1">
+                          <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+                          <span>สัดส่วนผู้โดยสารเดิมเทียบกับลำใหม่</span>
+                        </div>
+                        <div className="font-bold text-indigo-200 text-xs truncate">
+                          {currentAssignedModel.model}
+                        </div>
+                        <div className="text-[11px] text-slate-300 mt-1 flex items-center justify-between">
+                          <span>ความจุที่นั่งใหม่:</span>
+                          <strong className="text-white">{currentAssignedModel.capacity} ที่นั่ง</strong>
+                        </div>
+                        <div className="text-[11px] text-slate-300 flex items-center justify-between">
+                          <span>ส่วนต่างความจุ:</span>
+                          <strong className={capDiffTotal >= 0 ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                            {capDiffTotal >= 0 ? `+${capDiffTotal}` : capDiffTotal} ที่ ({capDiffPctTotal > 0 ? `+${capDiffPctTotal}%` : `${capDiffPctTotal}%`})
+                          </strong>
+                        </div>
+                        <div className="text-[11px] text-slate-300 flex items-center justify-between pt-1 border-t border-slate-800/80 mt-1">
+                          <span>สัดส่วนผู้โดยสารเดิม (Baseline LF):</span>
+                          <strong
+                            className={`text-sm font-black ${
+                              baselineLoadFactorPct > 100
+                                ? 'text-rose-400'
+                                : baselineLoadFactorPct >= 70
+                                ? 'text-emerald-400'
+                                : 'text-indigo-300'
+                            }`}
+                          >
+                            {baselineLoadFactorPct}%
+                          </strong>
+                        </div>
+                      </div>
+
+                      {/* Card 3: Projected Market Fill */}
+                      <div className="bg-slate-950 p-2.5 rounded-lg border border-sky-500/50 shadow">
+                        <div className="text-[10px] text-sky-300 uppercase font-bold flex items-center gap-1.5 mb-1">
+                          <span className="w-2 h-2 rounded-full bg-sky-400" />
+                          <span>ประมาณการบินจริง (Market Demand)</span>
+                        </div>
+                        <div className="font-bold text-sky-200 text-xs truncate">
+                          ไตรมาสถัดไป (Projected Flight)
+                        </div>
+                        <div className="text-[11px] text-slate-300 mt-1 flex items-center justify-between">
+                          <span>ผู้โดยสารคาดการณ์:</span>
+                          <strong className="text-sky-300 font-bold">
+                            {previewSimulation
+                              ? Math.round(previewSimulation.stats.passengers / (editFrequency * 12)).toLocaleString()
+                              : 0}{' '}
+                            คน/เที่ยว
+                          </strong>
+                        </div>
+                        <div className="text-[11px] text-slate-300 flex items-center justify-between">
+                          <span>กำไรสุทธิคาดการณ์:</span>
+                          <strong
+                            className={
+                              previewSimulation && previewSimulation.stats.profitK >= 0
+                                ? 'text-emerald-400 font-bold'
+                                : 'text-rose-400 font-bold'
+                            }
+                          >
+                            {previewSimulation
+                              ? (previewSimulation.stats.profitK >= 0
+                                  ? `+$${previewSimulation.stats.profitK.toLocaleString()}K`
+                                  : `-$${Math.abs(previewSimulation.stats.profitK).toLocaleString()}K`)
+                              : '-'}
+                          </strong>
+                        </div>
+                        <div className="text-[11px] text-slate-300 flex items-center justify-between pt-1 border-t border-slate-800/80 mt-1">
+                          <span>อัตราบรรทุกจริงคาดการณ์ (Proj. LF):</span>
+                          <strong className="text-emerald-400 font-black text-sm">
+                            {previewSimulation ? previewSimulation.stats.loadFactorPct : 0}%
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Visual Multi-Segment Bar */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex items-center justify-between text-[11px] text-slate-300">
+                        <span>แผนภาพสัดส่วนที่นั่ง (Visual Capacity Fill):</span>
+                        <span className="text-slate-400 text-[10px]">
+                          100% = {currentAssignedModel.capacity} ที่นั่ง
+                        </span>
+                      </div>
+
+                      <div className="w-full bg-slate-950 h-5 rounded-lg overflow-hidden border border-slate-800 flex relative">
+                        {/* Segment 1: Baseline Pax Fill */}
+                        <div
+                          className="bg-indigo-600 h-full flex items-center justify-center text-[10px] text-white font-black transition-all"
+                          style={{ width: `${Math.min(100, baselineLoadFactorPct)}%` }}
+                        >
+                          {baselineLoadFactorPct >= 18 && `ผู้โดยสารเดิม ${baselineLoadFactorPct}%`}
+                        </div>
+
+                        {/* Segment 2: Projected Growth from Market Demand (if projected > baseline) */}
+                        {previewSimulation && previewSimulation.stats.loadFactorPct > baselineLoadFactorPct && (
+                          <div
+                            className="bg-emerald-500 h-full flex items-center justify-center text-[10px] text-slate-950 font-black transition-all"
+                            style={{
+                              width: `${Math.min(
+                                100 - baselineLoadFactorPct,
+                                previewSimulation.stats.loadFactorPct - baselineLoadFactorPct
+                              )}%`,
+                            }}
+                          >
+                            {previewSimulation.stats.loadFactorPct - baselineLoadFactorPct >= 14 &&
+                              `+${previewSimulation.stats.loadFactorPct - baselineLoadFactorPct}% ตลาดโต`}
+                          </div>
+                        )}
+
+                        {/* Empty Seats */}
+                        <div className="flex-1 bg-slate-900/60 flex items-center justify-end px-2 text-[10px] text-slate-500">
+                          {100 - (previewSimulation ? previewSimulation.stats.loadFactorPct : baselineLoadFactorPct) >
+                            10 && (
+                            <span>
+                              ที่ว่างเหลือ{' '}
+                              {Math.max(
+                                0,
+                                currentAssignedModel.capacity -
+                                  (previewSimulation
+                                    ? Math.round(previewSimulation.stats.passengers / (editFrequency * 12))
+                                    : originalPaxPerFlight)
+                              )}{' '}
+                              ที่นั่ง
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Legend Explanations */}
+                      <div className="flex flex-wrap items-center gap-4 text-[10px] text-slate-400 pt-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-sm bg-indigo-600 inline-block" />
+                          <span>
+                            ผู้โดยสารเดิม ({originalPaxPerFlight} คน คิดเป็น <strong>{baselineLoadFactorPct}%</strong>{' '}
+                            ของลำนี้)
+                          </span>
+                        </div>
+                        {previewSimulation && previewSimulation.stats.loadFactorPct > baselineLoadFactorPct && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" />
+                            <span>
+                              อุปสงค์ในตลาดที่จะมาเติมเพิ่ม (ขยับเป็น{' '}
+                              <strong className="text-emerald-400">
+                                {previewSimulation.stats.loadFactorPct}%
+                              </strong>
+                              )
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-sm bg-slate-800 border border-slate-700 inline-block" />
+                          <span>
+                            ที่ว่างสำรองสำหรับรองรับการขยายตัว (
+                            {Math.max(
+                              0,
+                              100 - (previewSimulation ? previewSimulation.stats.loadFactorPct : baselineLoadFactorPct)
+                            )}
+                            %)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {availableFleetForRoute.length === 1 && (
                   <div className="text-[11px] font-mono text-slate-400 italic">
@@ -692,9 +989,14 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       <strong className="text-sm text-sky-300">
                         {previewSimulation.stats.passengers.toLocaleString()}
                       </strong>
-                      <span className="text-[10px] text-slate-500 block">
-                        ({previewSimulation.stats.loadFactorPct}% Load Factor)
+                      <span className="text-[10px] text-emerald-400 font-bold block">
+                        {previewSimulation.stats.loadFactorPct}% Load Factor
                       </span>
+                      {capDiffTotal !== 0 && (
+                        <span className="text-[9px] text-slate-400 block mt-0.5">
+                          (เดิม {originalLoadFactorPct}% ➔ สัดส่วนใหม่ {baselineLoadFactorPct}%)
+                        </span>
+                      )}
                     </div>
 
                     <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
@@ -801,7 +1103,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
 
       {/* TOAST FEEDBACK NOTIFICATION */}
       {toastMessage && (
-        <div className="fixed top-16 right-6 z-70 bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 border-2 border-emerald-400 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-200">
+        <div className="fixed top-16 right-6 z-[70] bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 border-2 border-emerald-400 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-200">
           <div className="p-1.5 rounded-full bg-emerald-500 text-slate-950">
             <CheckCircle2 className="w-4 h-4" />
           </div>
