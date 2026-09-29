@@ -16,11 +16,11 @@ $DesktopLocations = @(
     "$env:USERPROFILE\OneDrive\Desktop"
 ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique
 
-# 1. Clean up any existing / older versions of the game shortcut across all desktop paths
-$Patterns = @("*Airobiz*", "*Aerobiz*", "*Supersonic*")
+# 1. Clean up any existing / older versions of the game shortcut (.lnk or .url only) across all desktop paths
+$Patterns = @("*Airobiz*.lnk", "*Aerobiz*.lnk", "*Supersonic*.lnk", "*Airobiz*.url", "*Aerobiz*.url", "*Supersonic*.url")
 foreach ($dPath in $DesktopLocations) {
     foreach ($pattern in $Patterns) {
-        Get-ChildItem -Path $dPath -Filter $pattern -ErrorAction SilentlyContinue | ForEach-Object {
+        Get-ChildItem -Path $dPath -Filter $pattern -File -ErrorAction SilentlyContinue | ForEach-Object {
             Write-Host "Removing old shortcut: $($_.FullName)"
             Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue
         }

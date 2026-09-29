@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plane, PlusCircle, ShoppingCart, Building2, Handshake, BarChart3, ChevronRight } from 'lucide-react';
+import { Plane, PlusCircle, ShoppingCart, Building2, Handshake, BarChart3, ChevronRight, Users } from 'lucide-react';
 
 interface BottomToolbarProps {
   onOpenRouteModal: () => void;
@@ -8,6 +8,7 @@ interface BottomToolbarProps {
   onOpenBusinessModal: () => void;
   onOpenSlotModal: () => void;
   onOpenFinancialReport: () => void;
+  onOpenBoardMeeting: () => void;
   onAdvanceQuarter: () => void;
 }
 
@@ -18,6 +19,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
   onOpenBusinessModal,
   onOpenSlotModal,
   onOpenFinancialReport,
+  onOpenBoardMeeting,
   onAdvanceQuarter,
 }) => {
   return (
@@ -62,6 +64,14 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
         >
           <Building2 className="w-4 h-4 md:w-5 md:h-5 text-indigo-400" />
           <span>Hotels & Ventures</span>
+        </button>
+
+        <button
+          onClick={onOpenBoardMeeting}
+          className="flex items-center gap-2 px-3.5 py-2 bg-gradient-to-r from-amber-700/80 to-amber-800/80 hover:from-amber-600 hover:to-amber-700 text-amber-100 rounded-xl font-bold text-xs md:text-sm shadow border border-amber-500/50 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+        >
+          <Users className="w-4 h-4 md:w-5 md:h-5 text-amber-300" />
+          <span>Board Meeting</span>
         </button>
 
         <button

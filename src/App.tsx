@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GameState, City, Route, AircraftModel, BusinessVenture, NegotiatorMission, PendingAircraftOrder } from './types/game';
+import { GameState, City, Route, AircraftModel, BusinessVenture, NegotiatorMission, PendingAircraftOrder, RegionalCampaign } from './types/game';
 import { advanceQuarter } from './simulation/engine';
 import { createDefaultNegotiators } from './data/negotiators';
 import { saveGameToLocalStorage, exportSaveFile, importSaveFile } from './utils/saveLoad';
@@ -15,6 +15,8 @@ import { FinancialReportModal } from './components/FinancialReportModal';
 import { QuarterReportModal } from './components/QuarterReportModal';
 import { NewGameSetupModal } from './components/NewGameSetupModal';
 import { CityDetailModal } from './components/CityDetailModal';
+import { BoardMeetingModal } from './components/BoardMeetingModal';
+import { VictoryDefeatModal } from './components/VictoryDefeatModal';
 import { CheckCircle2 } from 'lucide-react';
 
 export function App() {
@@ -34,10 +36,21 @@ export function App() {
   const [showBusinessModal, setShowBusinessModal] = useState(false);
   const [showFinancialReport, setShowFinancialReport] = useState(false);
   const [showQuarterReport, setShowQuarterReport] = useState(false);
+  const [showBoardMeeting, setShowBoardMeeting] = useState(false);
+  const [showVictoryDefeatModal, setShowVictoryDefeatModal] = useState(false);
 
   // Selected city on map and inspecting city modal
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [inspectingCity, setInspectingCity] = useState<City | null>(null);
+  const [routeOriginCity, setRouteOriginCity] = useState<City | null>(null);
+  const [routeDestCity, setRouteDestCity] = useState<City | null>(null);
+
+  React.useEffect(() => {
+    (window as any).__gameState = gameState;
+    (window as any).__setGameState = setGameState;
+    (window as any).__setShowVictoryDefeatModal = setShowVictoryDefeatModal;
+    (window as any).__setShowQuarterReport = setShowQuarterReport;
+  }, [gameState]);
 
   // If no game initialized, show setup
   if (!gameState) {
@@ -366,13 +379,69 @@ export function App() {
     });
   };
 
+  // Launch regional advertising campaign
+  const handleLaunchCampaign = (campaign: RegionalCampaign) => {
+    if (playerAirline.cashK < campaign.costK) {
+      showToast(`Cannot launch campaign: Insufficient treasury ($${campaign.costK.toLocaleString()}K required)`);
+      return;
+    }
+
+    const existing = (playerAirline.activeCampaigns || []).filter((c) => c.regionId !== campaign.regionId);
+
+    const updatedAirlines = gameState.airlines.map((a) => {
+      if (a.id === playerAirline.id) {
+        return {
+          ...a,
+          cashK: a.cashK - campaign.costK,
+          activeCampaigns: [...existing, campaign],
+        };
+      }
+      return a;
+    });
+
+    setGameState({
+      ...gameState,
+      airlines: updatedAirlines,
+    });
+
+    showToast(`📢 Launched ${campaign.name} in ${campaign.regionName}! (Demand Boost: +${campaign.demandBoostPct}%)`);
+  };
+
+  // Sell business venture from BusinessModal
+  const handleSellBusiness = (ventureId: string, refundK: number) => {
+    const venture = playerAirline.businesses.find((b) => b.id === ventureId);
+    const updatedBusinesses = playerAirline.businesses.filter((b) => b.id !== ventureId);
+
+    const updatedAirlines = gameState.airlines.map((a) => {
+      if (a.id === playerAirline.id) {
+        return {
+          ...a,
+          cashK: a.cashK + refundK,
+          businesses: updatedBusinesses,
+        };
+      }
+      return a;
+    });
+
+    setGameState({
+      ...gameState,
+      airlines: updatedAirlines,
+    });
+
+    showToast(`🏢 Divested ${venture?.name || 'Venture'} for +$${refundK.toLocaleString()}K liquidation proceeds!`);
+  };
+
   // Advance to next quarter (Auto-saves to localStorage!)
   const handleAdvanceQuarter = () => {
     const nextState = advanceQuarter(gameState);
     setGameState(nextState);
     saveGameToLocalStorage(nextState, true);
     showToast('💾 Auto-saved (บันทึกอัตโนมัติ)');
-    setShowQuarterReport(true); // Open executive briefing modal!
+    if (nextState.isGameOver) {
+      setShowVictoryDefeatModal(true);
+    } else {
+      setShowQuarterReport(true); // Open executive briefing modal!
+    }
   };
 
   const handleQuickSave = () => {
@@ -434,12 +503,17 @@ export function App() {
 
       {/* 3. Executive Bottom Toolbar */}
       <BottomToolbar
-        onOpenRouteModal={() => setShowRouteModal(true)}
+        onOpenRouteModal={() => {
+          setRouteOriginCity(selectedCity);
+          setRouteDestCity(null);
+          setShowRouteModal(true);
+        }}
         onOpenFleetModal={() => setShowManageRoutes(true)}
         onOpenAircraftShop={() => setShowAircraftShop(true)}
         onOpenBusinessModal={() => setShowBusinessModal(true)}
         onOpenSlotModal={() => setShowSlotModal(true)}
         onOpenFinancialReport={() => setShowFinancialReport(true)}
+        onOpenBoardMeeting={() => setShowBoardMeeting(true)}
         onAdvanceQuarter={handleAdvanceQuarter}
       />
 
@@ -454,7 +528,8 @@ export function App() {
             setShowRouteModal(false);
             setShowAircraftShop(true);
           }}
-          initialOriginCity={selectedCity}
+          initialOriginCity={routeOriginCity}
+          initialDestCity={routeDestCity}
           fuelPriceIndex={gameState.fuelPriceIndex}
           currentYear={gameState.currentYear}
           currentQuarter={gameState.currentQuarter}
@@ -501,6 +576,8 @@ export function App() {
           playerAirline={playerAirline}
           onClose={() => setShowBusinessModal(false)}
           onBuyBusiness={handleBuyBusiness}
+          onSellBusiness={handleSellBusiness}
+          onLaunchCampaign={handleLaunchCampaign}
         />
       )}
 
@@ -516,7 +593,12 @@ export function App() {
         <QuarterReportModal
           gameState={gameState}
           playerAirline={playerAirline}
-          onClose={() => setShowQuarterReport(false)}
+          onClose={() => {
+            setShowQuarterReport(false);
+            if (gameState.isGameOver) {
+              setShowVictoryDefeatModal(true);
+            }
+          }}
           onOpenAircraftShop={() => setShowAircraftShop(true)}
           onContinueSandbox={() => {
             setGameState({
@@ -524,6 +606,54 @@ export function App() {
               gameMode: 'SANDBOX_INFINITE',
               isGameOver: false,
             });
+          }}
+        />
+      )}
+
+      {/* Board of Directors Meeting Modal */}
+      {showBoardMeeting && (
+        <BoardMeetingModal
+          gameState={gameState}
+          playerAirline={playerAirline}
+          onClose={() => setShowBoardMeeting(false)}
+          onOpenRouteModal={(originCity, destCity) => {
+            setShowBoardMeeting(false);
+            setRouteOriginCity(originCity || null);
+            setRouteDestCity(destCity || null);
+            setShowRouteModal(true);
+          }}
+          onOpenManageRoutes={() => {
+            setShowBoardMeeting(false);
+            setShowManageRoutes(true);
+          }}
+          onOpenAircraftShop={() => {
+            setShowBoardMeeting(false);
+            setShowAircraftShop(true);
+          }}
+          onOpenBusinessModal={() => {
+            setShowBoardMeeting(false);
+            setShowBusinessModal(true);
+          }}
+        />
+      )}
+
+      {/* Victory / Defeat Modal */}
+      {showVictoryDefeatModal && (
+        <VictoryDefeatModal
+          gameState={gameState}
+          playerAirline={playerAirline}
+          onClose={() => setShowVictoryDefeatModal(false)}
+          onContinueSandbox={() => {
+            setGameState({
+              ...gameState,
+              gameMode: 'SANDBOX_INFINITE',
+              isGameOver: false,
+            });
+            setShowVictoryDefeatModal(false);
+          }}
+          onRestartGame={() => {
+            setGameState(null);
+            setShowVictoryDefeatModal(false);
           }}
         />
       )}
@@ -537,6 +667,8 @@ export function App() {
           onClose={() => setInspectingCity(null)}
           onOpenRouteFromCity={(city) => {
             setSelectedCity(city);
+            setRouteOriginCity(city);
+            setRouteDestCity(null);
             setShowRouteModal(true);
           }}
           onDispatchNegotiator={handleDispatchNegotiator}

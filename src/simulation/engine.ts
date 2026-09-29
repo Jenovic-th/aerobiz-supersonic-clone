@@ -1,4 +1,4 @@
-import { City, AircraftModel, AircraftInstance, Route, RouteIncident, Airline, WorldEvent, GameState, DiplomaticReport, BusinessVenture, AirlineStanding, AircraftDiscountDeal, PendingAircraftOrder, AircraftDeliveryReport } from '../types/game';
+import { City, AircraftModel, AircraftInstance, Route, RouteIncident, Airline, WorldEvent, GameState, DiplomaticReport, BusinessVenture, AirlineStanding, AircraftDiscountDeal, PendingAircraftOrder, AircraftDeliveryReport, RegionalCampaign, RegionId } from '../types/game';
 import { CITIES } from '../data/cities';
 import { AIRCRAFTS } from '../data/aircrafts';
 import { HISTORICAL_EVENTS } from '../data/events';
@@ -608,6 +608,18 @@ export function advanceQuarter(currentState: GameState): GameState {
 
     let baseDemand = calculateRouteDemand(origin, dest, nextYear, nextQuarter, newActiveEvents);
 
+    // Regional Advertising Campaign Bonus:
+    // If owning airline has an active marketing campaign in origin or destination region,
+    // apply demand boost (+12% to +25%)
+    if (owningAirline?.activeCampaigns && owningAirline.activeCampaigns.length > 0) {
+      const activeCamp = owningAirline.activeCampaigns.find(
+        (c) => c.quartersRemaining > 0 && (c.regionId === origin.region || c.regionId === dest.region)
+      );
+      if (activeCamp) {
+        baseDemand = Math.round(baseDemand * (1 + activeCamp.demandBoostPct / 100));
+      }
+    }
+
     // Hub Transit / Connecting Passenger Bonus:
     // If route touches an established Regional Hub of the owning airline,
     // and that Hub has an active feeder route connecting back to HQ or other network nodes,
@@ -923,6 +935,15 @@ export function advanceQuarter(currentState: GameState): GameState {
 
     const finalFleet = [...updatedFleet, ...newlyDeliveredPlanes];
 
+    // Process active marketing campaigns (decrement quarters remaining, filter expired)
+    const updatedCampaigns: RegionalCampaign[] = (airline.activeCampaigns || [])
+      .map((c) => ({ ...c, quartersRemaining: c.quartersRemaining - 1 }))
+      .filter((c) => c.quartersRemaining > 0);
+
+    // Track consecutive unprofitable quarters (for Chapter 11 defeat condition)
+    const isQuarterDeficit = netRouteProfitK + businessDividendsK < 0;
+    const consecutiveLossQuarters = isQuarterDeficit ? (airline.consecutiveLossQuarters || 0) + 1 : 0;
+
     return {
       ...airline,
       fleet: finalFleet,
@@ -932,6 +953,8 @@ export function advanceQuarter(currentState: GameState): GameState {
       businesses: updatedBusinesses,
       hubCityIds: updatedHubs,
       negotiators: updatedNegotiators,
+      activeCampaigns: updatedCampaigns,
+      consecutiveLossQuarters,
     };
   });
 
@@ -995,22 +1018,155 @@ export function advanceQuarter(currentState: GameState): GameState {
     s.rank = idx + 1;
   });
 
-  // 5. Evaluate Victory Condition for 20-Year Campaign Mode
+  // 5. Evaluate Victory and Defeat Conditions (Classic Koei Aerobiz Supersonic Rules)
   let isGameOver = false;
+  let victoryType: GameState['victoryType'] = undefined;
   let winnerAirlineId: string | undefined = undefined;
   let victoryReason: string | undefined = undefined;
+  let victoryDetails: GameState['victoryDetails'] = undefined;
+  let defeatReason: string | undefined = undefined;
 
+  const ALL_REGIONS: RegionId[] = [
+    'NORTH_AMERICA',
+    'SOUTH_AMERICA',
+    'EUROPE',
+    'AFRICA',
+    'MIDDLE_EAST_SOUTH_ASIA',
+    'EAST_SOUTHEAST_ASIA',
+    'OCEANIA',
+  ];
+
+  // Calculate passenger leadership per region for this quarter
+  const regionalPax: Record<RegionId, Record<string, number>> = {
+    NORTH_AMERICA: {},
+    SOUTH_AMERICA: {},
+    EUROPE: {},
+    AFRICA: {},
+    MIDDLE_EAST_SOUTH_ASIA: {},
+    EAST_SOUTHEAST_ASIA: {},
+    OCEANIA: {},
+  };
+
+  updatedRoutes.forEach((r) => {
+    if (r.lastQuarterStats && r.lastQuarterStats.passengers > 0) {
+      const orig = cityMap.get(r.originCityId);
+      const dst = cityMap.get(r.destCityId);
+      const pax = r.lastQuarterStats.passengers;
+      if (orig) {
+        regionalPax[orig.region][r.airlineId] = (regionalPax[orig.region][r.airlineId] || 0) + pax;
+      }
+      if (dst && dst.region !== orig?.region) {
+        regionalPax[dst.region][r.airlineId] = (regionalPax[dst.region][r.airlineId] || 0) + pax;
+      }
+    }
+  });
+
+  // Determine leading airline per region
+  const leadingAirlinePerRegion: Record<RegionId, string | null> = {
+    NORTH_AMERICA: null,
+    SOUTH_AMERICA: null,
+    EUROPE: null,
+    AFRICA: null,
+    MIDDLE_EAST_SOUTH_ASIA: null,
+    EAST_SOUTHEAST_ASIA: null,
+    OCEANIA: null,
+  };
+
+  ALL_REGIONS.forEach((reg) => {
+    const scores = regionalPax[reg];
+    let topAirline: string | null = null;
+    let topScore = 0;
+    Object.entries(scores).forEach(([aId, pax]) => {
+      if (pax > topScore) {
+        topScore = pax;
+        topAirline = aId;
+      }
+    });
+    leadingAirlinePerRegion[reg] = topAirline;
+  });
+
+  // Evaluate each airline for Koei Victory Conditions:
+  // Condition A: Regional Hubs in ALL 7 Regions
+  // Condition B: #1 in passenger traffic in at least 5 regions (including home region)
+  // Condition C: Airline is profitable (net profit > 0)
+  for (const airline of updatedAirlines) {
+    const standing = standings.find((s) => s.airlineId === airline.id);
+    const isProfitable = (standing?.quarterProfitK || 0) > 0;
+
+    // Check unique regions covered by hub cities (home base + regional hubs)
+    const allHubIds = Array.from(new Set([airline.homeCityId, ...(airline.hubCityIds || [])]));
+    const hubRegions = new Set(allHubIds.map((cId) => cityMap.get(cId)?.region).filter(Boolean));
+    const hubsInAllRegions = ALL_REGIONS.every((reg) => hubRegions.has(reg));
+
+    // Count regions where airline is #1
+    const leadingRegions = ALL_REGIONS.filter((reg) => leadingAirlinePerRegion[reg] === airline.id);
+    const homeCity = cityMap.get(airline.homeCityId);
+    const leadsHomeRegion = homeCity ? leadingAirlinePerRegion[homeCity.region] === airline.id : false;
+    const leadsTargetRegions = leadingRegions.length >= 5 && leadsHomeRegion;
+
+    if (hubsInAllRegions && leadsTargetRegions && isProfitable) {
+      isGameOver = true;
+      winnerAirlineId = airline.id;
+      victoryType = airline.isHuman ? 'EARLY_VICTORY' : 'RIVAL_VICTORY';
+      victoryReason = airline.isHuman
+        ? `SUPREME VICTORY! Your airline has conquered the global skies! You established Regional Hubs in all 7 continents, captured #1 passenger market share in ${leadingRegions.length}/7 global regions, and achieved stellar profitability!`
+        : `GLOBAL DOMINATION BY RIVAL! ${airline.name} led by ${airline.ceoName || 'Rival Tycoon'} has established Hubs across all 7 continents and captured #1 passenger market share in ${leadingRegions.length} regions to win the game!`;
+
+      victoryDetails = {
+        winnerAirlineName: airline.name,
+        isHuman: airline.isHuman,
+        hubsCount: hubRegions.size,
+        leadingRegionsCount: leadingRegions.length,
+        totalPassengers: standing?.quarterPassengers || 0,
+        totalValuationK: standing?.totalValuationK || 0,
+        year: nextYear,
+        quarter: nextQuarter,
+      };
+      break;
+    }
+  }
+
+  // Check Defeat Conditions for Human Player:
+  // 1. Unprofitable for 4 consecutive quarters (1 full calendar year)
+  // 2. Severe debt / bankruptcy (cash < -$10,000K)
+  const humanAirline = updatedAirlines.find((a) => a.isHuman);
+  if (!isGameOver && humanAirline) {
+    if ((humanAirline.consecutiveLossQuarters || 0) >= 4) {
+      isGameOver = true;
+      victoryType = 'BANKRUPTCY';
+      defeatReason = `Your airline operated at a net financial loss for 4 consecutive quarters (1 full calendar year). The Board of Directors has declared insolvency and filed for bankruptcy.`;
+      victoryReason = `AIRLINE BANKRUPTCY & FORECLOSURE! Unable to maintain operating profitability for 4 consecutive quarters.`;
+    } else if (humanAirline.cashK < -10000) {
+      isGameOver = true;
+      victoryType = 'BANKRUPTCY';
+      defeatReason = `Your airline exhausted all emergency liquidity reserves and accumulated -$${Math.abs(humanAirline.cashK).toLocaleString()}K in unserviceable debt. Creditors have foreclosed operations.`;
+      victoryReason = `LIQUIDITY FORECLOSURE! Excessive debt obligations forced operations to shut down.`;
+    }
+  }
+
+  // 20-Year Campaign Time Limit Expiration (Turn > 80)
   const isCampaign = currentState.gameMode === 'CAMPAIGN_20YR';
-  if (isCampaign && nextTurn > 80) {
+  if (!isGameOver && isCampaign && nextTurn > 80) {
     isGameOver = true;
     const champion = standings[0];
     winnerAirlineId = champion.airlineId;
+    victoryType = champion.isHuman ? 'TIME_LIMIT_EXPIRED' : 'RIVAL_VICTORY';
     if (champion.isHuman) {
-      victoryReason = `VICTORY! You have conquered the skies across 20 intense years (80 Quarters)! Crowned World Airline Champion with a total empire valuation of $${champion.totalValuationK.toLocaleString()}K!`;
+      victoryReason = `20-YEAR CAMPAIGN VICTORY! You conquered the skies across 20 intense years (80 Quarters)! Crowned World Airline Champion with a total empire valuation of $${champion.totalValuationK.toLocaleString()}K!`;
     } else {
       const humanRank = standings.find((s) => s.isHuman)?.rank || 2;
       victoryReason = `20-YEAR CAMPAIGN CONCLUDED! Rival airline "${champion.airlineName}" led by ${champion.ceoName || 'Rival Tycoon'} won 1st Place with $${champion.totalValuationK.toLocaleString()}K valuation. Your airline placed #${humanRank}.`;
     }
+    victoryDetails = {
+      winnerAirlineName: champion.airlineName,
+      isHuman: champion.isHuman,
+      hubsCount: new Set([champion.homeCityId, ...(champion.airlineId === humanAirline?.id ? humanAirline?.hubCityIds || [] : [])]).size,
+      leadingRegionsCount: 0,
+      totalPassengers: champion.quarterPassengers,
+      totalValuationK: champion.totalValuationK,
+      year: nextYear,
+      quarter: nextQuarter,
+    };
   }
 
   const eventTitles = [
@@ -1037,8 +1193,11 @@ export function advanceQuarter(currentState: GameState): GameState {
     aircraftDeliveries: allAircraftDeliveries,
     airlineStandings: standings,
     isGameOver,
+    victoryType,
     winnerAirlineId,
     victoryReason,
+    victoryDetails,
+    defeatReason,
     newlyIntroducedAircraft: newlyIntroduced,
     upcomingAircraft: upcomingAircraft,
     retiringAircraft: retiringAircraft,

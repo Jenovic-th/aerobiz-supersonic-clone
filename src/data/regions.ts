@@ -248,6 +248,7 @@ export const REGION_ZONES: Record<RegionId, RegionZone> = {
 };
 
 export const REGION_LIST = Object.values(REGION_ZONES);
+export const REGIONS = REGION_LIST;
 
 export function getRegionByCoordinates(lat: number, lon: number): RegionZone | null {
   for (const region of REGION_LIST) {

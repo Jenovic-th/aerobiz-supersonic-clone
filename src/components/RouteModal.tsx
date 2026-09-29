@@ -14,6 +14,7 @@ interface RouteModalProps {
   onAddRoute: (newRoute: Route, inceptionCostK?: number) => void;
   onOpenAircraftShop?: () => void;
   initialOriginCity?: City | null;
+  initialDestCity?: City | null;
   fuelPriceIndex: number;
   currentYear: number;
   currentQuarter: 1 | 2 | 3 | 4;
@@ -26,6 +27,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
   onAddRoute,
   onOpenAircraftShop,
   initialOriginCity,
+  initialDestCity,
   fuelPriceIndex,
   currentYear,
   currentQuarter,
@@ -46,6 +48,9 @@ export const RouteModal: React.FC<RouteModalProps> = ({
   const [originId, setOriginId] = useState<string>(defaultOrigin);
 
   const [destId, setDestId] = useState<string>(() => {
+    if (initialDestCity && (playerAirline.slots[initialDestCity.id] || 0) > 0) {
+      return initialDestCity.id;
+    }
     if (initialOriginCity && !isInitialBase && (playerAirline.slots[initialOriginCity.id] || 0) > 0) {
       return initialOriginCity.id;
     }
@@ -67,7 +72,10 @@ export const RouteModal: React.FC<RouteModalProps> = ({
         }
       }
     }
-  }, [initialOriginCity, authorizedBases, playerAirline.homeCityId]);
+    if (initialDestCity && (playerAirline.slots[initialDestCity.id] || 0) > 0) {
+      setDestId(initialDestCity.id);
+    }
+  }, [initialOriginCity, initialDestCity, authorizedBases, playerAirline.homeCityId, playerAirline.slots]);
 
   // Handle changing Origin: Ensure destination never matches origin
   const handleOriginChange = (newOrigin: string) => {

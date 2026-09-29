@@ -113,15 +113,43 @@ export interface AircraftDiscountDeal {
   reason: string;
 }
 
+export type BusinessVentureType =
+  | 'HOTEL'
+  | 'SHUTTLE_BUS'
+  | 'TRAVEL_AGENCY'
+  | 'AMUSEMENT_PARK'
+  | 'GOLF_COURSE'
+  | 'SKI_RESORT'
+  | 'MUSEUM'
+  | 'CONCERT_HALL'
+  | 'ARTS_PAVILION'
+  | 'PLEASURE_BOAT'
+  | 'FERRY_BOAT'
+  | 'COMMUTER_AIRLINE';
+
 export interface BusinessVenture {
   id: string;
   cityId: string;
   airlineId: string;
-  type: 'HOTEL' | 'SHUTTLE_BUS' | 'TRAVEL_AGENCY' | 'AMUSEMENT_PARK' | 'GOLF_COURSE' | 'SKI_RESORT' | 'MUSEUM';
+  type: BusinessVentureType;
   name: string;
   purchaseCostK: number;
   quarterlyDividendK: number;
   tourismBoost: number;
+}
+
+export type CampaignCategory = 'CULTURE_ART' | 'LEISURE_SPORTS' | 'TRAVEL_NETWORK';
+
+export interface RegionalCampaign {
+  id: string;
+  airlineId: string;
+  regionId: RegionId;
+  regionName?: string;
+  category: CampaignCategory;
+  name: string;
+  quartersRemaining: number; // 4 quarters (1 year duration)
+  demandBoostPct: number; // e.g. 15 = +15%
+  costK: number;
 }
 
 export interface WorldEvent {
@@ -213,6 +241,8 @@ export interface Airline {
   negotiators: Negotiator[];
   ceoName?: string;
   personality?: 'AGGRESSIVE' | 'BALANCED' | 'LUXURY' | 'REGIONAL' | 'BUDGET_DISCOUNTER' | 'GLOBAL_FLAGSHIP';
+  activeCampaigns?: RegionalCampaign[];
+  consecutiveLossQuarters?: number;
   avatarId?: string;
   aiActionLog?: string[]; // Decisions and actions performed in recent quarter
 }
@@ -271,8 +301,20 @@ export interface GameState {
   }[];
   diplomaticReports?: DiplomaticReport[];
   isGameOver?: boolean;
+  victoryType?: 'EARLY_VICTORY' | 'BANKRUPTCY' | 'TIME_LIMIT_EXPIRED' | 'RIVAL_VICTORY';
   winnerAirlineId?: string;
   victoryReason?: string;
+  victoryDetails?: {
+    winnerAirlineName: string;
+    isHuman: boolean;
+    hubsCount: number;
+    leadingRegionsCount: number;
+    totalPassengers: number;
+    totalValuationK: number;
+    year: number;
+    quarter: number;
+  };
+  defeatReason?: string;
   newlyIntroducedAircraft?: AircraftModel[];
   upcomingAircraft?: AircraftModel[]; // Aircraft entering service in 1 year (advance notice)
   retiringAircraft?: AircraftModel[]; // Aircraft ceasing commercial production in 1 year (end-of-production advance notice!)
