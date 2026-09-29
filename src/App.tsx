@@ -50,6 +50,7 @@ export function App() {
     (window as any).__setGameState = setGameState;
     (window as any).__setShowVictoryDefeatModal = setShowVictoryDefeatModal;
     (window as any).__setShowQuarterReport = setShowQuarterReport;
+    (window as any).__setShowBoardMeeting = setShowBoardMeeting;
   }, [gameState]);
 
   // If no game initialized, show setup
@@ -633,6 +634,14 @@ export function App() {
           onOpenBusinessModal={() => {
             setShowBoardMeeting(false);
             setShowBusinessModal(true);
+          }}
+          onOpenSlotModal={(city) => {
+            setShowBoardMeeting(false);
+            if (city) {
+              setInspectingCity(city);
+            } else {
+              setShowSlotModal(true);
+            }
           }}
         />
       )}
