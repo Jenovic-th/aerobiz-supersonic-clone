@@ -156,7 +156,7 @@ export interface WorldEvent {
   id: string;
   year: number;
   quarter: 1 | 2 | 3 | 4;
-  type: 'WORLD_CUP' | 'EURO' | 'OLYMPICS' | 'WAR' | 'OIL_CRISIS' | 'EPIDEMIC' | 'ECONOMIC_CRISIS';
+  type: 'WORLD_CUP' | 'EURO' | 'OLYMPICS' | 'WAR' | 'OIL_CRISIS' | 'EPIDEMIC' | 'ECONOMIC_CRISIS' | 'EXPO' | 'TOURISM_YEAR' | 'HISTORIC_EVENT';
   title: string;
   description: string;
   affectedCityIds?: string[];
@@ -164,6 +164,12 @@ export interface WorldEvent {
   demandMultiplier?: number; // e.g. 2.0 = +100% demand
   fuelPriceMultiplier?: number; // e.g. 1.8 = oil crisis
   durationQuarters: number;
+}
+
+export interface UpcomingWorldEvent {
+  event: WorldEvent;
+  quartersUntil: number; // 1 = 3 months, 2 = 6 months, 3 = 9 months, 4 = 12 months
+  estimatedDemandSurgePct: number; // e.g. +120%
 }
 
 export interface NegotiatorMission {
@@ -289,6 +295,7 @@ export interface GameState {
   airlines: Airline[];
   routes: Route[];
   activeEvents: WorldEvent[];
+  upcomingEvents?: UpcomingWorldEvent[]; // Forecast of major events arriving in the next 1-4 quarters (3-12 months)
   airlineStandings?: AirlineStanding[];
   quarterHistory: {
     year: number;

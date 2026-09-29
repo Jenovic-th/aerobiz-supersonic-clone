@@ -137,6 +137,36 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
           <span className="font-mono font-black text-base">{gameState.fuelPriceIndex.toFixed(1)}x</span>
         </div>
 
+        {/* Upcoming Event Radar Indicator */}
+        {gameState.upcomingEvents && gameState.upcomingEvents.length > 0 && (
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-950/90 to-purple-950/90 border border-indigo-400/80 rounded-xl shadow-lg font-mono text-xs cursor-default"
+            title={`${gameState.upcomingEvents[0].event.title}: ${gameState.upcomingEvents[0].event.description}`}
+          >
+            <span className="text-sm animate-pulse">
+              {gameState.upcomingEvents[0].event.type === 'WORLD_CUP'
+                ? '⚽'
+                : gameState.upcomingEvents[0].event.type === 'OLYMPICS'
+                ? '🏅'
+                : gameState.upcomingEvents[0].event.type === 'EURO'
+                ? '🏆'
+                : gameState.upcomingEvents[0].event.type === 'EXPO'
+                ? '🌐'
+                : gameState.upcomingEvents[0].event.type === 'TOURISM_YEAR'
+                ? '🌴'
+                : '🔮'}
+            </span>
+            <div className="flex flex-col text-left">
+              <span className="text-[9px] text-indigo-300 font-bold uppercase tracking-wider">
+                อีก {gameState.upcomingEvents[0].quartersUntil * 3} เดือน ({gameState.upcomingEvents[0].quartersUntil}Q)
+              </span>
+              <span className="text-white font-bold text-xs truncate max-w-[150px]">
+                {gameState.upcomingEvents[0].event.title}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* 4+1 Executive Delegates Bar */}
         <button
           onClick={() => setShowRoster(true)}

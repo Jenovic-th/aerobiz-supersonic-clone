@@ -21,6 +21,7 @@ import {
   ArrowRight,
   CheckCircle2,
   AlertCircle,
+  Calendar,
 } from 'lucide-react';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
 import { AIRCRAFTS } from '../data/aircrafts';
@@ -308,6 +309,49 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 className="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 rounded-lg text-xs font-bold font-mono transition cursor-pointer shrink-0"
               >
                 View News Bulletin ➔
+              </button>
+            </div>
+          )}
+
+          {/* Upcoming World Events Radar Alert Banner (3-12 Months Advance Notice) */}
+          {gameState.upcomingEvents && gameState.upcomingEvents.length > 0 && (
+            <div className="p-3.5 bg-gradient-to-r from-indigo-950/95 via-slate-900 to-purple-950/95 border-2 border-indigo-400 rounded-2xl shadow-xl flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-xl">
+                  {gameState.upcomingEvents[0].event.type === 'WORLD_CUP'
+                    ? '⚽'
+                    : gameState.upcomingEvents[0].event.type === 'OLYMPICS'
+                    ? '🏅'
+                    : gameState.upcomingEvents[0].event.type === 'EURO'
+                    ? '🏆'
+                    : gameState.upcomingEvents[0].event.type === 'EXPO'
+                    ? '🌐'
+                    : gameState.upcomingEvents[0].event.type === 'TOURISM_YEAR'
+                    ? '🌴'
+                    : '🔮'}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500 text-slate-950 font-black uppercase font-mono">
+                      UPCOMING EVENT IN {gameState.upcomingEvents[0].quartersUntil * 3} MONTHS
+                    </span>
+                    <span className="font-black text-indigo-200 text-sm">
+                      {gameState.upcomingEvents[0].event.title}
+                    </span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400 font-mono font-bold">
+                      ดีมานด์คาดการณ์: +{gameState.upcomingEvents[0].estimatedDemandSurgePct}%
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-300 mt-0.5 truncate max-w-xl">
+                    {gameState.upcomingEvents[0].event.description}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveTab('NEWS')}
+                className="px-3 py-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-400/50 rounded-lg text-xs font-bold font-mono transition cursor-pointer shrink-0"
+              >
+                View Event Calendar ➔
               </button>
             </div>
           )}
@@ -1151,6 +1195,94 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                   </div>
                   <div className="text-xs text-amber-200/90 font-mono">
                     All global airlines are eligible for this promotional discount during the current quarter. AI competitors with available funds are actively placing orders!
+                  </div>
+                </div>
+              )}
+
+              {/* UPCOMING WORLD SPECTACLES & GLOBAL EVENTS RADAR (3-12 MONTHS ADVANCE WARNING) */}
+              {gameState.upcomingEvents && gameState.upcomingEvents.length > 0 && (
+                <div className="p-5 bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 border-2 border-indigo-400 rounded-2xl shadow-2xl space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-500/40 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-xl bg-indigo-500/20 border border-indigo-400 text-indigo-300 shadow">
+                        <Calendar className="w-6 h-6 animate-pulse" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-400 uppercase tracking-wider">
+                            GLOBAL HORIZON RADAR
+                          </span>
+                          <span className="text-xs text-indigo-300 font-mono font-bold">
+                            // 3 - 12 MONTHS ADVANCE NOTICE
+                          </span>
+                        </div>
+                        <h3 className="font-black text-white text-base md:text-lg font-mono mt-0.5">
+                          🔮 มหกรรมโลกและการแข่งขันกีฬาสำคัญที่กำลังจะมาถึง (Upcoming World Spectacles)
+                        </h3>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono text-indigo-300 bg-indigo-950/80 px-3 py-1 rounded-lg border border-indigo-500/50">
+                      Forecast Range: 1 - 4 Quarters Ahead
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    {gameState.upcomingEvents.map((item, idx) => {
+                      const ev = item.event;
+                      const monthsAway = item.quartersUntil * 3;
+                      const affectedCities = (ev.affectedCityIds || []).map((id) => cityMap.get(id)?.name || id).join(', ');
+
+                      return (
+                        <div
+                          key={ev.id + '_' + idx}
+                          className="p-4 bg-slate-900/90 border border-indigo-500/40 hover:border-indigo-400 rounded-xl space-y-2.5 transition shadow-lg relative overflow-hidden"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2.5">
+                              <span className="text-2xl">
+                                {ev.type === 'WORLD_CUP'
+                                  ? '⚽'
+                                  : ev.type === 'OLYMPICS'
+                                  ? '🏅'
+                                  : ev.type === 'EURO'
+                                  ? '🏆'
+                                  : ev.type === 'EXPO'
+                                  ? '🌐'
+                                  : ev.type === 'TOURISM_YEAR'
+                                  ? '🌴'
+                                  : '🏛️'}
+                              </span>
+                              <div>
+                                <h4 className="font-black text-white text-sm sm:text-base">{ev.title}</h4>
+                                <div className="text-[11px] text-indigo-300 font-mono">
+                                  Host: <strong className="text-white">{affectedCities || 'Global / Multi-region'}</strong>
+                                </div>
+                              </div>
+                            </div>
+                            <span
+                              className={`text-xs px-2.5 py-1 rounded-lg font-mono font-black shrink-0 border ${
+                                item.quartersUntil === 1
+                                  ? 'bg-rose-950 text-rose-300 border-rose-500 animate-pulse'
+                                  : item.quartersUntil === 2
+                                  ? 'bg-amber-950 text-amber-300 border-amber-500'
+                                  : 'bg-indigo-950 text-indigo-300 border-indigo-500'
+                              }`}
+                            >
+                              {item.quartersUntil === 1 ? '🔥 อีก 3 เดือน (Q ถัดไป!)' : `อีก ${monthsAway} เดือน (${item.quartersUntil} ไตรมาส)`}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-300 leading-relaxed">{ev.description}</p>
+                          <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-800 flex-wrap gap-1">
+                            <span className="text-emerald-400 font-mono font-bold">
+                              📈 คาดการณ์ผู้โดยสาร: +{item.estimatedDemandSurgePct}%
+                            </span>
+                            <span className="text-[11px] text-slate-400">
+                              💡 กลยุทธ์: จองสล็อตสนามบินและเตรียมจัดฝูงบินล่วงหน้า
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

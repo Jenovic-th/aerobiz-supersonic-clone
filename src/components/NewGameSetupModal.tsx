@@ -4,7 +4,7 @@ import { CITIES } from '../data/cities';
 import { AIRCRAFTS } from '../data/aircrafts';
 import { createDefaultNegotiators } from '../data/negotiators';
 import { getDynamicAIRivals, assignDistributedHQs, createAIAirline } from '../simulation/aiCompetitor';
-import { calculateDistance, calculateBaseFare } from '../simulation/engine';
+import { calculateDistance, calculateBaseFare, getUpcomingWorldEvents } from '../simulation/engine';
 import {
   getLatestAvailableSave,
   loadGameFromLocalStorage,
@@ -338,6 +338,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({ onStartGam
       airlines: allAirlines,
       routes: allInitialRoutes,
       activeEvents: [],
+      upcomingEvents: getUpcomingWorldEvents(startYear, 1, 4),
       airlineStandings: initialStandings,
       quarterHistory: [],
       airportSlots: CITIES.reduce((acc, c) => {

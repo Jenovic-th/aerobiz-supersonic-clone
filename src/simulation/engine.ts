@@ -1,4 +1,4 @@
-import { City, AircraftModel, AircraftInstance, Route, RouteIncident, Airline, WorldEvent, GameState, DiplomaticReport, BusinessVenture, AirlineStanding, AircraftDiscountDeal, PendingAircraftOrder, AircraftDeliveryReport, RegionalCampaign, RegionId } from '../types/game';
+import { City, AircraftModel, AircraftInstance, Route, RouteIncident, Airline, WorldEvent, UpcomingWorldEvent, GameState, DiplomaticReport, BusinessVenture, AirlineStanding, AircraftDiscountDeal, PendingAircraftOrder, AircraftDeliveryReport, RegionalCampaign, RegionId } from '../types/game';
 import { CITIES } from '../data/cities';
 import { AIRCRAFTS } from '../data/aircrafts';
 import { HISTORICAL_EVENTS } from '../data/events';
@@ -373,6 +373,95 @@ export function simulateRoutePerformance(
     },
     incident,
   };
+}
+
+/**
+ * Forecast major world spectacles, sport cups, expos, and tourism campaigns coming up
+ * in the next 1 to 4 quarters (3 to 12 months) so players and the board can prepare in advance.
+ */
+export function getUpcomingWorldEvents(
+  currentYear: number,
+  currentQuarter: 1 | 2 | 3 | 4,
+  maxQuartersAhead: number = 4
+): UpcomingWorldEvent[] {
+  const upcoming: UpcomingWorldEvent[] = [];
+
+  for (let qAhead = 1; qAhead <= maxQuartersAhead; qAhead++) {
+    let targetQuarter = currentQuarter + qAhead;
+    let targetYear = currentYear;
+    while (targetQuarter > 4) {
+      targetQuarter -= 4;
+      targetYear += 1;
+    }
+
+    const matchingEvents = HISTORICAL_EVENTS.filter(
+      (e) => e.year === targetYear && e.quarter === targetQuarter
+    );
+
+    for (const ev of matchingEvents) {
+      // Forecast sports cups, expos, tourism campaigns, and historic events
+      if (['WORLD_CUP', 'OLYMPICS', 'EURO', 'EXPO', 'TOURISM_YEAR', 'HISTORIC_EVENT'].includes(ev.type)) {
+        const surgePct = ev.demandMultiplier ? Math.round((ev.demandMultiplier - 1.0) * 100) : 80;
+        upcoming.push({
+          event: ev,
+          quartersUntil: qAhead,
+          estimatedDemandSurgePct: surgePct,
+        });
+      }
+    }
+
+    // Dynamic recurring events for Sandbox / Future Years (>= 2030)
+    if (targetYear >= 2030 && matchingEvents.length === 0) {
+      if (targetYear % 4 === 2 && targetQuarter === 2) {
+        upcoming.push({
+          event: {
+            id: `WC_${targetYear}`,
+            year: targetYear,
+            quarter: 2,
+            type: 'WORLD_CUP',
+            title: `FIFA World Cup ${targetYear}`,
+            description: `The ${targetYear} World Cup attracts millions of international football travelers worldwide!`,
+            demandMultiplier: 1.85,
+            durationQuarters: 1,
+          },
+          quartersUntil: qAhead,
+          estimatedDemandSurgePct: 85,
+        });
+      } else if (targetYear % 4 === 0 && targetQuarter === 3) {
+        upcoming.push({
+          event: {
+            id: `OLY_${targetYear}`,
+            year: targetYear,
+            quarter: 3,
+            type: 'OLYMPICS',
+            title: `Summer Olympic Games ${targetYear}`,
+            description: `Athletes and spectators from 200+ nations converge for the global Olympic Games!`,
+            demandMultiplier: 1.70,
+            durationQuarters: 1,
+          },
+          quartersUntil: qAhead,
+          estimatedDemandSurgePct: 70,
+        });
+      } else if (targetYear % 4 === 0 && targetQuarter === 2) {
+        upcoming.push({
+          event: {
+            id: `EURO_${targetYear}`,
+            year: targetYear,
+            quarter: 2,
+            type: 'EURO',
+            title: `UEFA European Championship ${targetYear}`,
+            description: `European continent experiences surging intercontinental passenger demand!`,
+            demandMultiplier: 1.55,
+            durationQuarters: 1,
+          },
+          quartersUntil: qAhead,
+          estimatedDemandSurgePct: 55,
+        });
+      }
+    }
+  }
+
+  return upcoming;
 }
 
 /**
@@ -1187,6 +1276,7 @@ export function advanceQuarter(currentState: GameState): GameState {
     turnNumber: nextTurn,
     fuelPriceIndex: fuelMultiplier,
     activeEvents: newActiveEvents,
+    upcomingEvents: getUpcomingWorldEvents(nextYear, nextQuarter, 4),
     airlines: updatedAirlines,
     routes: updatedRoutes,
     diplomaticReports,

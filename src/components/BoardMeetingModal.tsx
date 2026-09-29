@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GameState, Airline, City, Route, AircraftModel } from '../types/game';
 import { CITIES } from '../data/cities';
 import { AIRCRAFTS } from '../data/aircrafts';
@@ -32,6 +32,7 @@ import {
   Clock,
   Sparkles,
   Search,
+  Calendar,
 } from 'lucide-react';
 
 interface BoardMeetingModalProps {
@@ -59,6 +60,17 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
 }) => {
   const [selectedTopic, setSelectedTopic] = useState<MeetingTopic>('NEW_ROUTES');
   const [showFormulaExplanation, setShowFormulaExplanation] = useState<boolean>(true);
+
+  // Keyboard Escape listener to dismiss meeting instantly
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const cityMap = new Map(CITIES.map((c) => [c.id, c]));
   const playerRoutes = gameState.routes.filter((r) => r.airlineId === playerAirline.id);
@@ -138,7 +150,18 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
       (f) => f.assignedRouteId === null && ((AIRCRAFTS.find((a) => a.id === f.modelId)?.rangeKm ?? 0) >= dist)
     );
 
-    const score = dest.population * 2.5 + dest.businessIndex * 1.8 + dest.tourismIndex * 1.5 + (isMonopoly ? 80 : 0);
+    const upcomingEvent = (gameState.upcomingEvents || []).find(
+      (ue) =>
+        (ue.event.affectedCityIds || []).includes(dest.id) ||
+        (ue.event.affectedRegionIds || []).includes(dest.region)
+    );
+
+    const score =
+      dest.population * 2.5 +
+      dest.businessIndex * 1.8 +
+      dest.tourismIndex * 1.5 +
+      (isMonopoly ? 80 : 0) +
+      (upcomingEvent ? 150 : 0);
 
     return {
       dest,
@@ -155,6 +178,7 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
       idlePlane,
       score,
       slotsOwned: playerAirline.slots[dest.id] || 0,
+      upcomingEvent,
     };
   });
 
@@ -321,10 +345,16 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
   }));
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150">
-      <div className="bg-slate-900 border-2 border-indigo-500/90 rounded-3xl shadow-[0_0_80px_rgba(99,102,241,0.4)] w-full max-w-5xl overflow-hidden flex flex-col text-slate-100 max-h-[95vh]">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150 cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-slate-900 border-2 border-indigo-500/90 rounded-3xl shadow-[0_0_80px_rgba(99,102,241,0.4)] w-full max-w-5xl overflow-hidden flex flex-col text-slate-100 max-h-[95vh] cursor-default"
+      >
         {/* Header */}
-        <div className="shrink-0 bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 px-6 py-4 border-b border-indigo-800/80 flex items-center justify-between">
+        <div className="shrink-0 bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 px-6 py-4 border-b border-indigo-800/80 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-indigo-900/80 border border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.5)]">
               <Users className="w-6 h-6 text-indigo-300" />
@@ -342,9 +372,11 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-500/70 text-rose-200 hover:text-white text-xs font-mono font-bold flex items-center gap-1.5 transition cursor-pointer shadow-md shrink-0 active:scale-95"
+            title="ยกเลิกหรือปิดการประชุมทันที (Esc)"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
+            <span>ยกเลิก / ปิดการประชุม (Cancel / Exit)</span>
           </button>
         </div>
 
@@ -574,6 +606,12 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                           ) : (
                             <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-700 px-2 py-0.5 rounded font-black">
                               ⚔️ CONTESTED ({opp.rivalCount} Rivals)
+                            </span>
+                          )}
+                          {opp.upcomingEvent && (
+                            <span className="text-[10px] bg-indigo-950 text-indigo-300 border border-indigo-500/80 px-2 py-0.5 rounded font-black flex items-center gap-1 shadow animate-pulse">
+                              <Calendar className="w-3 h-3 text-indigo-400" />
+                              <span>🔮 มหกรรมโลก: {opp.upcomingEvent.event.title} (อีก {opp.upcomingEvent.quartersUntil * 3} เดือน / ดีมานด์ +{opp.upcomingEvent.estimatedDemandSurgePct}%)</span>
                             </span>
                           )}
                         </div>
@@ -1234,22 +1272,73 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                     ))}
                   </div>
                 </div>
+
+                {/* 5. Upcoming Global Spectacles Radar (3-12 Months Advance Notice) */}
+                {gameState.upcomingEvents && gameState.upcomingEvents.length > 0 && (
+                  <div className="bg-gradient-to-r from-indigo-950/70 via-slate-950 to-purple-950/70 border border-indigo-500/50 rounded-2xl p-4 space-y-3 text-xs">
+                    <div className="flex items-center justify-between border-b border-indigo-500/30 pb-2">
+                      <div className="text-indigo-200 font-bold flex items-center gap-2 text-sm">
+                        <Calendar className="w-4 h-4 text-indigo-400 animate-pulse" />
+                        <span>UPCOMING WORLD SPECTACLES RADAR (ปฏิทินมหกรรมโลก & การแจ้งเตือนล่วงหน้า 3 - 12 เดือน):</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-indigo-300 bg-indigo-900/60 px-2 py-0.5 rounded border border-indigo-400">
+                        ADVANCE STRATEGIC INTELLIGENCE
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {gameState.upcomingEvents.map((item, idx) => {
+                        const ev = item.event;
+                        const affectedCities = (ev.affectedCityIds || []).map((id) => cityMap.get(id)?.name || id).join(', ');
+                        return (
+                          <div key={ev.id + '_' + idx} className="bg-slate-900/90 p-3 rounded-xl border border-indigo-500/30 space-y-1.5">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-bold text-white text-xs truncate">{ev.title}</span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold shrink-0 border ${
+                                item.quartersUntil === 1
+                                  ? 'bg-rose-950 text-rose-300 border-rose-500 animate-pulse'
+                                  : 'bg-indigo-950 text-indigo-300 border-indigo-500'
+                              }`}>
+                                {item.quartersUntil === 1 ? '🔥 อีก 3 เดือน!' : `อีก ${item.quartersUntil * 3} เดือน (${item.quartersUntil}Q)`}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-300 leading-snug line-clamp-2">
+                              {ev.description}
+                            </div>
+                            <div className="flex items-center justify-between text-[10px] pt-1 text-slate-400 border-t border-slate-800">
+                              <span>เมืองเป้าหมาย: <strong className="text-indigo-300">{affectedCities || 'Global'}</strong></span>
+                              <span className="text-emerald-400 font-bold">ดีมานด์: +{item.estimatedDemandSurgePct}%</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0 font-mono">
+        <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0 font-mono gap-3 flex-wrap">
           <div className="text-xs text-slate-400 hidden sm:block">
             Aerobiz Executive Intelligence System • Real-time Economic Modeling &amp; Rival Reconnaissance
           </div>
-          <button
-            onClick={onClose}
-            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow"
-          >
-            Adjourn Meeting (ปิดการประชุม)
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={onClose}
+              className="px-4 py-2.5 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/60 text-rose-200 hover:text-white rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
+            >
+              ✕ ยกเลิกการประชุม (Cancel / Exit)
+            </button>
+            <button
+              onClick={onClose}
+              className="px-5 py-2.5 bg-indigo-900/80 hover:bg-indigo-800 text-white rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow border border-indigo-500/50 active:scale-95"
+            >
+              Adjourn Meeting (ปิดการประชุม)
+            </button>
+          </div>
         </div>
       </div>
     </div>

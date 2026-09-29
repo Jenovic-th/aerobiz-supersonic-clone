@@ -32,6 +32,13 @@ const CITY_LABEL_OFFSETS: Record<
   ATH: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
   MOW: { dx: 0, dy: -14, align: 'center', baseline: 'bottom' },
   KEF: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
+  BER: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
+  AMS: { dx: -14, dy: -8, align: 'right', baseline: 'bottom' },
+  VIE: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
+  BCN: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
+  IST: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
+  LED: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
+  VVO: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
 
   // Dense East / Southeast Asia Cluster
   BJS: { dx: -14, dy: -8, align: 'right', baseline: 'bottom' },
@@ -44,6 +51,17 @@ const CITY_LABEL_OFFSETS: Record<
   SIN: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
   HKT: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
   DPS: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
+  HAN: { dx: -14, dy: -8, align: 'right', baseline: 'bottom' },
+  SGN: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
+  REP: { dx: -14, dy: 8, align: 'right', baseline: 'top' },
+  VTE: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
+  SPK: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
+  OSA: { dx: -14, dy: 8, align: 'right', baseline: 'top' },
+  FUK: { dx: -14, dy: -8, align: 'right', baseline: 'bottom' },
+  TPE: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
+  KUL: { dx: -14, dy: 8, align: 'right', baseline: 'top' },
+  CGK: { dx: -14, dy: 8, align: 'right', baseline: 'top' },
+  CAN: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
 
   // North America
   NYC: { dx: 14, dy: -6, align: 'left', baseline: 'bottom' },
@@ -54,6 +72,9 @@ const CITY_LABEL_OFFSETS: Record<
   MEX: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
   HNL: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
   CUN: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
+  SFO: { dx: -14, dy: -8, align: 'right', baseline: 'bottom' },
+  YYZ: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
+  HAV: { dx: -14, dy: 8, align: 'right', baseline: 'top' },
 
   // South America
   BOG: { dx: 14, dy: -6, align: 'left', baseline: 'bottom' },
@@ -62,6 +83,9 @@ const CITY_LABEL_OFFSETS: Record<
   SAO: { dx: -14, dy: 8, align: 'right', baseline: 'top' },
   RIO: { dx: 14, dy: -6, align: 'left', baseline: 'bottom' },
   GPS: { dx: -14, dy: 0, align: 'right', baseline: 'middle' },
+  LIM: { dx: -14, dy: 0, align: 'right', baseline: 'middle' },
+  CCS: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
+  BSB: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
 
   // Middle East & South Asia
   DEL: { dx: 0, dy: -14, align: 'center', baseline: 'bottom' },
@@ -70,12 +94,19 @@ const CITY_LABEL_OFFSETS: Record<
   THR: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
   CAI: { dx: -14, dy: 8, align: 'right', baseline: 'top' },
   MLE: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
+  DOH: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
+  RUH: { dx: -14, dy: 8, align: 'right', baseline: 'top' },
+  TAS: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
 
   // Africa
   JNB: { dx: 0, dy: 14, align: 'center', baseline: 'top' },
   LOS: { dx: -14, dy: 0, align: 'right', baseline: 'middle' },
   NBO: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
   CPT: { dx: -14, dy: 8, align: 'right', baseline: 'top' },
+  CMN: { dx: -14, dy: -8, align: 'right', baseline: 'bottom' },
+  ADD: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
+  TUN: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
+  DAR: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
 
   // Oceania
   SYD: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
@@ -83,6 +114,10 @@ const CITY_LABEL_OFFSETS: Record<
   AKL: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
   GUM: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
   NAN: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
+  PPT: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
+  NOU: { dx: -14, dy: 8, align: 'right', baseline: 'top' },
+  PER: { dx: -14, dy: 0, align: 'right', baseline: 'middle' },
+  BNE: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
 };
 
 function hexToRgb(hex: string): string {
