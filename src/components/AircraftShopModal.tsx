@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Airline, AircraftModel, AircraftDiscountDeal } from '../types/game';
-import { AIRCRAFTS } from '../data/aircrafts';
+import { AIRCRAFTS, getAllAircraftModels } from '../data/aircrafts';
 import { CITIES } from '../data/cities';
 import { calculateDistance } from '../simulation/engine';
-import { X, ShoppingCart, Plane, CheckCircle2, AlertCircle, Sparkles, Filter, Flame, Tag, AlertTriangle, Wrench, Compass, Plus, Minus, Receipt, Clock, Building2 } from 'lucide-react';
+import { X, ShoppingCart, Plane, CheckCircle2, AlertCircle, Sparkles, Filter, Flame, Tag, AlertTriangle, Wrench, Compass, Plus, Minus, Receipt, Clock, Building2, Calendar, Eye } from 'lucide-react';
 import { AircraftBlueprintViewer } from './AircraftBlueprintViewer';
 import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
 
@@ -27,19 +27,26 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
   currentQuarter = 1,
   activeDiscountDeal,
 }) => {
-  const [activeTab, setActiveTab] = useState<'DEPOT' | 'FLEET' | 'PENDING'>('DEPOT');
+  const [activeTab, setActiveTab] = useState<'DEPOT' | 'FLEET' | 'PENDING' | 'TIMELINE'>('DEPOT');
   const [filterMfg, setFilterMfg] = useState<string>('ALL');
+  const [timelineFilter, setTimelineFilter] = useState<'ALL' | 'ACTIVE' | 'UPCOMING' | 'RETIRED'>('ALL');
+  const [timelineSelectedId, setTimelineSelectedId] = useState<string>('');
 
   const pendingOrders = playerAirline.pendingOrders || [];
   const nextDeliveryQuarter = currentQuarter === 4 ? 1 : currentQuarter + 1;
   const nextDeliveryYear = currentQuarter === 4 ? currentYear + 1 : currentYear;
 
+  // Master catalog including future models dynamically up to currentYear + 15
+  const allAircraftCatalog = useMemo(() => {
+    return getAllAircraftModels(Math.max(currentYear + 15, 2075));
+  }, [currentYear]);
+
   // Filter available aircraft models for current era & year
   const availableModels = useMemo(() => {
-    return AIRCRAFTS.filter((model) => {
+    return allAircraftCatalog.filter((model) => {
       return model.introYear <= currentYear && (!model.retireYear || model.retireYear >= currentYear);
     });
-  }, [currentYear]);
+  }, [allAircraftCatalog, currentYear]);
 
   // Dynamic statistics per manufacturer for available models in this era/year
   const manufacturerStats = useMemo(() => {
@@ -90,6 +97,8 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
     if (lower.includes('ilyushin')) return { flag: '🇷🇺', shortName: 'Ilyushin (Ил)', country: 'USSR/RU' };
     if (lower.includes('tupolev')) return { flag: '🇷🇺', shortName: 'Tupolev (Ту)', country: 'USSR/RU' };
     if (lower.includes('boom')) return { flag: '⚡', shortName: 'Boom', country: 'USA' };
+    if (lower.includes('embraer')) return { flag: '🇧🇷', shortName: 'Embraer', country: 'Brazil' };
+    if (lower.includes('comac')) return { flag: '🇨🇳', shortName: 'COMAC', country: 'China' };
     if (lower.includes('tesla') || lower.includes('spacex'))
       return { flag: '🚀', shortName: mfg, country: 'USA' };
     return { flag: '✈️', shortName: mfg, country: 'Global' };
@@ -175,6 +184,34 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
       setOrderQuantity(1);
     }
   }, [filteredModels, selectedModelId]);
+
+  // Sorted chronological timeline of all models
+  const timelineModels = useMemo(() => {
+    const list = [...allAircraftCatalog].sort((a, b) => {
+      if (a.introYear !== b.introYear) return a.introYear - b.introYear;
+      return a.model.localeCompare(b.model);
+    });
+
+    if (timelineFilter === 'ACTIVE') {
+      return list.filter((m) => m.introYear <= currentYear && (!m.retireYear || m.retireYear >= currentYear));
+    }
+    if (timelineFilter === 'UPCOMING') {
+      return list.filter((m) => m.introYear > currentYear);
+    }
+    if (timelineFilter === 'RETIRED') {
+      return list.filter((m) => m.retireYear && m.retireYear < currentYear);
+    }
+    return list;
+  }, [allAircraftCatalog, timelineFilter, currentYear]);
+
+  const selectedTimelineModel = useMemo(() => {
+    return (
+      timelineModels.find((m) => m.id === timelineSelectedId) ||
+      timelineModels.find((m) => m.introYear > currentYear) ||
+      timelineModels[0] ||
+      allAircraftCatalog[0]
+    );
+  }, [timelineModels, timelineSelectedId, currentYear, allAircraftCatalog]);
 
   // Batch purchase quantity & confirmation modal
   const [orderQuantity, setOrderQuantity] = useState<number>(1);
@@ -293,6 +330,17 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
             >
               <Plane className="w-4 h-4 text-sky-400" />
               <span>Fleet Hangar ({playerAirline.fleet.length} Owned)</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('TIMELINE')}
+              className={`py-3 px-6 text-sm md:text-base font-black border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+                activeTab === 'TIMELINE'
+                  ? 'border-purple-400 text-purple-400 bg-purple-950/30'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Calendar className="w-4 h-4 text-purple-400" />
+              <span>R&D Roadmap ({allAircraftCatalog.length} Models)</span>
             </button>
           </div>
 
@@ -927,7 +975,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               </div>
             )}
           </div>
-        ) : (
+        ) : activeTab === 'FLEET' ? (
           /* FLEET HANGAR / RESALE DEPOT */
           <div className="flex-1 min-h-0 p-6 overflow-y-auto bg-slate-950">
             {playerAirline.fleet.length === 0 ? (
@@ -1105,6 +1153,214 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 })}
               </div>
             )}
+          </div>
+        ) : (
+          /* TIMELINE / R&D ROADMAP (1962 - 2070+) */
+          <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden bg-slate-950">
+            {/* LEFT COLUMN: Chronological Timeline List */}
+            <div className="w-full md:w-[460px] lg:w-[480px] xl:w-[500px] shrink-0 flex flex-col border-r border-slate-700/80 bg-slate-950">
+              {/* Timeline Header & Filter Pills */}
+              <div className="p-3 border-b border-slate-800 bg-slate-950 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-purple-400 font-mono font-bold text-xs">
+                    <Calendar className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                    <span>AEROSPACE R&D TIMELINE (1962 – 2070+)</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono">Current Year: {currentYear}</span>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 text-xs font-mono">
+                  <button
+                    onClick={() => setTimelineFilter('ALL')}
+                    className={`px-2.5 py-1 rounded-lg font-bold text-xs transition cursor-pointer ${
+                      timelineFilter === 'ALL'
+                        ? 'bg-purple-500 text-slate-950 font-black shadow'
+                        : 'bg-slate-900 border border-slate-700/80 text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    All ({allAircraftCatalog.length})
+                  </button>
+                  <button
+                    onClick={() => setTimelineFilter('ACTIVE')}
+                    className={`px-2.5 py-1 rounded-lg font-bold text-xs transition cursor-pointer flex items-center gap-1 ${
+                      timelineFilter === 'ACTIVE'
+                        ? 'bg-emerald-500 text-slate-950 font-black shadow'
+                        : 'bg-emerald-950/40 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-900/50'
+                    }`}
+                  >
+                    <span>🟢 In Market</span>
+                    <span className="text-[10px]">({availableModels.length})</span>
+                  </button>
+                  <button
+                    onClick={() => setTimelineFilter('UPCOMING')}
+                    className={`px-2.5 py-1 rounded-lg font-bold text-xs transition cursor-pointer flex items-center gap-1 ${
+                      timelineFilter === 'UPCOMING'
+                        ? 'bg-amber-500 text-slate-950 font-black shadow'
+                        : 'bg-amber-950/40 border border-amber-500/50 text-amber-300 hover:bg-amber-900/50'
+                    }`}
+                  >
+                    <span>🟡 Upcoming</span>
+                    <span className="text-[10px]">
+                      ({allAircraftCatalog.filter((m) => m.introYear > currentYear).length})
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setTimelineFilter('RETIRED')}
+                    className={`px-2.5 py-1 rounded-lg font-bold text-xs transition cursor-pointer flex items-center gap-1 ${
+                      timelineFilter === 'RETIRED'
+                        ? 'bg-slate-500 text-slate-950 font-black shadow'
+                        : 'bg-slate-900 border border-slate-700 text-slate-400 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>⚪ Retired</span>
+                    <span className="text-[10px]">
+                      ({allAircraftCatalog.filter((m) => m.retireYear && m.retireYear < currentYear).length})
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable Model Cards */}
+              <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
+                {timelineModels.map((m) => {
+                  const isSelected = selectedTimelineModel.id === m.id;
+                  const isNow = m.introYear <= currentYear && (!m.retireYear || m.retireYear >= currentYear);
+                  const isUpcoming = m.introYear > currentYear;
+                  const isRetired = m.retireYear && m.retireYear < currentYear;
+                  const photoInfo = getAircraftPhotoInfo(m);
+                  const meta = getMfgMeta(m.manufacturer);
+
+                  return (
+                    <div
+                      key={m.id}
+                      onClick={() => setTimelineSelectedId(m.id)}
+                      className={`p-3 rounded-xl border transition-all cursor-pointer select-none group ${
+                        isSelected
+                          ? 'bg-purple-950/80 border-2 border-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.3)]'
+                          : 'bg-slate-900/80 border-slate-800 hover:border-slate-600 hover:bg-slate-800/80'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Year Badge & Thumbnail */}
+                        <div className="shrink-0 flex flex-col items-center gap-1">
+                          <div
+                            className={`px-2 py-0.5 rounded font-mono font-black text-xs shadow text-center min-w-[50px] ${
+                              isNow
+                                ? 'bg-emerald-500 text-slate-950'
+                                : isUpcoming
+                                ? 'bg-amber-500 text-slate-950'
+                                : 'bg-slate-700 text-slate-300'
+                            }`}
+                          >
+                            {m.introYear}
+                          </div>
+                          <div className="w-16 h-12 rounded-lg overflow-hidden border border-slate-700/80 bg-slate-950 relative shadow">
+                            <img
+                              src={photoInfo.photoUrl}
+                              alt={m.model}
+                              className="w-full h-full object-cover object-center filter brightness-105"
+                            />
+                            {m.isSupersonic && (
+                              <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black font-mono text-[7px] leading-tight shadow">
+                                SST
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-1">
+                            <div className="font-black text-sm text-white truncate">
+                              {m.model}
+                            </div>
+                            <span className="font-black font-mono text-xs text-emerald-400 shrink-0">
+                              ${m.priceK.toLocaleString()}K
+                            </span>
+                          </div>
+
+                          <div className="text-[11px] text-slate-400 font-mono mt-0.5 flex items-center gap-1.5 flex-wrap">
+                            <span>{meta.flag}</span>
+                            <span>{m.manufacturer}</span>
+                            <span>•</span>
+                            {isNow ? (
+                              <span className="text-emerald-400 font-bold">🟢 Active in Market</span>
+                            ) : isUpcoming ? (
+                              <span className="text-amber-300 font-bold">
+                                🟡 Debuts in {m.introYear} ({m.introYear - currentYear === 1 ? 'Next Year' : `in ${m.introYear - currentYear} yrs`})
+                              </span>
+                            ) : (
+                              <span className="text-slate-400">⚪ Retired {m.retireYear}</span>
+                            )}
+                          </div>
+
+                          <div className="mt-1.5 flex items-center gap-2 text-[10px] font-mono text-slate-300 border-t border-slate-800/80 pt-1">
+                            <span>{m.capacity} Seats</span>
+                            <span className="text-slate-600">•</span>
+                            <span className="text-emerald-400 font-bold">{m.rangeKm.toLocaleString()} km</span>
+                            <span className="text-slate-600">•</span>
+                            <span>{m.speedKmh} km/h</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: Blueprint, Photos & Actions */}
+            <div className="flex-1 min-h-0 flex flex-col p-3 md:p-4 bg-slate-900/90 overflow-hidden">
+              <div className="flex-1 min-h-0 relative">
+                {selectedTimelineModel && (
+                  <AircraftBlueprintViewer key={selectedTimelineModel.id} model={selectedTimelineModel} />
+                )}
+              </div>
+
+              {/* Bottom Context & Jump-to-Purchase Bar */}
+              {selectedTimelineModel && (
+                <div className="shrink-0 mt-3 p-3.5 bg-slate-950 border-2 border-purple-800/70 rounded-xl flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-xl">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-xs text-slate-400">R&D STATUS:</span>
+                      <strong className="text-purple-300 font-mono text-base">{selectedTimelineModel.model}</strong>
+                      {selectedTimelineModel.introYear <= currentYear && (!selectedTimelineModel.retireYear || selectedTimelineModel.retireYear >= currentYear) ? (
+                        <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500 text-xs font-mono font-bold">
+                          ✓ Production Active (Order Available in Showroom)
+                        </span>
+                      ) : selectedTimelineModel.introYear > currentYear ? (
+                        <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500 text-xs font-mono font-bold animate-pulse">
+                          ⏳ Debut Scheduled: Year {selectedTimelineModel.introYear} ({selectedTimelineModel.introYear - currentYear === 1 ? 'Next Year' : `in ${selectedTimelineModel.introYear - currentYear} Years`})
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-600 text-xs font-mono font-bold">
+                          🏛 Historical Classic (Production Ended {selectedTimelineModel.retireYear})
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-400 font-mono mt-1 flex items-center gap-2 flex-wrap">
+                      <span>Engine: {selectedTimelineModel.engineType || 'High-Bypass Turbofans'}</span>
+                      <span>•</span>
+                      <span>Ceiling: {selectedTimelineModel.serviceCeilingFt?.toLocaleString() || 41000} ft</span>
+                      <span>•</span>
+                      <span>Cabin: {selectedTimelineModel.cabinAisle || 'Standard'}</span>
+                    </div>
+                  </div>
+
+                  {selectedTimelineModel.introYear <= currentYear && (!selectedTimelineModel.retireYear || selectedTimelineModel.retireYear >= currentYear) && (
+                    <button
+                      onClick={() => {
+                        setSelectedModelId(selectedTimelineModel.id);
+                        setActiveTab('DEPOT');
+                      }}
+                      className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm md:text-base rounded-xl shadow-xl transition-all active:scale-95 border-2 border-emerald-400 cursor-pointer flex items-center gap-2 shrink-0"
+                    >
+                      <ShoppingCart className="w-4 h-4 text-emerald-200" />
+                      <span>Switch to Showroom to Procure</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

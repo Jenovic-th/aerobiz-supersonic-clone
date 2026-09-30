@@ -1,6 +1,6 @@
 import { City, AircraftModel, AircraftInstance, Route, RouteIncident, Airline, WorldEvent, UpcomingWorldEvent, GameState, DiplomaticReport, BusinessVenture, AirlineStanding, AircraftDiscountDeal, PendingAircraftOrder, AircraftDeliveryReport, RegionalCampaign, RegionId, OngoingAirportExpansion } from '../types/game';
 import { CITIES } from '../data/cities';
-import { AIRCRAFTS } from '../data/aircrafts';
+import { AIRCRAFTS, getAllAircraftModels } from '../data/aircrafts';
 import { HISTORICAL_EVENTS } from '../data/events';
 import { createDefaultNegotiators } from '../data/negotiators';
 import { getCityVisual } from '../data/cityVisuals';
@@ -520,15 +520,18 @@ export function advanceQuarter(currentState: GameState): GameState {
     }
   }
 
+  // Dynamically resolve known aircraft catalog up to nextYear + 5 for infinite future capability
+  const allKnownAircraft = getAllAircraftModels(nextYear + 5);
+
   // Check for newly introduced aircraft entering service
-  const newlyIntroduced = AIRCRAFTS.filter((a) => a.introYear === nextYear && nextQuarter === 1);
-  const newlyRetired = AIRCRAFTS.filter((a) => a.retireYear === nextYear && nextQuarter === 1);
+  const newlyIntroduced = allKnownAircraft.filter((a) => a.introYear === nextYear && nextQuarter === 1);
+  const newlyRetired = allKnownAircraft.filter((a) => a.retireYear === nextYear && nextQuarter === 1);
 
   // Check for 1-year advance preview notice for aircraft in development
-  const upcomingAircraft = AIRCRAFTS.filter((a) => a.introYear === nextYear + 1);
+  const upcomingAircraft = allKnownAircraft.filter((a) => a.introYear === nextYear + 1 && nextQuarter === 1);
 
   // Check for 1-year advance notice for aircraft ceasing commercial production
-  const retiringAircraft = AIRCRAFTS.filter((a) => a.retireYear === nextYear + 1);
+  const retiringAircraft = allKnownAircraft.filter((a) => a.retireYear === nextYear + 1 && nextQuarter === 1);
 
   // Process Realistic Manufacturer Promotions (Tiered by market frequency)
   let nextDiscountDeal: AircraftDiscountDeal | undefined = undefined;
@@ -539,7 +542,7 @@ export function advanceQuarter(currentState: GameState): GameState {
     };
   } else {
     const roll = Math.random();
-    const activeEraModels = AIRCRAFTS.filter(
+    const activeEraModels = allKnownAircraft.filter(
       (a) => a.introYear <= nextYear && (!a.retireYear || a.retireYear >= nextYear)
     );
 
@@ -671,7 +674,7 @@ export function advanceQuarter(currentState: GameState): GameState {
   });
 
   const cityMap = new Map(CITIES.map((c) => [c.id, c]));
-  const aircraftMap = new Map(AIRCRAFTS.map((a) => [a.id, a]));
+  const aircraftMap = new Map(allKnownAircraft.map((a) => [a.id, a]));
 
   // 1. Autonomous AI Competitor Decision Phase
   const intermediateAirlines: Airline[] = [];

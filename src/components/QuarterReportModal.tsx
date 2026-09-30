@@ -24,7 +24,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
-import { AIRCRAFTS } from '../data/aircrafts';
+import { AIRCRAFTS, getAllAircraftModels } from '../data/aircrafts';
 
 interface QuarterReportModalProps {
   gameState: GameState;
@@ -1920,23 +1920,43 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                   </div>
                   <span className="text-[11px] text-slate-500">Global R&D Intelligence</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                  {AIRCRAFTS.filter((a) => a.introYear > gameState.currentYear)
-                    .slice(0, 2)
-                    .map((m) => (
-                      <div key={m.id} className="p-3 bg-slate-900/80 rounded-xl border border-slate-700/60">
-                        <div className="flex justify-between items-center text-white font-black">
-                          <span>{m.model}</span>
-                          <span className="text-amber-300 text-[10px]">Introduces {m.introYear}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  {getAllAircraftModels(gameState.currentYear + 15)
+                    .filter((a) => a.introYear > gameState.currentYear)
+                    .slice(0, 4)
+                    .map((m) => {
+                      const diff = m.introYear - gameState.currentYear;
+                      return (
+                        <div key={m.id} className="p-3 bg-slate-900/90 rounded-xl border border-slate-700/80 hover:border-sky-500/60 transition">
+                          <div className="flex justify-between items-center text-white font-black gap-2">
+                            <span className="truncate">{m.model}</span>
+                            <span className="text-amber-300 text-[10px] shrink-0 font-bold px-1.5 py-0.5 rounded bg-amber-950/80 border border-amber-500/50">
+                              {diff === 1 ? 'Next Year' : `in ${diff} yrs`} ({m.introYear})
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-300 mt-1 flex items-center justify-between">
+                            <span>{m.manufacturer} • {m.capacity} Seats</span>
+                            <span className="text-emerald-400 font-bold">{m.rangeKm.toLocaleString()} km</span>
+                          </div>
                         </div>
-                        <div className="text-[11px] text-slate-400 mt-1">
-                          {m.manufacturer} • {m.capacity} Pax • {m.rangeKm.toLocaleString()} km
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
-                <div className="text-[11px] text-slate-400 italic">
-                  💡 Tip: Manufacturers periodically offer 30%-50% flash discounts. Keep cash in reserve to expand your fleet when promotions hit.
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-800/80 text-[11px] text-slate-400">
+                  <span className="italic">
+                    💡 Tip: Review the R&D Roadmap in Aircraft Market to plan fleet transitions before older models retire.
+                  </span>
+                  {onOpenAircraftShop && (
+                    <button
+                      onClick={() => {
+                        onClose();
+                        onOpenAircraftShop();
+                      }}
+                      className="px-3 py-1 bg-purple-900/60 hover:bg-purple-800 text-purple-200 border border-purple-500/60 rounded-lg font-bold text-xs font-mono transition cursor-pointer self-start sm:self-auto shrink-0"
+                    >
+                      Open Aircraft R&D Roadmap ➔
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

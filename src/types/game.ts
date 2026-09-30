@@ -31,7 +31,10 @@ export type Manufacturer =
   | 'Aérospatiale' 
   | 'Boom Supersonic'
   | 'Tesla Aerospace'
-  | 'SpaceX';
+  | 'SpaceX'
+  | 'Embraer'
+  | 'COMAC'
+  | (string & {});
 
 export type GameMode = 'CAMPAIGN_20YR' | 'SANDBOX_INFINITE';
 

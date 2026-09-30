@@ -12,11 +12,11 @@ export interface AircraftPhotoInfo {
 export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
   const id = model.id.toUpperCase();
 
-  // 1. Concorde Supersonic
+  // 1. Concorde & Super Concorde Supersonic
   if (id.includes('CONCORDE')) {
     return {
       photoUrl: './aircrafts/concorde.jpg',
-      caption: 'Concorde Mach 2.04 Stratospheric Supersonic Cruise',
+      caption: model.model || 'Concorde Mach 2.04 Stratospheric Supersonic Cruise',
       airlineLivery: 'British Airways / Aérospatiale-BAC Supersonic Livery',
       flightContext: 'FL600 Stratospheric Transatlantic Corridor',
       manufacturerWatermark: 'AÉROSPATIALE / BAC',
@@ -24,32 +24,42 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 2. Boom Overture / Next-Gen Supersonic
-  if (id.includes('BOOM') || id.includes('OVERTURE')) {
+  // 2. Boom Overture / Next-Gen Supersonic & QSST
+  if (id.includes('BOOM') || id.includes('OVERTURE') || id.includes('QSST')) {
     return {
       photoUrl: './aircrafts/boom.jpg',
-      caption: 'Boom Overture Mach 1.7 Next-Gen Supersonic Airliner',
+      caption: model.model || 'Boom Overture Mach 1.7 Next-Gen Supersonic Airliner',
       airlineLivery: 'Boom Commercial Flight Prototype Livery',
       flightContext: 'High-Altitude Transoceanic Supersonic Corridor',
-      manufacturerWatermark: 'BOOM SUPERSONIC AEROSPACE',
+      manufacturerWatermark: model.manufacturer.toUpperCase(),
       badgeType: 'SUPERSONIC',
     };
   }
 
-  // 3. Sci-Fi Hypersonic & Point-to-Point Spaceplanes
+  // 3. Sci-Fi Hypersonic, Cryogenic & Point-to-Point Spaceplanes
   if (
     id.includes('STARLINER') ||
+    id.includes('STARSHIP') ||
     id.includes('AEROSTAR') ||
     id.includes('MACH4') ||
+    id.includes('MACH6') ||
     id.includes('B797') ||
-    id.includes('ZEROE')
+    id.includes('808') ||
+    id.includes('ZEROE') ||
+    id.includes('CRYOFLEX') ||
+    id.includes('HYPERION') ||
+    id.includes('ORBITAL') ||
+    id.includes('SOLARIS') ||
+    id.includes('404') ||
+    id.includes('QUANTUM') ||
+    id.includes('GEN')
   ) {
     return {
       photoUrl: './aircrafts/future.jpg',
-      caption: 'Hypersonic Sub-Orbital Point-to-Point Spaceplane',
+      caption: `${model.model}`,
       airlineLivery: 'Mirror-Finish Stainless Thermal Hull & Ion Thrusters',
       flightContext: 'Mesosphere Sub-Orbital Trajectory (Mach 5.0+)',
-      manufacturerWatermark: 'ADVANCED AEROSPACE INITIATIVE',
+      manufacturerWatermark: model.manufacturer.toUpperCase(),
       badgeType: 'FUTURE',
     };
   }
@@ -124,33 +134,40 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 9. McDonnell Douglas DC-10 & MD-11 & MD-80
-  if (id.includes('DC-10') || id.includes('MD-11') || id.includes('MD-80')) {
+  // 9. McDonnell Douglas DC-10 & MD-11 & MD-80 / MD-82 / MD-XX
+  if (
+    id.includes('DC-10') ||
+    id.includes('MD-11') ||
+    id.includes('MD-80') ||
+    id.includes('MD-82') ||
+    id.includes('MD2000')
+  ) {
     return {
       photoUrl: './aircrafts/dc10.jpg',
-      caption: `${model.model} Intercontinental Trijet`,
+      caption: `${model.model}`,
       airlineLivery: 'Continental Airlines Golden Tail Jet Livery',
       flightContext: 'Transoceanic Crossing Over Deep Blue Waters',
       manufacturerWatermark: 'MCDONNELL DOUGLAS',
-      badgeType: id.includes('MD-80') ? 'NARROWBODY' : 'WIDEBODY',
+      badgeType: id.includes('MD-80') || id.includes('MD-82') ? 'NARROWBODY' : 'WIDEBODY',
     };
   }
 
-  // 10. Soviet Aviation: Ilyushin Il-62, Il-86, Il-96, Tu-154, Tu-204
+  // 10. Soviet Aviation: Ilyushin Il-62, Il-86, Il-96, Tu-154, Tu-204, Tu-404
   if (
     id.includes('IL-') ||
     id.includes('154') ||
     id.includes('204') ||
+    id.includes('404') ||
     model.manufacturer.toLowerCase().includes('ilyushin') ||
     model.manufacturer.toLowerCase().includes('tupolev')
   ) {
     return {
       photoUrl: './aircrafts/soviet.jpg',
       caption: `${model.model} Heavy Airliner`,
-      airlineLivery: 'Aeroflot Soviet Civil Aviation Directorate',
+      airlineLivery: 'Aeroflot Civil Aviation Directorate',
       flightContext: 'Cruising Northern Airway Above Snow-Covered Terrain',
       manufacturerWatermark: `${model.manufacturer.toUpperCase()} DESIGN BUREAU`,
-      badgeType: id.includes('IL-86') || id.includes('IL-96') ? 'WIDEBODY' : 'NARROWBODY',
+      badgeType: id.includes('IL-86') || id.includes('IL-96') || id.includes('404') ? 'WIDEBODY' : 'NARROWBODY',
     };
   }
 
@@ -172,11 +189,17 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 12. Early & Mid Widebody Twinjets: Airbus A300, A330, Boeing 767
-  if (id.includes('300') || id.includes('330') || id.includes('767')) {
+  // 12. Early & Mid Widebody Twinjets: Airbus A300, A310, A330, A340, Boeing 767
+  if (
+    id.includes('300') ||
+    id.includes('310') ||
+    id.includes('330') ||
+    id.includes('340') ||
+    id.includes('767')
+  ) {
     return {
       photoUrl: './aircrafts/a300.jpg',
-      caption: `${model.model} Widebody Twinjet`,
+      caption: `${model.model} Widebody Airliner`,
       airlineLivery: 'Air France European Intercity Livery',
       flightContext: 'Cruising Over European Alpine Mountains',
       manufacturerWatermark: model.manufacturer.toUpperCase(),
