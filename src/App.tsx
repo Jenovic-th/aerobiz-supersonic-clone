@@ -519,6 +519,8 @@ export function App() {
 
       {/* 3. Executive Bottom Toolbar */}
       <BottomToolbar
+        gameState={gameState}
+        playerAirline={playerAirline}
         onOpenRouteModal={() => {
           setRouteOriginCity(selectedCity);
           setRouteDestCity(null);
