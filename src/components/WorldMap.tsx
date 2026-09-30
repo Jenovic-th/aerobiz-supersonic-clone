@@ -1006,13 +1006,27 @@ export const WorldMap: React.FC<WorldMapProps> = ({
         const envoySubtext = cityEnvoys.length > 0
           ? ` • 💼 ${cityEnvoys.map((e) => e.name.split(' ')[0]).join(' & ')}`
           : '';
+        const usedSlots = (routes || [])
+          .filter(
+            (r) =>
+              r.airlineId === playerAirline.id &&
+              r.status !== 'SUSPENDED' &&
+              (r.originCityId === city.id || r.destCityId === city.id)
+          )
+          .reduce((sum, r) => sum + r.weeklyFrequency, 0);
+        const freeSlots = Math.max(0, slots - usedSlots);
+
+        const slotBadge = slots > 0
+          ? freeSlots === 0
+            ? `${slots} SLOTS (0 ว่าง/เต็ม)`
+            : `${slots} SLOTS (${freeSlots} ว่าง)`
+          : 'NO SLOTS';
+
         const statusText = (isHome
-          ? `★ HEADQUARTERS • ${slots} SLOTS`
+          ? `★ HEADQUARTERS • ${slotBadge}`
           : isHub
-          ? `◆ REGIONAL HUB • ${slots} SLOTS`
-          : slots > 0
-          ? `${city.country} • ${slots} SLOTS`
-          : `${city.country} • NO SLOTS`) + envoySubtext;
+          ? `◆ REGIONAL HUB • ${slotBadge}`
+          : `${city.country} • ${slotBadge}`) + envoySubtext;
 
         const lx = x + offset.dx;
         let line1Y: number;
@@ -1678,7 +1692,24 @@ export const WorldMap: React.FC<WorldMapProps> = ({
             <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
               <span className="text-slate-400 block text-[11px]">Your Slots:</span>
               <span className="font-black text-emerald-400 font-mono text-sm">
-                {playerAirline.slots[hoveredCity.id] || 0} / {hoveredCity.baseSlots}
+                {(() => {
+                  const owned = playerAirline.slots[hoveredCity.id] || 0;
+                  const used = (routes || [])
+                    .filter(
+                      (r) =>
+                        r.airlineId === playerAirline.id &&
+                        r.status !== 'SUSPENDED' &&
+                        (r.originCityId === hoveredCity.id || r.destCityId === hoveredCity.id)
+                    )
+                    .reduce((sum, r) => sum + r.weeklyFrequency, 0);
+                  const free = Math.max(0, owned - used);
+                  if (owned === 0) return '0 / ' + hoveredCity.baseSlots;
+                  return (
+                    <span>
+                      {free} <span className="text-slate-400 text-[10px] font-normal">ว่าง</span> / {owned}
+                    </span>
+                  );
+                })()}
               </span>
             </div>
             <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">

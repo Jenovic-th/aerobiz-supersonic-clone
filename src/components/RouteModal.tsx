@@ -13,6 +13,8 @@ interface RouteModalProps {
   onClose: () => void;
   onAddRoute: (newRoute: Route, inceptionCostK?: number) => void;
   onOpenAircraftShop?: () => void;
+  onOpenManageRoutes?: () => void;
+  onOpenSlotModal?: () => void;
   initialOriginCity?: City | null;
   initialDestCity?: City | null;
   fuelPriceIndex: number;
@@ -26,6 +28,8 @@ export const RouteModal: React.FC<RouteModalProps> = ({
   onClose,
   onAddRoute,
   onOpenAircraftShop,
+  onOpenManageRoutes,
+  onOpenSlotModal,
   initialOriginCity,
   initialDestCity,
   fuelPriceIndex,
@@ -175,11 +179,37 @@ export const RouteModal: React.FC<RouteModalProps> = ({
       .reduce((sum, r) => sum + r.weeklyFrequency, 0);
   }, [existingRoutes, playerAirline.id, destId]);
 
-  const originFreeSlots = Math.max(0, (playerAirline.slots[originId] || 0) - originUsedSlots);
-  const destFreeSlots = Math.max(0, (playerAirline.slots[destId] || 0) - destUsedSlots);
+  const originTotalSlots = playerAirline.slots[originId] || 0;
+  const destTotalSlots = playerAirline.slots[destId] || 0;
+  const originFreeSlots = Math.max(0, originTotalSlots - originUsedSlots);
+  const destFreeSlots = Math.max(0, destTotalSlots - destUsedSlots);
   const slotLimit = Math.min(14, originFreeSlots, destFreeSlots);
   const fleetMaxWeeklyFlights = Math.max(7, selectedInstanceIds.length * 7);
   const maxWeeklyFlights = isDuplicateRoute ? 0 : Math.min(slotLimit, fleetMaxWeeklyFlights);
+
+  // Helper to query slot breakdown for any city
+  const getCitySlotInfo = (cityId: string) => {
+    const total = playerAirline.slots[cityId] || 0;
+    const used = (existingRoutes || [])
+      .filter(
+        (r) =>
+          r.airlineId === playerAirline.id &&
+          r.status !== 'SUSPENDED' &&
+          (r.originCityId === cityId || r.destCityId === cityId)
+      )
+      .reduce((sum, r) => sum + r.weeklyFrequency, 0);
+    const free = Math.max(0, total - used);
+    return { total, used, free };
+  };
+
+  // Synchronize and clamp weekly frequency to available slot clearance
+  useEffect(() => {
+    if (maxWeeklyFlights > 0) {
+      if (weeklyFrequency > maxWeeklyFlights || weeklyFrequency === 0) {
+        setWeeklyFrequency(Math.min(7, maxWeeklyFlights));
+      }
+    }
+  }, [maxWeeklyFlights]);
 
   // Toggle plane selection
   const togglePlaneSelection = (instanceId: string) => {
@@ -254,6 +284,29 @@ export const RouteModal: React.FC<RouteModalProps> = ({
   }, [originCity, destCity, distance]);
 
   const canAffordInception = playerAirline.cashK >= inceptionCostK;
+
+  // Dynamic button label providing immediate clarity on any launch blockage
+  const launchButtonLabel = useMemo(() => {
+    if (isDuplicateRoute) return '🚫 มีเส้นทางบินนี้อยู่แล้ว (Duplicate)';
+    if (originFreeSlots === 0) return `🚫 สล็อตต้นทางเต็ม (${originCity?.name || originId}: 0 ว่าง)`;
+    if (destFreeSlots === 0) return `🚫 สล็อตปลายทางไม่พอ (${destCity?.name || destId}: 0 ว่าง)`;
+    if (maxWeeklyFlights <= 0) return '🚫 สล็อตไม่เพียงพอ (Max 0 เที่ยว/สัปดาห์)';
+    if (capableFleet.length === 0) return '🚫 ไม่มีเครื่องบินว่างที่บินถึง';
+    if (!canAffordInception) return `🚫 เงินไม่พอจ่ายค่าจัดตั้งสถานี ($${inceptionCostK.toLocaleString()}K)`;
+    return `Launch Route ($${inceptionCostK.toLocaleString()}K)`;
+  }, [
+    isDuplicateRoute,
+    originFreeSlots,
+    destFreeSlots,
+    maxWeeklyFlights,
+    capableFleet.length,
+    canAffordInception,
+    originCity,
+    originId,
+    destCity,
+    destId,
+    inceptionCostK,
+  ]);
 
   const handleLaunch = () => {
     if (
@@ -344,9 +397,10 @@ export const RouteModal: React.FC<RouteModalProps> = ({
               >
                 {authorizedBases.map((city) => {
                   const isHQ = city.id === playerAirline.homeCityId;
+                  const info = getCitySlotInfo(city.id);
                   return (
                     <option key={city.id} value={city.id}>
-                      {city.name} ({city.id}) — {isHQ ? 'Corporate HQ' : 'Regional Hub'} [Slots: {playerAirline.slots[city.id] || 0}]
+                      {city.name} ({city.id}) — {isHQ ? 'Corporate HQ' : 'Regional Hub'} [ว่าง: {info.free}/{info.total} สล็อต]{info.free === 0 ? ' ⛔ สล็อตเต็ม' : ''}
                     </option>
                   );
                 })}
@@ -371,10 +425,10 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                       const m = AIRCRAFTS.find((a) => a.id === f.modelId);
                       return m && m.rangeKm >= distToCity;
                     });
-
+                    const info = getCitySlotInfo(city.id);
                     return (
                       <option key={city.id} value={city.id}>
-                        {city.name} ({city.id}) — {distToCity.toLocaleString()} km [Slots: {playerAirline.slots[city.id] || 0}] {hasCapablePlane ? '✓ Flyable' : '⚠️ Need Long-Range'}
+                        {city.name} ({city.id}) — {distToCity.toLocaleString()} km [ว่าง: {info.free}/{info.total} สล็อต] {info.free === 0 ? '⛔ สล็อตหมด' : hasCapablePlane ? '✓ Flyable' : '⚠️ Need Long-Range'}
                       </option>
                     );
                   })}
@@ -418,6 +472,151 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                   Max {maxWeeklyFlights} flights/week
                 </span>
               </div>
+            </div>
+
+            {/* Prominent Airport Slot Status Dashboard */}
+            <div className="col-span-1 md:col-span-2 bg-slate-950/90 border border-slate-700/80 rounded-2xl p-4 space-y-3 shadow-inner">
+              <div className="flex items-center justify-between text-xs font-mono flex-wrap gap-2">
+                <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                  <Compass className="w-4 h-4 text-sky-400" />
+                  <span>AIRPORT SLOT STATUS (สถานะโควตาสล็อตสนามบิน)</span>
+                </span>
+                <span
+                  className={`font-black px-2.5 py-0.5 rounded-full border text-xs ${
+                    maxWeeklyFlights > 0
+                      ? 'bg-emerald-950/80 border-emerald-500/60 text-emerald-300'
+                      : 'bg-rose-950/90 border-rose-500 text-rose-300 animate-pulse'
+                  }`}
+                >
+                  {maxWeeklyFlights > 0
+                    ? `✓ โควตาสูงสุด: ${maxWeeklyFlights} เที่ยว/สัปดาห์`
+                    : '⛔ สล็อตไม่พอ (0 เที่ยว/สัปดาห์)'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* Origin Airport */}
+                <div
+                  className={`p-3 rounded-xl border ${
+                    originFreeSlots > 0 ? 'bg-slate-900/90 border-slate-700' : 'bg-rose-950/50 border-rose-500/80'
+                  }`}
+                >
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="font-black text-sky-300 flex items-center gap-1">
+                      <span>🛫 ต้นทาง:</span>
+                      <span>{originCity.name} ({originCity.id})</span>
+                    </span>
+                    <span
+                      className={`font-black font-mono px-2 py-0.5 rounded text-xs ${
+                        originFreeSlots > 0
+                          ? 'bg-emerald-500/20 text-emerald-300'
+                          : 'bg-rose-500/30 text-rose-200 font-bold border border-rose-500'
+                      }`}
+                    >
+                      {originFreeSlots > 0 ? `${originFreeSlots} สล็อตว่าง` : '⛔ 0 สล็อต (เต็ม)'}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-300 font-mono space-y-0.5">
+                    <div>สล็อตที่ถือครอง: <strong className="text-white">{originTotalSlots}</strong> สล็อต</div>
+                    <div>ถูกใช้โดยเส้นทางอื่น: <strong className="text-amber-400">{originUsedSlots}</strong> สล็อต</div>
+                  </div>
+                </div>
+
+                {/* Destination Airport */}
+                <div
+                  className={`p-3 rounded-xl border ${
+                    destFreeSlots > 0 ? 'bg-slate-900/90 border-slate-700' : 'bg-rose-950/50 border-rose-500/80'
+                  }`}
+                >
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="font-black text-emerald-300 flex items-center gap-1">
+                      <span>🛬 ปลายทาง:</span>
+                      <span>{destCity.name} ({destCity.id})</span>
+                    </span>
+                    <span
+                      className={`font-black font-mono px-2 py-0.5 rounded text-xs ${
+                        destFreeSlots > 0
+                          ? 'bg-emerald-500/20 text-emerald-300'
+                          : 'bg-rose-500/30 text-rose-200 font-bold border border-rose-500'
+                      }`}
+                    >
+                      {destFreeSlots > 0 ? `${destFreeSlots} สล็อตว่าง` : '⛔ 0 สล็อต (ไม่มีสล็อต)'}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-300 font-mono space-y-0.5">
+                    <div>สล็อตที่ถือครอง: <strong className="text-white">{destTotalSlots}</strong> สล็อต</div>
+                    <div>ถูกใช้โดยเส้นทางอื่น: <strong className="text-amber-400">{destUsedSlots}</strong> สล็อต</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actionable Warning Banner for Origin Slot Shortage */}
+              {originFreeSlots <= 0 && (
+                <div className="p-3 bg-rose-950/80 border border-rose-500/80 rounded-xl text-xs space-y-2">
+                  <div className="flex items-center gap-2 text-rose-200 font-bold">
+                    <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>
+                      สล็อตสนามบินต้นทาง ({originCity.name}) ถูกใช้จนเต็มแล้ว! ({originUsedSlots}/{originTotalSlots} สล็อต)
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-rose-200/80 leading-relaxed">
+                    เส้นทางเดิมของคุณได้ใช้โควตาสล็อตทั้งหมดของ {originCity.name} ไปแล้ว จึงไม่สามารถเปิดเที่ยวบินเพิ่มได้
+                  </p>
+                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                    {onOpenManageRoutes && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenManageRoutes();
+                        }}
+                        className="px-3 py-1.5 bg-rose-700 hover:bg-rose-600 text-white rounded-lg font-bold text-xs transition cursor-pointer shadow flex items-center gap-1.5"
+                      >
+                        <span>🔧 ลดเที่ยวบินเส้นทางเดิม (Manage Routes)</span>
+                      </button>
+                    )}
+                    {onOpenSlotModal && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenSlotModal();
+                        }}
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-300 rounded-lg font-bold text-xs border border-slate-600 transition cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>💼 ส่งทูตขอสล็อตเพิ่ม (Envoy)</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Actionable Warning Banner for Dest Slot Shortage */}
+              {originFreeSlots > 0 && destFreeSlots <= 0 && (
+                <div className="p-3 bg-amber-950/80 border border-amber-500/80 rounded-xl text-xs space-y-2">
+                  <div className="flex items-center gap-2 text-amber-200 font-bold">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>สนามบินปลายทาง ({destCity.name}) ไม่มีสล็อตว่าง!</span>
+                  </div>
+                  <p className="text-[11px] text-amber-200/80 leading-relaxed">
+                    สายการบินของคุณยังไม่มีสล็อตที่เมืองนี้ หรือใช้โควตาเต็มแล้ว ต้องส่งทูตเจรจาขอสล็อตก่อน
+                  </p>
+                  {onOpenSlotModal && (
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenSlotModal();
+                        }}
+                        className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-white rounded-lg font-bold text-xs transition cursor-pointer shadow flex items-center gap-1.5"
+                      >
+                        <span>💼 ส่งทูตไปเจรจาสล็อตที่ {destCity.name}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -592,20 +791,25 @@ export const RouteModal: React.FC<RouteModalProps> = ({
               <div>
                 <div className="flex justify-between mb-1.5 text-sm font-mono">
                   <span className="font-bold text-slate-200">Weekly Flight Frequency:</span>
-                  <span className="font-black text-sky-400 text-base">
-                    {weeklyFrequency} flights / week
+                  <span className={`font-black text-base ${maxWeeklyFlights === 0 ? 'text-rose-400 font-bold' : 'text-sky-400'}`}>
+                    {maxWeeklyFlights === 0 ? '0 flights / week (⛔ สล็อตเต็ม)' : `${weeklyFrequency} flights / week`}
                   </span>
                 </div>
                 <input
                   type="range"
-                  min="1"
+                  min={maxWeeklyFlights === 0 ? 0 : 1}
                   max={Math.max(1, maxWeeklyFlights)}
-                  value={weeklyFrequency}
+                  value={maxWeeklyFlights === 0 ? 0 : weeklyFrequency}
+                  disabled={maxWeeklyFlights === 0}
                   onChange={(e) => setWeeklyFrequency(Number(e.target.value))}
-                  className="w-full accent-sky-500 cursor-pointer h-2.5 bg-slate-700 rounded-lg"
+                  className={`w-full h-2.5 rounded-lg ${
+                    maxWeeklyFlights === 0
+                      ? 'opacity-30 cursor-not-allowed bg-slate-800'
+                      : 'accent-sky-500 cursor-pointer bg-slate-700'
+                  }`}
                 />
                 <div className="text-xs text-slate-400 mt-1.5 font-mono">
-                  Origin slots: {originFreeSlots} free • Dest slots: {destFreeSlots} free (Max permitted: {maxWeeklyFlights}/wk)
+                  Origin slots: <strong className={originFreeSlots > 0 ? 'text-emerald-400' : 'text-rose-400'}>{originFreeSlots} free</strong> • Dest slots: <strong className={destFreeSlots > 0 ? 'text-emerald-400' : 'text-rose-400'}>{destFreeSlots} free</strong> (Max permitted: <strong className={maxWeeklyFlights > 0 ? 'text-sky-300' : 'text-rose-400'}>{maxWeeklyFlights}/wk</strong>)
                 </div>
               </div>
 
@@ -728,19 +932,34 @@ export const RouteModal: React.FC<RouteModalProps> = ({
               Cancel
             </button>
             <button
-              disabled={selectedInstanceIds.length === 0 || !isRangeValid || maxWeeklyFlights <= 0 || capableFleet.length === 0 || !canAffordInception || isDuplicateRoute}
+              disabled={
+                selectedInstanceIds.length === 0 ||
+                !isRangeValid ||
+                maxWeeklyFlights <= 0 ||
+                capableFleet.length === 0 ||
+                !canAffordInception ||
+                isDuplicateRoute
+              }
               onClick={handleLaunch}
               title={
                 isDuplicateRoute
-                  ? 'A commercial route already operates between these cities'
+                  ? 'มีเส้นทางบินระหว่างคู่นี้อยู่แล้ว (Duplicate Route)'
+                  : originFreeSlots === 0
+                  ? `สนามบินต้นทาง (${originCity.name}) ไม่มีสล็อตว่าง กรุณาลดเที่ยวบินเส้นทางเดิมหรือเจรจาขอสล็อต`
+                  : destFreeSlots === 0
+                  ? `สนามบินปลายทาง (${destCity.name}) ไม่มีสล็อตว่าง กรุณาส่งทูตไปเจรจาขอสล็อต`
+                  : maxWeeklyFlights <= 0
+                  ? 'สล็อตการบินไม่เพียงพอที่จะจัดสรรเที่ยวบิน'
+                  : capableFleet.length === 0
+                  ? 'ไม่มีเครื่องบินว่างในฝูงบินที่พิสัยบินถึง'
                   : !canAffordInception
-                  ? `Requires $${inceptionCostK.toLocaleString()}K to establish station`
-                  : 'Launch commercial route'
+                  ? `ต้องการเงินทุน $${inceptionCostK.toLocaleString()}K เพื่อจัดตั้งสถานี`
+                  : 'เปิดเส้นทางบินพาณิชย์'
               }
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 hover:from-blue-500 hover:to-sky-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-xl font-black text-sm md:text-base shadow-xl transition border border-sky-400 cursor-pointer flex items-center gap-2"
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 hover:from-blue-500 hover:to-sky-500 disabled:opacity-40 disabled:pointer-events-none text-white rounded-xl font-black text-xs md:text-sm shadow-xl transition border border-sky-400 cursor-pointer flex items-center gap-2"
             >
-              <Plane className="w-4 h-4" />
-              <span>Launch Route (${inceptionCostK.toLocaleString()}K)</span>
+              <Plane className="w-4 h-4 shrink-0" />
+              <span>{launchButtonLabel}</span>
             </button>
           </div>
         </div>

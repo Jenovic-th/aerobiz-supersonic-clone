@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { GameState, City, Route, AircraftModel, BusinessVenture, NegotiatorMission, PendingAircraftOrder, RegionalCampaign } from './types/game';
 import { advanceQuarter } from './simulation/engine';
 import { createDefaultNegotiators } from './data/negotiators';
-import { saveGameToLocalStorage, exportSaveFile, importSaveFile } from './utils/saveLoad';
+import { saveGameToLocalStorage, loadGameFromLocalStorage, exportSaveFile, importSaveFile } from './utils/saveLoad';
 import { WorldMap } from './components/WorldMap';
 import { ExecutiveHeader } from './components/ExecutiveHeader';
 import { BottomToolbar } from './components/BottomToolbar';
@@ -17,6 +17,7 @@ import { NewGameSetupModal } from './components/NewGameSetupModal';
 import { CityDetailModal } from './components/CityDetailModal';
 import { BoardMeetingModal } from './components/BoardMeetingModal';
 import { VictoryDefeatModal } from './components/VictoryDefeatModal';
+import { SaveLoadModal } from './components/SaveLoadModal';
 import { CheckCircle2 } from 'lucide-react';
 
 export function App() {
@@ -38,6 +39,7 @@ export function App() {
   const [showQuarterReport, setShowQuarterReport] = useState(false);
   const [showBoardMeeting, setShowBoardMeeting] = useState(false);
   const [showVictoryDefeatModal, setShowVictoryDefeatModal] = useState(false);
+  const [showSaveLoadModal, setShowSaveLoadModal] = useState(false);
 
   // Selected city on map and inspecting city modal
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
@@ -451,6 +453,18 @@ export function App() {
     showToast('💾 Game Saved to Local Storage (บันทึกเซฟเรียบร้อย)');
   };
 
+  const handleLoadSave = (isAutoSave: boolean) => {
+    const loaded = loadGameFromLocalStorage(isAutoSave);
+    if (loaded) {
+      setGameState(loaded);
+      showToast(
+        `📂 โหลดเซฟสำเร็จ: ${loaded.airlines.find((a) => a.isHuman)?.name || 'Airline'} (Turn ${loaded.turnNumber})`
+      );
+    } else {
+      showToast('⚠️ ไม่พบข้อมูลเซฟในระบบ');
+    }
+  };
+
   const handleExportSave = () => {
     if (!gameState) return;
     exportSaveFile(gameState);
@@ -478,6 +492,7 @@ export function App() {
         onQuickSave={handleQuickSave}
         onExportSave={handleExportSave}
         onImportSave={handleImportSave}
+        onOpenSaveLoadModal={() => setShowSaveLoadModal(true)}
       />
 
       {/* Floating System Toast Notification */}
@@ -528,6 +543,14 @@ export function App() {
           onOpenAircraftShop={() => {
             setShowRouteModal(false);
             setShowAircraftShop(true);
+          }}
+          onOpenManageRoutes={() => {
+            setShowRouteModal(false);
+            setShowManageRoutes(true);
+          }}
+          onOpenSlotModal={() => {
+            setShowRouteModal(false);
+            setShowSlotModal(true);
           }}
           initialOriginCity={routeOriginCity}
           initialDestCity={routeDestCity}
@@ -664,6 +687,19 @@ export function App() {
             setGameState(null);
             setShowVictoryDefeatModal(false);
           }}
+        />
+      )}
+
+      {/* Save & Load Management Modal */}
+      {showSaveLoadModal && gameState && (
+        <SaveLoadModal
+          isOpen={showSaveLoadModal}
+          onClose={() => setShowSaveLoadModal(false)}
+          gameState={gameState}
+          onQuickSave={handleQuickSave}
+          onLoadSave={handleLoadSave}
+          onExportSave={handleExportSave}
+          onImportSave={handleImportSave}
         />
       )}
 
