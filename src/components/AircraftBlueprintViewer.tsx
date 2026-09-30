@@ -35,9 +35,15 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
     model.id.includes('MACH4');
   const is747 = model.id.includes('747');
   const isA380 = model.id.includes('380');
-  const isWidebodyTrijet = model.id.includes('DC-10') || model.id.includes('MD-11');
+  const isWidebodyTrijet = model.id.includes('DC-10') || model.id.includes('MD-11') || model.id.includes('L-1011');
   const isTTailTrijet = model.id.includes('727') || model.id.includes('154');
-  const isClassicQuad = model.id.includes('707') || model.id.includes('DC-8') || model.id.includes('340') || model.id.includes('96');
+  const isClassicQuad =
+    model.id.includes('707') ||
+    model.id.includes('DC-8') ||
+    model.id.includes('340') ||
+    model.id.includes('96') ||
+    model.id.includes('86') ||
+    model.id.includes('62');
   const isFutureTech = model.id.includes('Tesla') || model.id.includes('SpaceX') || model.id.includes('Starship');
   const isWidebodyTwin =
     bp.category === 'WIDEBODY_TWIN' ||

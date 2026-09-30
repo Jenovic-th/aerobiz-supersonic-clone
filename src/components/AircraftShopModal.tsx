@@ -3,7 +3,7 @@ import { Airline, AircraftModel, AircraftDiscountDeal } from '../types/game';
 import { AIRCRAFTS } from '../data/aircrafts';
 import { CITIES } from '../data/cities';
 import { calculateDistance } from '../simulation/engine';
-import { X, ShoppingCart, Plane, CheckCircle2, AlertCircle, Sparkles, Filter, Flame, Tag, AlertTriangle, Wrench, Compass, Plus, Minus, Receipt, Clock } from 'lucide-react';
+import { X, ShoppingCart, Plane, CheckCircle2, AlertCircle, Sparkles, Filter, Flame, Tag, AlertTriangle, Wrench, Compass, Plus, Minus, Receipt, Clock, Building2 } from 'lucide-react';
 import { AircraftBlueprintViewer } from './AircraftBlueprintViewer';
 import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
 
@@ -40,6 +40,60 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
       return model.introYear <= currentYear && (!model.retireYear || model.retireYear >= currentYear);
     });
   }, [currentYear]);
+
+  // Dynamic statistics per manufacturer for available models in this era/year
+  const manufacturerStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    availableModels.forEach((m) => {
+      counts[m.manufacturer] = (counts[m.manufacturer] || 0) + 1;
+    });
+    return counts;
+  }, [availableModels]);
+
+  const supersonicCount = useMemo(() => {
+    return availableModels.filter((m) => m.isSupersonic).length;
+  }, [availableModels]);
+
+  // Order active manufacturers logically (Boeing, McDonnell Douglas, Airbus, Lockheed, Ilyushin, Tupolev, etc.)
+  const activeManufacturers = useMemo(() => {
+    const priority = [
+      'Boeing',
+      'McDonnell Douglas',
+      'Airbus',
+      'Lockheed',
+      'Ilyushin',
+      'Tupolev',
+      'Aérospatiale',
+      'Boom Supersonic',
+      'Tesla Aerospace',
+      'SpaceX',
+    ];
+    return Object.keys(manufacturerStats).sort((a, b) => {
+      const idxA = priority.indexOf(a);
+      const idxB = priority.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return (manufacturerStats[b] || 0) - (manufacturerStats[a] || 0);
+    });
+  }, [manufacturerStats]);
+
+  const getMfgMeta = (mfg: string) => {
+    const lower = mfg.toLowerCase();
+    if (lower.includes('boeing')) return { flag: '🇺🇸', shortName: 'Boeing', country: 'USA' };
+    if (lower.includes('mcdonnell') || lower.includes('douglas'))
+      return { flag: '🇺🇸', shortName: 'McDonnell Douglas', country: 'USA' };
+    if (lower.includes('lockheed')) return { flag: '🇺🇸', shortName: 'Lockheed', country: 'USA' };
+    if (lower.includes('airbus')) return { flag: '🇪🇺', shortName: 'Airbus', country: 'Europe' };
+    if (lower.includes('aérospatiale') || lower.includes('aerospatiale'))
+      return { flag: '🇫🇷', shortName: 'Aérospatiale', country: 'France/UK' };
+    if (lower.includes('ilyushin')) return { flag: '🇷🇺', shortName: 'Ilyushin (Ил)', country: 'USSR/RU' };
+    if (lower.includes('tupolev')) return { flag: '🇷🇺', shortName: 'Tupolev (Ту)', country: 'USSR/RU' };
+    if (lower.includes('boom')) return { flag: '⚡', shortName: 'Boom', country: 'USA' };
+    if (lower.includes('tesla') || lower.includes('spacex'))
+      return { flag: '🚀', shortName: mfg, country: 'USA' };
+    return { flag: '✈️', shortName: mfg, country: 'Global' };
+  };
 
   // Helper to compute effective price with active manufacturer discount deal
   const getModelPriceInfo = (model: AircraftModel) => {
@@ -97,7 +151,10 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
           ? activeDiscountDeal.specificModelId === model.id
           : activeDiscountDeal.manufacturer.toLowerCase() === model.manufacturer.toLowerCase();
       }
-      return model.manufacturer.toLowerCase().includes(filterMfg.toLowerCase());
+      return (
+        model.manufacturer.toLowerCase() === filterMfg.toLowerCase() ||
+        model.manufacturer.toLowerCase().includes(filterMfg.toLowerCase())
+      );
     });
   }, [availableModels, targetDistance, filterMfg, activeDiscountDeal]);
 
@@ -110,6 +167,14 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
     filteredModels[0] ||
     availableModels[0] ||
     AIRCRAFTS[0];
+
+  // Auto-focus first model in list when user changes manufacturer filter
+  useEffect(() => {
+    if (filteredModels.length > 0 && !filteredModels.some((m) => m.id === selectedModelId)) {
+      setSelectedModelId(filteredModels[0].id);
+      setOrderQuantity(1);
+    }
+  }, [filteredModels, selectedModelId]);
 
   // Batch purchase quantity & confirmation modal
   const [orderQuantity, setOrderQuantity] = useState<number>(1);
@@ -252,51 +317,144 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
           <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
             {/* LEFT COLUMN: Aircraft Selection Catalog (Comfortable 460px width, no horizontal truncation) */}
             <div className="w-full md:w-[440px] lg:w-[480px] xl:w-[500px] shrink-0 flex flex-col border-r border-slate-700/80 bg-slate-950">
-              {/* Manufacturer Filter Chips (Flex-wrap with comfortable spacing) */}
-              <div className="p-3 border-b border-slate-800 bg-slate-950 flex flex-wrap items-center gap-2 text-xs">
-                <div className="flex items-center gap-1.5 text-sky-400 font-mono font-bold mr-1">
-                  <Filter className="w-3.5 h-3.5" />
-                  <span>FILTER:</span>
+              {/* Dynamic Manufacturer Showroom Deck */}
+              <div className="p-3 border-b border-slate-800 bg-slate-950/95 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-sky-400 font-mono font-bold text-xs">
+                    <Building2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                    <span>MANUFACTURER SHOWROOM:</span>
+                  </div>
+                  {filterMfg !== 'ALL' && (
+                    <button
+                      onClick={() => setFilterMfg('ALL')}
+                      className="text-[10px] text-sky-400 hover:text-white underline cursor-pointer font-mono"
+                    >
+                      Show All ({availableModels.length})
+                    </button>
+                  )}
                 </div>
-                {['ALL', 'Boeing', 'Airbus', 'SUPERSONIC'].map((mfg) => (
+
+                {/* Filter Chips: All, Each Manufacturer in Era, Supersonic */}
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                  {/* All Models Chip */}
                   <button
-                    key={mfg}
-                    onClick={() => setFilterMfg(mfg)}
-                    className={`px-3 py-1.5 rounded-lg font-mono font-bold text-xs transition cursor-pointer ${
-                      filterMfg === mfg
-                        ? 'bg-sky-500 text-slate-950 shadow-md font-black'
-                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    onClick={() => setFilterMfg('ALL')}
+                    className={`px-2.5 py-1 rounded-lg font-mono font-bold text-xs transition cursor-pointer flex items-center gap-1.5 border ${
+                      filterMfg === 'ALL'
+                        ? 'bg-sky-500 text-slate-950 border-sky-400 shadow font-black'
+                        : 'bg-slate-900 border-slate-700/80 text-slate-300 hover:bg-slate-800 hover:border-slate-600'
                     }`}
                   >
-                    {mfg === 'ALL' ? 'All Models' : mfg}
+                    <span>🌐</span>
+                    <span>All Models</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        filterMfg === 'ALL'
+                          ? 'bg-slate-950/30 text-slate-950 font-black'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}
+                    >
+                      {availableModels.length}
+                    </span>
                   </button>
-                ))}
+
+                  {/* Dynamic Manufacturer Chips (Boeing, McDonnell Douglas, Airbus, Lockheed, Ilyushin, Tupolev, etc.) */}
+                  {activeManufacturers.map((mfg) => {
+                    const meta = getMfgMeta(mfg);
+                    const count = manufacturerStats[mfg] || 0;
+                    const isSelected = filterMfg.toLowerCase() === mfg.toLowerCase();
+                    const hasDiscount =
+                      activeDiscountDeal &&
+                      activeDiscountDeal.manufacturer.toLowerCase() === mfg.toLowerCase();
+
+                    return (
+                      <button
+                        key={mfg}
+                        onClick={() => setFilterMfg(mfg)}
+                        className={`px-2.5 py-1 rounded-lg font-mono font-bold text-xs transition cursor-pointer flex items-center gap-1.5 border ${
+                          isSelected
+                            ? 'bg-sky-500 text-slate-950 border-sky-400 shadow font-black'
+                            : hasDiscount
+                            ? 'bg-amber-950/40 border-amber-500/70 text-amber-300 hover:bg-amber-900/50'
+                            : 'bg-slate-900 border-slate-700/80 text-slate-300 hover:bg-slate-800 hover:border-slate-600'
+                        }`}
+                        title={`${mfg} (${meta.country}) • ${count} models in service`}
+                      >
+                        <span className="text-xs">{meta.flag}</span>
+                        <span>{meta.shortName}</span>
+                        {hasDiscount && <Flame className="w-3 h-3 text-amber-400 animate-pulse shrink-0" />}
+                        <span
+                          className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                            isSelected
+                              ? 'bg-slate-950/30 text-slate-950 font-black'
+                              : 'bg-slate-800 text-slate-400'
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+
+                  {/* Supersonic Flagships Chip */}
+                  {supersonicCount > 0 && (
+                    <button
+                      onClick={() => setFilterMfg('SUPERSONIC')}
+                      className={`px-2.5 py-1 rounded-lg font-mono font-bold text-xs transition cursor-pointer flex items-center gap-1.5 border ${
+                        filterMfg === 'SUPERSONIC'
+                          ? 'bg-purple-500 text-slate-950 border-purple-400 shadow font-black'
+                          : 'bg-purple-950/40 border-purple-600/70 text-purple-300 hover:bg-purple-900/50'
+                      }`}
+                    >
+                      <Sparkles className="w-3 h-3 text-purple-300 shrink-0" />
+                      <span>Supersonic</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                          filterMfg === 'SUPERSONIC'
+                            ? 'bg-slate-950/30 text-slate-950 font-black'
+                            : 'bg-purple-900/80 text-purple-200'
+                        }`}
+                      >
+                        {supersonicCount}
+                      </span>
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* Dedicated Full-Width Flash Promotion Banner (Never clipped, prominent gold) */}
+              {/* Consolidated Special Promotion / Rebate Banner */}
               {activeDiscountDeal && (
-                <div className="px-3 pt-2.5 pb-1 bg-slate-950">
-                  <button
-                    onClick={() => setFilterMfg(filterMfg === 'DISCOUNT' ? 'ALL' : 'DISCOUNT')}
-                    className={`w-full px-3.5 py-2 rounded-xl font-mono font-bold text-xs transition cursor-pointer flex items-center justify-between border ${
-                      filterMfg === 'DISCOUNT'
-                        ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 border-amber-300 shadow-[0_0_18px_rgba(245,158,11,0.6)] font-black'
-                        : 'bg-gradient-to-r from-amber-950/80 via-slate-900 to-amber-950/80 border-amber-500/80 text-amber-300 hover:border-amber-400 hover:bg-amber-900/40 shadow'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Flame className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
-                      <span>SPECIAL {activeDiscountDeal.discountPct}% OFF REBATE: {activeDiscountDeal.manufacturer.toUpperCase()}</span>
-                    </span>
-                    <span className="text-[10px] uppercase font-black tracking-wider bg-amber-950/90 border border-amber-500/50 px-2 py-0.5 rounded-md text-amber-200">
-                      {filterMfg === 'DISCOUNT' ? 'FILTER ON' : 'FILTER'}
-                    </span>
-                  </button>
+                <div className="px-3 pt-2 pb-1 bg-slate-950">
+                  <div className="p-2.5 bg-gradient-to-r from-amber-950/90 via-slate-900 to-amber-950/90 border border-amber-500/80 rounded-xl shadow-lg flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 text-amber-300 font-mono font-black text-xs">
+                        <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse shrink-0" />
+                        <span className="truncate">
+                          {activeDiscountDeal.specificModelId
+                            ? `CLEARANCE: ${activeDiscountDeal.discountPct}% OFF ${activeDiscountDeal.modelName || activeDiscountDeal.specificModelId}`
+                            : `${activeDiscountDeal.discountPct}% REBATE: ${activeDiscountDeal.manufacturer.toUpperCase()}`}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-300 font-sans truncate mt-0.5">
+                        {activeDiscountDeal.reason || `${activeDiscountDeal.manufacturer} is offering a sales incentive.`}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setFilterMfg(filterMfg === 'DISCOUNT' ? 'ALL' : 'DISCOUNT')}
+                      className={`shrink-0 px-2.5 py-1 rounded-lg font-mono font-black text-[10px] uppercase transition cursor-pointer border ${
+                        filterMfg === 'DISCOUNT'
+                          ? 'bg-amber-400 text-slate-950 border-amber-300 shadow font-black'
+                          : 'bg-amber-900/60 border-amber-500/60 text-amber-200 hover:bg-amber-800'
+                      }`}
+                    >
+                      {filterMfg === 'DISCOUNT' ? 'ACTIVE' : 'FILTER'}
+                    </button>
+                  </div>
                 </div>
               )}
 
               {/* Destination Reachability Filter (Koei Aerobiz Route Filter) */}
-              <div className="px-3 py-2.5 border-b border-slate-800 bg-slate-900/60">
+              <div className="px-3 py-2 border-b border-slate-800 bg-slate-900/60">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] font-mono font-bold text-sky-300 flex items-center gap-1.5">
                     <Compass className="w-3.5 h-3.5 text-sky-400 shrink-0" />
@@ -335,23 +493,6 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                   </div>
                 )}
               </div>
-
-              {/* Active Flash Promotion Banner */}
-              {activeDiscountDeal && (
-                <div className="m-3 p-3 bg-gradient-to-r from-amber-950 via-rose-950 to-orange-950 border border-amber-500/80 rounded-xl shadow-lg">
-                  <div className="flex items-center gap-2 text-amber-300 font-mono font-black text-xs">
-                    <Flame className="w-4 h-4 text-amber-400 animate-pulse" />
-                    <span>
-                      {activeDiscountDeal.specificModelId
-                        ? `🔥 CLEARANCE: ${activeDiscountDeal.discountPct}% OFF ${activeDiscountDeal.modelName || activeDiscountDeal.specificModelId}!`
-                        : `🔥 ${activeDiscountDeal.discountPct}% FACTORY DISCOUNT ACTIVE!`}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-slate-300 mt-1 leading-snug">
-                    {activeDiscountDeal.reason || `${activeDiscountDeal.manufacturer} is offering a ${activeDiscountDeal.discountPct}% rebate this quarter.`}
-                  </div>
-                </div>
-              )}
 
               {/* Scrollable Model List */}
               <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
@@ -437,8 +578,12 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs text-slate-400 mt-0.5 font-mono">
-                                {model.manufacturer} • Intro {model.introYear} {model.retireYear ? `• End ${model.retireYear}` : ''}
+                              <div className="text-xs text-slate-400 mt-0.5 font-mono flex items-center gap-1.5 flex-wrap">
+                                <span>{getMfgMeta(model.manufacturer).flag}</span>
+                                <span>{model.manufacturer}</span>
+                                <span>•</span>
+                                <span>Intro {model.introYear}</span>
+                                {model.retireYear && <span>• End {model.retireYear}</span>}
                               </div>
                             </div>
 
@@ -465,12 +610,12 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                             </div>
                           </div>
 
-                          <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-slate-300 border-t border-slate-800/80 pt-1.5">
+                          <div className="mt-2 flex items-center gap-2 text-[11px] font-mono text-slate-300 border-t border-slate-800/80 pt-1.5">
                             <span>{model.capacity} Seats</span>
-                            <span>•</span>
+                            <span className="text-slate-600">•</span>
                             <span className="text-emerald-400 font-bold">{model.rangeKm.toLocaleString()} km</span>
-                            <span>•</span>
-                            <span>{model.speedKmh} km/h</span>
+                            <span className="text-slate-600">•</span>
+                            <span className="text-slate-400">{model.speedKmh} km/h</span>
                           </div>
                         </div>
                       </div>
@@ -519,7 +664,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                       )}
                     </div>
                     <div className="text-xs text-slate-400 font-mono mt-1 flex items-center gap-2.5 flex-wrap">
-                      <span>
+                      <span className="whitespace-nowrap">
                         Unit Price:{' '}
                         {selectedPriceInfo.hasDiscount ? (
                           <span>
@@ -532,20 +677,20 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                           <span className="text-white font-bold">${unitPriceK.toLocaleString()}K</span>
                         )}
                       </span>
-                      <span>•</span>
-                      <span>
+                      <span className="text-slate-600 hidden sm:inline">•</span>
+                      <span className="whitespace-nowrap">
                         Order Total:{' '}
                         <strong className="text-emerald-400 font-bold text-sm">
                           ${totalCostK.toLocaleString()}K
                         </strong>
                       </span>
-                      <span>•</span>
+                      <span className="text-slate-600 hidden sm:inline">•</span>
                       {canAfford ? (
-                        <span className="text-emerald-400 font-bold">
-                          Cash balance after delivery: ${remainingCash.toLocaleString()}K
+                        <span className="text-emerald-400 font-bold whitespace-nowrap">
+                          Balance after delivery: ${remainingCash.toLocaleString()}K
                         </span>
                       ) : (
-                        <span className="text-rose-400 font-bold flex items-center gap-1">
+                        <span className="text-rose-400 font-bold flex items-center gap-1 whitespace-nowrap">
                           <AlertCircle className="w-3.5 h-3.5" />
                           Short by ${(totalCostK - playerAirline.cashK).toLocaleString()}K
                         </span>

@@ -112,31 +112,49 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 8. Widebody Trijets: DC-10, MD-11, L-1011 TriStar
-  if (id.includes('DC-10') || id.includes('MD-11') || id.includes('L-1011')) {
+  // 8. Lockheed L-1011 TriStar
+  if (id.includes('L-1011')) {
     return {
       photoUrl: './aircrafts/dc10.jpg',
-      caption: 'McDonnell Douglas DC-10-30 Intercontinental Trijet',
-      airlineLivery: 'Continental Airlines Golden Tail Jet Livery',
-      flightContext: 'Transoceanic Crossing Over Deep Blue Waters',
-      manufacturerWatermark: 'MCDONNELL DOUGLAS',
+      caption: 'Lockheed L-1011 TriStar Advanced Widebody Trijet',
+      airlineLivery: 'Delta Air Lines Classic Widget Livery',
+      flightContext: 'Transcontinental Cruising Over Coastline',
+      manufacturerWatermark: 'LOCKHEED CORPORATION',
       badgeType: 'WIDEBODY',
     };
   }
 
-  // 9. Soviet Aviation: Ilyushin Il-86, Il-96, Tu-154, Tu-204
-  if (id.includes('IL-86') || id.includes('IL-96') || id.includes('154') || id.includes('204')) {
+  // 9. McDonnell Douglas DC-10 & MD-11 & MD-80
+  if (id.includes('DC-10') || id.includes('MD-11') || id.includes('MD-80')) {
+    return {
+      photoUrl: './aircrafts/dc10.jpg',
+      caption: `${model.model} Intercontinental Trijet`,
+      airlineLivery: 'Continental Airlines Golden Tail Jet Livery',
+      flightContext: 'Transoceanic Crossing Over Deep Blue Waters',
+      manufacturerWatermark: 'MCDONNELL DOUGLAS',
+      badgeType: id.includes('MD-80') ? 'NARROWBODY' : 'WIDEBODY',
+    };
+  }
+
+  // 10. Soviet Aviation: Ilyushin Il-62, Il-86, Il-96, Tu-154, Tu-204
+  if (
+    id.includes('IL-') ||
+    id.includes('154') ||
+    id.includes('204') ||
+    model.manufacturer.toLowerCase().includes('ilyushin') ||
+    model.manufacturer.toLowerCase().includes('tupolev')
+  ) {
     return {
       photoUrl: './aircrafts/soviet.jpg',
       caption: `${model.model} Heavy Airliner`,
       airlineLivery: 'Aeroflot Soviet Civil Aviation Directorate',
       flightContext: 'Cruising Northern Airway Above Snow-Covered Terrain',
-      manufacturerWatermark: 'ILYUSHIN / TUPOLEV DESIGN BUREAU',
-      badgeType: id.includes('IL') ? 'WIDEBODY' : 'NARROWBODY',
+      manufacturerWatermark: `${model.manufacturer.toUpperCase()} DESIGN BUREAU`,
+      badgeType: id.includes('IL-86') || id.includes('IL-96') ? 'WIDEBODY' : 'NARROWBODY',
     };
   }
 
-  // 10. Modern Flagship Twinjets: Boeing 777, 787, Airbus A350
+  // 11. Modern Flagship Twinjets: Boeing 777, 787, Airbus A350
   if (
     id.includes('777') ||
     id.includes('787') ||
@@ -154,7 +172,7 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 11. Early & Mid Widebody Twinjets: Airbus A300, A330, Boeing 767
+  // 12. Early & Mid Widebody Twinjets: Airbus A300, A330, Boeing 767
   if (id.includes('300') || id.includes('330') || id.includes('767')) {
     return {
       photoUrl: './aircrafts/a300.jpg',
@@ -166,9 +184,9 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 12. Standard Narrowbody Airliners: Boeing 737, 757, Airbus A320, A320neo, A321XLR
+  // 13. Standard Narrowbody Airliners: Boeing 737, 757, Airbus A320, A320neo, A321XLR
   return {
-    photoUrl: '/aircrafts/b737.jpg',
+    photoUrl: './aircrafts/b737.jpg',
     caption: `${model.model} High-Efficiency Narrowbody Jet`,
     airlineLivery: 'Alaska Airlines Modern Commercial Livery',
     flightContext: 'Cruising in Sunlight Above Towering Cumulus Clouds',
