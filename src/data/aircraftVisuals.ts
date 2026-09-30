@@ -191,7 +191,7 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
 
   // 12. Early & Mid Widebody Twinjets: Airbus A300, A310, A330, A340, Boeing 767
   if (
-    id.includes('300') ||
+    id.includes('A300') ||
     id.includes('310') ||
     id.includes('330') ||
     id.includes('340') ||
