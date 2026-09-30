@@ -86,3 +86,127 @@ export function calculateNegotiationCostK(targetCity: City, requestedSlots: numb
   const slotMultiplier = requestedSlots / 10;
   return Math.round(Math.max(800, baseCost * slotMultiplier));
 }
+
+export interface SlotNegotiationLimitInfo {
+  totalAirportCap: number;
+  totalAllocated: number;
+  remainingFreeSlots: number;
+  isAirportFull: boolean;
+  isCongested: boolean;
+  isAntiMonopolyActive: boolean;
+  antiMonopolyReason?: string;
+  minSlots: number;
+  maxRequestableSlots: number;
+  presetOptions: number[];
+  recommendedSlots: number;
+}
+
+/**
+ * Calculates flexible slot negotiation boundaries and enforces the Anti-Monopoly Fair-Share rule.
+ * - In abundant phases, airlines can request large chunks (15-35 slots) at once.
+ * - When congested or newly expanded (+25 slots), slot requests are capped to a 4-way fair share (7-8 slots) to prevent monopolies.
+ */
+export function calculateSlotNegotiationLimits(
+  city: City,
+  totalAirportCap: number,
+  totalAllocated: number,
+  playerOwnedSlots: number,
+  isHomeHQ: boolean,
+  isHub: boolean,
+  recentExpansionSlots: number = 0,
+  numAirlines: number = 4
+): SlotNegotiationLimitInfo {
+  const remainingFreeSlots = Math.max(0, totalAirportCap - totalAllocated);
+  const isAirportFull = remainingFreeSlots <= 0;
+  const isCongested = !isAirportFull && (remainingFreeSlots <= 15 || totalAllocated / totalAirportCap >= 0.75);
+
+  if (isAirportFull) {
+    return {
+      totalAirportCap,
+      totalAllocated,
+      remainingFreeSlots: 0,
+      isAirportFull: true,
+      isCongested: true,
+      isAntiMonopolyActive: false,
+      minSlots: 0,
+      maxRequestableSlots: 0,
+      presetOptions: [],
+      recommendedSlots: 0,
+    };
+  }
+
+  // Check if Anti-Monopoly / Fair-Share regulation triggers:
+  // 1. Airport was recently expanded (+slots added to a congested airport)
+  // 2. Remaining slots are scarce (R <= 35) or high utilization (>= 75%)
+  // 3. Player already holds high proportion of total airport capacity
+  const isScarce = remainingFreeSlots <= 35 || (totalAllocated / totalAirportCap) >= 0.75;
+  const isRecentlyExpanded = recentExpansionSlots > 0;
+  const isHighShare = isHomeHQ
+    ? playerOwnedSlots / totalAirportCap >= 0.65
+    : playerOwnedSlots / totalAirportCap >= 0.45;
+
+  const isAntiMonopolyActive = isScarce || isRecentlyExpanded || isHighShare;
+
+  let maxRequestableSlots: number;
+  let antiMonopolyReason: string | undefined;
+
+  if (isAntiMonopolyActive) {
+    // Fair-share formula: Share remaining pool equally among the 4 competitor airlines
+    // E.g. If 25 slots available: ceil(25 / 4) = 7 or 8 slots
+    const fairShare = Math.max(4, Math.ceil(remainingFreeSlots / numAirlines));
+    maxRequestableSlots = Math.min(remainingFreeSlots, fairShare);
+
+    if (isRecentlyExpanded) {
+      antiMonopolyReason = `สนามบินเพิ่งขยายสล็อต (+${recentExpansionSlots}) • กฎหมายป้องกันการผูกขาดแบ่งสรรสูงสุดไม่เกิน ${maxRequestableSlots} สล็อต/สายการบิน (หาร 4 บริษัท)`;
+    } else if (isHighShare) {
+      antiMonopolyReason = `สายการบินถือครองสล็อตใกล้เพดานโควตาสูงสุด • ถูกจำกัดไม่เกิน ${maxRequestableSlots} สล็อตเพื่อเปิดโอกาสให้คู่แข่ง`;
+    } else {
+      antiMonopolyReason = `สล็อตสนามบินเริ่มเหลือน้อย (${remainingFreeSlots} สล็อต) • กฎหมายแบ่งสรรโควตาอย่างเป็นธรรม จำกัดไม่เกิน ${maxRequestableSlots} สล็อต/ครั้ง`;
+    }
+  } else {
+    // Abundant / Open Phase: Player can request generous amounts!
+    // Corporate HQ: up to 35 slots
+    // Regional Hub: up to 25 slots
+    // Regular destination: up to 20 slots
+    const baseCap = isHomeHQ ? 35 : isHub ? 25 : 20;
+    maxRequestableSlots = Math.min(remainingFreeSlots, baseCap);
+  }
+
+  const minSlots = Math.min(4, maxRequestableSlots);
+
+  // Generate sensible preset options up to maxRequestableSlots
+  const candidatePresets = isAntiMonopolyActive
+    ? [4, 6, 7, 8, 10, maxRequestableSlots]
+    : [5, 10, 15, 20, 25, 30, maxRequestableSlots];
+
+  const presetOptions = Array.from(
+    new Set(
+      candidatePresets
+        .filter((p) => p >= minSlots && p <= maxRequestableSlots)
+        .sort((a, b) => a - b)
+    )
+  );
+
+  if (!presetOptions.includes(maxRequestableSlots) && maxRequestableSlots >= minSlots) {
+    presetOptions.push(maxRequestableSlots);
+  }
+
+  const recommendedSlots = Math.min(
+    maxRequestableSlots,
+    isHomeHQ ? (isAntiMonopolyActive ? maxRequestableSlots : 25) : isAntiMonopolyActive ? maxRequestableSlots : 10
+  );
+
+  return {
+    totalAirportCap,
+    totalAllocated,
+    remainingFreeSlots,
+    isAirportFull: false,
+    isCongested,
+    isAntiMonopolyActive,
+    antiMonopolyReason,
+    minSlots,
+    maxRequestableSlots,
+    presetOptions,
+    recommendedSlots,
+  };
+}

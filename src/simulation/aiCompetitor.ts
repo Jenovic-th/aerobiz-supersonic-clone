@@ -1,7 +1,7 @@
 import { Airline, Route, GameState, AircraftModel, City, BusinessVenture, AircraftInstance, PendingAircraftOrder } from '../types/game';
 import { CITIES } from '../data/cities';
 import { AIRCRAFTS } from '../data/aircrafts';
-import { createDefaultNegotiators, calculateNegotiationCostK, calculateNegotiationQuarters } from '../data/negotiators';
+import { createDefaultNegotiators, calculateNegotiationCostK, calculateNegotiationQuarters, calculateSlotNegotiationLimits } from '../data/negotiators';
 import { getCityVisual } from '../data/cityVisuals';
 import { calculateDistance, calculateRouteDemand, calculateRouteInceptionCostK } from './engine';
 
@@ -646,7 +646,17 @@ export function simulateAITurn(
 
         if (freeAtHomeAirport >= 4 && homeSlots < 60) {
           const envoyToDispatch = freeFieldEnvoys[0];
-          const reqSlots = Math.min(10, freeAtHomeAirport);
+          const homeLimits = calculateSlotNegotiationLimits(
+            homeCity,
+            totalHomeAirportSlots,
+            totalAllocatedHome,
+            homeSlots,
+            true,
+            false,
+            0,
+            (gameState.airlines || []).length
+          );
+          const reqSlots = Math.min(freeAtHomeAirport, homeLimits.recommendedSlots);
           const costK = calculateNegotiationCostK(homeCity, reqSlots);
           const quarters = calculateNegotiationQuarters(homeCity, homeCity);
 
@@ -813,17 +823,31 @@ export function simulateAITurn(
           const targetCity = candidateCities[0];
           const envoyToDispatch = freeFieldEnvoys[0];
 
-          // Determine modest, operational request size: 7 to 10 slots
+          // Determine operational request size respecting anti-monopoly fair-share caps
           const totalAirportSlots = gameState.airportSlots?.[targetCity.id] ?? targetCity.baseSlots;
           const totalAllocated = (gameState.airlines || []).reduce(
             (sum, a) => sum + (a.slots[targetCity.id] || 0),
             0
           );
           const remainingSlots = Math.max(0, totalAirportSlots - totalAllocated);
-          const requestedSlots = Math.min(
+          const targetSlotsOwned = currentSlots[targetCity.id] || 0;
+          const isTargetHub = currentHubs.includes(targetCity.id);
+          const targetLimits = calculateSlotNegotiationLimits(
+            targetCity,
+            totalAirportSlots,
+            totalAllocated,
+            targetSlotsOwned,
+            false,
+            isTargetHub,
+            0,
+            (gameState.airlines || []).length
+          );
+          const maxAllowed = Math.min(
             remainingSlots,
+            targetLimits.maxRequestableSlots,
             personality === 'AGGRESSIVE' ? 10 : 7
           );
+          const requestedSlots = Math.max(targetLimits.minSlots, maxAllowed);
 
           const costK = calculateNegotiationCostK(targetCity, requestedSlots);
           const quarters = calculateNegotiationQuarters(homeCity, targetCity);

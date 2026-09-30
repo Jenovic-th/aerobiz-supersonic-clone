@@ -1,4 +1,4 @@
-import { City, AircraftModel, AircraftInstance, Route, RouteIncident, Airline, WorldEvent, UpcomingWorldEvent, GameState, DiplomaticReport, BusinessVenture, AirlineStanding, AircraftDiscountDeal, PendingAircraftOrder, AircraftDeliveryReport, RegionalCampaign, RegionId } from '../types/game';
+import { City, AircraftModel, AircraftInstance, Route, RouteIncident, Airline, WorldEvent, UpcomingWorldEvent, GameState, DiplomaticReport, BusinessVenture, AirlineStanding, AircraftDiscountDeal, PendingAircraftOrder, AircraftDeliveryReport, RegionalCampaign, RegionId, OngoingAirportExpansion } from '../types/game';
 import { CITIES } from '../data/cities';
 import { AIRCRAFTS } from '../data/aircrafts';
 import { HISTORICAL_EVENTS } from '../data/events';
@@ -611,33 +611,64 @@ export function advanceQuarter(currentState: GameState): GameState {
   };
 
   const airportExpansionNotices: NonNullable<GameState['airportExpansions']> = [];
+  const updatedOngoingExpansions: OngoingAirportExpansion[] = [];
 
-  // Airport Expansion Cycle: Every 4-5 years (16 quarters), major global airports expand runways & terminals
-  const isExpansionCycle = nextTurn > 1 && nextTurn % 16 === 0;
-  if (isExpansionCycle) {
-    const candidateCities = [...CITIES].sort((a, b) => {
-      const scoreA = a.population * 2.5 + a.businessIndex * 1.5 + (a.baseSlots >= 100 ? 50 : 0);
-      const scoreB = b.population * 2.5 + b.businessIndex * 1.5 + (b.baseSlots >= 100 ? 50 : 0);
-      return scoreB - scoreA;
-    });
-
-    const cycleBatch = Math.floor(nextTurn / 16) % 3;
-    const citiesToExpand = candidateCities.slice(cycleBatch * 5, cycleBatch * 5 + 6);
-
-    citiesToExpand.forEach((city) => {
-      const addedSlots =
-        city.population >= 10 || city.baseSlots >= 120 ? 50 : city.population >= 5 ? 35 : 20;
-      currentAirportSlots[city.id] = (currentAirportSlots[city.id] || city.baseSlots) + addedSlots;
+  // 1. Progress active runway & terminal construction projects (3, 6, 9, 12 months duration)
+  (currentState.ongoingAirportExpansions || []).forEach((exp) => {
+    const rem = exp.quartersRemaining - 1;
+    if (rem <= 0) {
+      // Construction successfully finished! Runways & terminals officially open!
+      const city = CITIES.find((c) => c.id === exp.cityId);
+      const prevSlots = currentAirportSlots[exp.cityId] || (city?.baseSlots ?? 100);
+      currentAirportSlots[exp.cityId] = prevSlots + exp.addedSlots;
 
       airportExpansionNotices.push({
+        cityId: exp.cityId,
+        cityName: exp.cityName,
+        addedSlots: exp.addedSlots,
+        newTotalSlots: currentAirportSlots[exp.cityId],
+        reason: `${exp.cityName} International Airport completes new runway and terminal complex (+${exp.addedSlots} slots). New slots now open under 4-way Anti-Monopoly allocation!`,
+      });
+    } else {
+      updatedOngoingExpansions.push({
+        ...exp,
+        quartersRemaining: rem,
+      });
+    }
+  });
+
+  // 2. Dynamic Congestion Trigger: Detect airports near capacity (<= 15 free slots or >= 85% utilized)
+  // and initiate a realistic civil aviation construction project (1 to 3 quarters lead time)
+  const activeExpansionCityIds = new Set(updatedOngoingExpansions.map((e) => e.cityId));
+
+  CITIES.forEach((city) => {
+    if (activeExpansionCityIds.has(city.id)) return;
+
+    const totalCap = currentAirportSlots[city.id] || city.baseSlots;
+    const totalAllocated = currentState.airlines.reduce(
+      (sum, a) => sum + (a.slots[city.id] || 0),
+      0
+    );
+    const freeSlots = Math.max(0, totalCap - totalAllocated);
+
+    // Congestion trigger condition: free slots <= 15 or >= 85% utilized, and hasn't reached maximum airport ceiling (<= 250)
+    if (freeSlots <= 15 && totalCap < 250) {
+      const isMega = city.population >= 10 || city.baseSlots >= 120;
+      // Construction duration: 1 to 3 quarters (3 to 9 months)
+      const quarters = isMega ? 3 : city.population >= 5 ? 2 : 1;
+      const addedSlots = isMega ? 35 : city.population >= 5 ? 25 : 20;
+
+      updatedOngoingExpansions.push({
         cityId: city.id,
         cityName: city.name,
         addedSlots,
-        newTotalSlots: currentAirportSlots[city.id],
-        reason: `${city.name} International Airport completes new runway and terminal complex (+${addedSlots} slots).`,
+        quartersRemaining: quarters,
+        totalQuarters: quarters,
+        reason: `${city.name} Civil Aviation Authority breaks ground on new runway & terminal expansion (+${addedSlots} slots in ${quarters * 3} months) to alleviate congestion.`,
       });
-    });
-  }
+      activeExpansionCityIds.add(city.id);
+    }
+  });
 
   const cityMap = new Map(CITIES.map((c) => [c.id, c]));
   const aircraftMap = new Map(AIRCRAFTS.map((a) => [a.id, a]));
@@ -1295,6 +1326,7 @@ export function advanceQuarter(currentState: GameState): GameState {
     activeDiscountDeal: nextDiscountDeal,
     airportSlots: currentAirportSlots,
     airportExpansions: airportExpansionNotices,
+    ongoingAirportExpansions: updatedOngoingExpansions,
     lastQuarterClosedRoutes: allClosedRoutes,
     routeIncidents: routeIncidents,
     quarterHistory: [

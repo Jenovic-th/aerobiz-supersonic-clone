@@ -282,6 +282,15 @@ export interface AirportExpansionNotice {
   reason: string;
 }
 
+export interface OngoingAirportExpansion {
+  cityId: string;
+  cityName: string;
+  addedSlots: number;
+  quartersRemaining: number;
+  totalQuarters: number;
+  reason: string;
+}
+
 export interface GameState {
   gameMode: GameMode;
   era: 1 | 2 | 3;
@@ -329,6 +338,7 @@ export interface GameState {
   activeDiscountDeal?: AircraftDiscountDeal; // Special flash manufacturer discount promotion
   airportSlots?: Record<string, number>; // Dynamic total airport slot capacity per city
   airportExpansions?: AirportExpansionNotice[]; // Airport expansion events this quarter
+  ongoingAirportExpansions?: OngoingAirportExpansion[]; // Runway & terminal projects currently under construction
   lastQuarterClosedRoutes?: {
     airlineId: string;
     airlineName: string;

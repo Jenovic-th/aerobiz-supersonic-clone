@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { City, Airline, Route, NegotiatorMission, Negotiator, GameState } from '../types/game';
+import { City, Airline, Route, NegotiatorMission, Negotiator, GameState, OngoingAirportExpansion } from '../types/game';
 import { getCityVisual } from '../data/cityVisuals';
-import { calculateNegotiationQuarters, calculateNegotiationCostK } from '../data/negotiators';
+import { calculateNegotiationQuarters, calculateNegotiationCostK, calculateSlotNegotiationLimits } from '../data/negotiators';
 import { CityLandmarkDiorama } from './CityLandmarkDiorama';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
 import {
@@ -19,6 +19,10 @@ import {
   AlertTriangle,
   Shield,
   HelpCircle,
+  Plus,
+  Minus,
+  Scale,
+  Hammer,
 } from 'lucide-react';
 
 interface CityDetailModalProps {
@@ -77,9 +81,27 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
       : ({ id: playerAirline.homeCityId, country: 'Home Country', bloc: 'WEST' } as City);
 
   const requiredQuarters = calculateNegotiationQuarters(homeCity, city);
-  const requestedSlots = 10;
+  const recentExpansion = gameState?.airportExpansions?.find((e) => e.cityId === city.id);
+  const ongoingExpansion = gameState?.ongoingAirportExpansions?.find((e) => e.cityId === city.id);
+
+  const limits = calculateSlotNegotiationLimits(
+    city,
+    totalAirportCap,
+    totalAllocated,
+    slotsOwned,
+    isHQ,
+    isHub,
+    recentExpansion?.addedSlots || 0,
+    (gameState?.airlines || []).length || 4
+  );
+
+  const [chosenSlots, setChosenSlots] = useState<number | null>(null);
+  const requestedSlots = Math.min(
+    limits.maxRequestableSlots,
+    Math.max(limits.minSlots, chosenSlots ?? limits.recommendedSlots)
+  );
   const slotCostK = calculateNegotiationCostK(city, requestedSlots);
-  const maxSlotsReached = slotsOwned >= totalAirportCap || isAirportFull;
+  const maxSlotsReached = slotsOwned >= totalAirportCap || isAirportFull || limits.maxRequestableSlots <= 0;
 
   // Active slot negotiation in this city (if any)
   const activeSlotNegotiator = fieldNegotiators.find(
@@ -115,6 +137,18 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
     };
     setSelectedEnvoyId(availableFieldNegotiators[0]?.id || '');
     setPendingMission(mission);
+  };
+
+  const handleUpdatePendingSlots = (newSlots: number) => {
+    if (!pendingMission || pendingMission.type !== 'SLOT_NEGOTIATION') return;
+    const clamped = Math.max(limits.minSlots, Math.min(limits.maxRequestableSlots, newSlots));
+    const newCostK = calculateNegotiationCostK(city, clamped);
+    setPendingMission({
+      ...pendingMission,
+      requestedSlots: clamped,
+      costK: newCostK,
+    });
+    setChosenSlots(clamped);
   };
 
   // Trigger Confirmation for Subsidiary Buyout
@@ -458,13 +492,27 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
         {/* 3. BOTTOM EXECUTIVE DECK: CITY SLOTS STATUS & PRIMARY ACTIONS */}
         <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 px-5 py-2.5 border-t-2 border-sky-500/60 shrink-0 flex items-center justify-between gap-4">
           {/* Left: City Status & Negotiation Summary */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400 font-bold uppercase font-mono">Status:</span>
               <span className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 font-mono font-bold text-xs text-sky-300">
                 {slotsOwned} / {totalAirportCap} Slots (Airport: {totalAllocated}/{totalAirportCap})
               </span>
             </div>
+
+            {ongoingExpansion && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500 font-bold flex items-center gap-1 animate-pulse">
+                <Hammer className="w-3 h-3" />
+                <span>+{ongoingExpansion.addedSlots} in {ongoingExpansion.quartersRemaining}Q ({ongoingExpansion.quartersRemaining * 3}mo)</span>
+              </span>
+            )}
+
+            {limits.isAntiMonopolyActive && !isAirportFull && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500 font-bold flex items-center gap-1">
+                <Scale className="w-3 h-3" />
+                <span>Fair-Share: Max {limits.maxRequestableSlots}</span>
+              </span>
+            )}
 
             {/* If slots negotiation ongoing */}
             {activeSlotNegotiator && (
@@ -477,9 +525,9 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
             )}
           </div>
 
-          {/* Right: Direct Actions (Negotiate 10 Slots & HQ Director) */}
+          {/* Right: Direct Actions (Negotiate Slots & HQ Director) */}
           <div className="flex items-center gap-2.5 shrink-0">
-            {/* Negotiate 10 Slots Button */}
+            {/* Negotiate Slots Button */}
             {!activeSlotNegotiator && (
               <button
                 disabled={
@@ -494,7 +542,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                 <span>
                   {maxSlotsReached
                     ? 'Slots Maxed'
-                    : `Negotiate 10 Slots ($${slotCostK.toLocaleString()}K • ${requiredQuarters}Q)`}
+                    : `Negotiate ${requestedSlots} Slots ($${slotCostK.toLocaleString()}K • ${requiredQuarters}Q)`}
                 </span>
               </button>
             )}
@@ -578,15 +626,88 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
               </div>
 
               {/* Mission Summary Card */}
-              <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-2 text-xs">
+              <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-3 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Target Objective:</span>
                   <span className="font-black text-white text-sm">
                     {pendingMission.type === 'SLOT_NEGOTIATION'
-                      ? `+10 Airport Slots in ${city.name}`
+                      ? `+${pendingMission.requestedSlots} Airport Slots in ${city.name}`
                       : `${pendingMission.ventureName}`}
                   </span>
                 </div>
+
+                {pendingMission.type === 'SLOT_NEGOTIATION' && limits.maxRequestableSlots > 0 && (
+                  <div className="bg-slate-900/90 rounded-xl p-3 border border-slate-700/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 font-bold uppercase font-mono text-[10px]">
+                        Adjust Requested Slots:
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={(pendingMission.requestedSlots || 10) <= limits.minSlots}
+                          onClick={() =>
+                            handleUpdatePendingSlots(
+                              (pendingMission.requestedSlots || 10) -
+                                ((pendingMission.requestedSlots || 10) > 10 ? 5 : 1)
+                            )
+                          }
+                          className="w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-white border border-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer transition"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+
+                        <span className="font-mono text-sm font-black text-emerald-400 min-w-[36px] text-center">
+                          +{pendingMission.requestedSlots}
+                        </span>
+
+                        <button
+                          type="button"
+                          disabled={(pendingMission.requestedSlots || 10) >= limits.maxRequestableSlots}
+                          onClick={() =>
+                            handleUpdatePendingSlots(
+                              (pendingMission.requestedSlots || 10) +
+                                ((pendingMission.requestedSlots || 10) >= 10 ? 5 : 1)
+                            )
+                          }
+                          className="w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-white border border-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer transition"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Presets */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {limits.presetOptions.map((preset) => {
+                        const isSelected = pendingMission.requestedSlots === preset;
+                        const isMax = preset === limits.maxRequestableSlots;
+                        return (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => handleUpdatePendingSlots(preset)}
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold transition cursor-pointer border ${
+                              isSelected
+                                ? 'bg-emerald-600 text-white border-emerald-400 shadow'
+                                : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                            }`}
+                          >
+                            {isMax ? `Max (${preset})` : `+${preset}`}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {limits.isAntiMonopolyActive && limits.antiMonopolyReason && (
+                      <div className="p-2 rounded-lg bg-purple-950/40 border border-purple-800/60 text-purple-200 text-[11px] flex items-start gap-1.5 leading-snug">
+                        <Scale className="w-3.5 h-3.5 text-purple-300 shrink-0 mt-0.5" />
+                        <span>{limits.antiMonopolyReason}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Negotiation Duration:</span>
                   <span className="font-bold text-amber-300 font-mono">

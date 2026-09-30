@@ -62,6 +62,11 @@ export function sanitizeLoadedState(loadedState: any): GameState {
     loadedState.airportExpansions = [];
   }
 
+  // Ensure ongoingAirportExpansions exists
+  if (!Array.isArray(loadedState.ongoingAirportExpansions)) {
+    loadedState.ongoingAirportExpansions = [];
+  }
+
   // Ensure activeEvents exists
   if (!Array.isArray(loadedState.activeEvents)) {
     loadedState.activeEvents = [];
@@ -96,6 +101,9 @@ export function saveGameToLocalStorage(
     // Ensure all arrays are initialized before saving
     if (!Array.isArray(state.aircraftDeliveries)) {
       state.aircraftDeliveries = [];
+    }
+    if (!Array.isArray(state.ongoingAirportExpansions)) {
+      state.ongoingAirportExpansions = [];
     }
     state.airlines.forEach((airline) => {
       if (!Array.isArray(airline.pendingOrders)) {
