@@ -383,9 +383,6 @@ export const WorldMap: React.FC<WorldMapProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Airline Network Display Filter ('ALL' | 'PLAYER' | rivalId)
-  const [airlineFilter, setAirlineFilter] = useState<'ALL' | 'PLAYER' | string>('ALL');
-
   // Active Continental Region Mode (null = Global World Overview)
   const [activeRegion, setActiveRegion] = useState<RegionId | null>(null);
   const [hoveredRegion, setHoveredRegion] = useState<RegionId | null>(null);
@@ -444,10 +441,6 @@ export const WorldMap: React.FC<WorldMapProps> = ({
     if (!activeRegion) return new Set<string>();
     const set = new Set<string>();
     (routes || []).forEach((r) => {
-      if (airlineFilter !== 'ALL') {
-        if (airlineFilter === 'PLAYER' && r.airlineId !== playerAirline.id) return;
-        if (airlineFilter !== 'PLAYER' && r.airlineId !== airlineFilter) return;
-      }
       const o = cityMap.get(r.originCityId);
       const d = cityMap.get(r.destCityId);
       if (!o || !d) return;
@@ -458,7 +451,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
       }
     });
     return set;
-  }, [routes, activeRegion, airlineFilter, cityMap, playerAirline.id]);
+  }, [routes, activeRegion, cityMap]);
 
   // Animation frame loop for continuous 60fps flight motion & holographic pulses
   useEffect(() => {
@@ -845,12 +838,6 @@ export const WorldMap: React.FC<WorldMapProps> = ({
     interconBadgesRef.current = [];
 
     routes.forEach((route) => {
-      // Filter routes based on selected airline network
-      if (airlineFilter !== 'ALL') {
-        if (airlineFilter === 'PLAYER' && route.airlineId !== playerAirline.id) return;
-        if (airlineFilter !== 'PLAYER' && route.airlineId !== airlineFilter) return;
-      }
-
       const origin = cityMap.get(route.originCityId);
       const dest = cityMap.get(route.destCityId);
       if (!origin || !dest) return;
@@ -1487,7 +1474,6 @@ export const WorldMap: React.FC<WorldMapProps> = ({
     avatarsLoaded,
     playerAirline,
     airlines,
-    airlineFilter,
     projectCoords,
   ]);
 
@@ -1686,10 +1672,40 @@ export const WorldMap: React.FC<WorldMapProps> = ({
     setIsDragging(false);
   };
 
+  // Zoom by factor centered on a specific client point (defaults to canvas center)
+  const handleZoomByFactor = useCallback(
+    (factor: number, clientX?: number, clientY?: number) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+
+      const mouseX = clientX !== undefined ? clientX - rect.left : cx;
+      const mouseY = clientY !== undefined ? clientY - rect.top : cy;
+
+      setZoom((prevZoom) => {
+        const newZoom = Math.min(3.8, Math.max(0.8, prevZoom * factor));
+        if (newZoom === prevZoom) return prevZoom;
+
+        const scaleRatio = newZoom / prevZoom;
+        setPan((prevPan) => {
+          const newPanX = prevPan.x - (mouseX - cx - prevPan.x) * (scaleRatio - 1);
+          const newPanY = prevPan.y - (mouseY - cy - prevPan.y) * (scaleRatio - 1);
+          return { x: newPanX, y: newPanY };
+        });
+
+        return newZoom;
+      });
+    },
+    []
+  );
+
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    const zoomDelta = e.deltaY < 0 ? 0.15 : -0.15;
-    setZoom((prev) => Math.min(3.8, Math.max(0.8, prev + zoomDelta)));
+    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    handleZoomByFactor(factor, e.clientX, e.clientY);
   };
 
   const handleClick = () => {
@@ -1719,88 +1735,39 @@ export const WorldMap: React.FC<WorldMapProps> = ({
         onClick={handleClick}
       />
 
-      {/* TOP-RIGHT HUD: AIRLINE NETWORK FILTER */}
-      <div className="absolute top-14 right-4 z-20 hidden md:flex items-center gap-1.5 p-1.5 bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-700/80 shadow-2xl text-xs">
-        <span className="text-[10px] font-mono font-black text-slate-400 px-1.5 uppercase">
-          Network:
-        </span>
-        <button
-          onClick={() => setAirlineFilter('ALL')}
-          className={`px-2.5 py-1 rounded-xl font-mono font-bold transition cursor-pointer flex items-center gap-1.5 ${
-            airlineFilter === 'ALL'
-              ? 'bg-sky-500 text-slate-950 font-black shadow-md'
-              : 'text-slate-300 hover:bg-slate-800'
-          }`}
-        >
-          <span>All Airlines</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-950/70 font-mono text-slate-200">
-            {routes.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setAirlineFilter('PLAYER')}
-          className={`px-2.5 py-1 rounded-xl font-mono font-bold transition cursor-pointer flex items-center gap-1.5 ${
-            airlineFilter === 'PLAYER'
-              ? 'bg-blue-600 text-white font-black shadow-md border border-sky-400'
-              : 'text-slate-300 hover:bg-slate-800'
-          }`}
-        >
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: playerAirline.color }} />
-          <span>My Airline</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-950/70 font-mono text-slate-200">
-            {routes.filter((r) => r.airlineId === playerAirline.id).length}
-          </span>
-        </button>
-
-        {airlines
-          ?.filter((a) => !a.isHuman)
-          .map((ai) => {
-            const aiRouteCount = routes.filter((r) => r.airlineId === ai.id).length;
-            const isSelected = airlineFilter === ai.id;
-            return (
-              <button
-                key={ai.id}
-                onClick={() => setAirlineFilter(ai.id)}
-                className={`px-2.5 py-1 rounded-xl font-mono font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                  isSelected ? 'text-white font-black shadow-md' : 'text-slate-400 hover:bg-slate-800'
-                }`}
-                style={{
-                  backgroundColor: isSelected ? ai.color : undefined,
-                  border: isSelected ? `1px solid ${ai.color}` : '1px solid transparent',
-                }}
-              >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ai.color }} />
-                <span className="truncate max-w-[90px]">{ai.name.split(' ')[0]}</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-950/70 font-mono text-slate-200">
-                  {aiRouteCount}
-                </span>
-              </button>
-            );
-          })}
-      </div>
-
-      {/* TOP HUD: CONTINENTAL SECTOR SWITCHER BAR */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 p-1.5 bg-slate-900/90 backdrop-blur-md rounded-2xl border border-sky-500/50 shadow-2xl overflow-x-auto max-w-[96vw]">
+      {/* TOP HUD: CONTINENTAL SECTOR SWITCHER BAR (Clean, single-row, unobstructed) */}
+      <div className="absolute top-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 p-1 bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-700/80 shadow-2xl overflow-x-auto max-w-[96vw]">
         {/* Global Overview Button */}
         <button
           onClick={() => handleSelectRegion(null)}
           className={`px-3 py-1.5 rounded-xl font-bold font-mono text-xs transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
             !activeRegion
-              ? 'bg-sky-500 text-slate-950 shadow-[0_0_10px_rgba(56,189,248,0.5)]'
-              : 'text-slate-300 hover:bg-slate-800'
+              ? 'bg-sky-500 text-slate-950 shadow-[0_0_10px_rgba(56,189,248,0.5)] font-black'
+              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
           }`}
         >
           <Globe className="w-3.5 h-3.5" />
           <span>Global World</span>
         </button>
 
-        <div className="w-[1px] h-4 bg-slate-700 mx-1"></div>
+        <div className="w-[1px] h-4 bg-slate-700/80 mx-1 shrink-0"></div>
 
         {/* 7 Continental Region Buttons */}
         {REGION_LIST.map((reg) => {
           const isActive = activeRegion === reg.id;
           const cityCount = CITIES.filter((c) => c.region === reg.id).length;
+          const label =
+            reg.id === 'AFRICA'
+              ? 'Africa'
+              : reg.id === 'NORTH_AMERICA'
+              ? 'N. America'
+              : reg.id === 'SOUTH_AMERICA'
+              ? 'S. America'
+              : reg.id === 'MIDDLE_EAST_SOUTH_ASIA'
+              ? 'M. East'
+              : reg.id === 'EAST_SOUTHEAST_ASIA'
+              ? 'East Asia'
+              : reg.name.split('&')[0].trim();
 
           return (
             <button
@@ -1808,14 +1775,14 @@ export const WorldMap: React.FC<WorldMapProps> = ({
               onClick={() => handleSelectRegion(reg.id)}
               onMouseEnter={() => !activeRegion && setHoveredRegion(reg.id)}
               onMouseLeave={() => !activeRegion && setHoveredRegion(null)}
-              className={`px-3 py-1.5 rounded-xl font-bold font-mono text-xs transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-2.5 py-1.5 rounded-xl font-bold font-mono text-xs transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 isActive
                   ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white border border-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.5)]'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
               }`}
             >
               <span>{reg.icon}</span>
-              <span>{reg.name.split('&')[0]}</span>
+              <span>{label}</span>
               <span className="text-[10px] opacity-75 font-normal">({cityCount})</span>
             </button>
           );
@@ -1839,14 +1806,14 @@ export const WorldMap: React.FC<WorldMapProps> = ({
       {/* Map Control Buttons */}
       <div className="absolute bottom-5 right-5 flex flex-col gap-1.5 z-10 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-700 shadow-2xl">
         <button
-          onClick={() => setZoom((prev) => Math.min(3.8, prev + 0.25))}
+          onClick={() => handleZoomByFactor(1.2)}
           title="Zoom In"
           className="p-2.5 hover:bg-slate-800 text-slate-200 hover:text-white rounded-lg transition cursor-pointer"
         >
           <ZoomIn className="w-5 h-5 text-sky-400" />
         </button>
         <button
-          onClick={() => setZoom((prev) => Math.max(0.8, prev - 0.25))}
+          onClick={() => handleZoomByFactor(1 / 1.2)}
           title="Zoom Out"
           className="p-2.5 hover:bg-slate-800 text-slate-200 hover:text-white rounded-lg transition cursor-pointer"
         >

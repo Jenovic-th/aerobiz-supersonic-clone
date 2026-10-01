@@ -78,7 +78,7 @@ async function run() {
 
   console.log('[STEP 2] Verifying initial unread News button and badge on Turn 1...');
   const hasUnreadBadgeTurn1 = await evalJs(
-    'Boolean(document.querySelector(\'[data-testid="header-news-unread-badge"]\'))'
+    'Boolean(document.querySelector(\'[data-testid="toolbar-news-unread-badge"]\'))'
   );
   console.log('Turn 1 has unread badge:', hasUnreadBadgeTurn1);
   if (!hasUnreadBadgeTurn1) {
@@ -87,7 +87,7 @@ async function run() {
   await capture('news_1_unread_badge_main.png');
 
   console.log('[STEP 3] Opening News & Chronicle Modal...');
-  await click('[data-testid="header-news-btn"]');
+  await click('[data-testid="toolbar-news-btn"]');
   await new Promise((r) => setTimeout(r, 500));
   await capture('news_2_breaking_news_tab.png');
 
@@ -101,7 +101,7 @@ async function run() {
   await new Promise((r) => setTimeout(r, 500));
 
   const hasBadgeAfterRead = await evalJs(
-    'Boolean(document.querySelector(\'[data-testid="header-news-unread-badge"]\'))'
+    'Boolean(document.querySelector(\'[data-testid="toolbar-news-unread-badge"]\'))'
   );
   console.log('Badge is gone after reading news:', !hasBadgeAfterRead);
   if (hasBadgeAfterRead) {
@@ -129,12 +129,12 @@ async function run() {
   await new Promise((r) => setTimeout(r, 800));
 
   const hasBadgeTurn2 = await evalJs(
-    'Boolean(document.querySelector(\'[data-testid="header-news-unread-badge"]\'))'
+    'Boolean(document.querySelector(\'[data-testid="toolbar-news-unread-badge"]\'))'
   );
   console.log('Turn 2 has new unread news badge:', hasBadgeTurn2);
 
   // Open news in Turn 2 and check archive
-  await click('[data-testid="header-news-btn"]');
+  await click('[data-testid="toolbar-news-btn"]');
   await new Promise((r) => setTimeout(r, 500));
   await click('[data-testid="news-tab-archives"]');
   await new Promise((r) => setTimeout(r, 500));
@@ -152,7 +152,7 @@ async function run() {
 
   // Test Escape key
   console.log('[STEP 8] Testing Escape Key Close...');
-  await click('[data-testid="header-news-btn"]');
+  await click('[data-testid="toolbar-news-btn"]');
   await new Promise((r) => setTimeout(r, 400));
   win.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Escape' });
   await new Promise((r) => setTimeout(r, 80));

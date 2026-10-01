@@ -87,20 +87,22 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
   const hasUnreadNews = gameState.turnNumber > (gameState.lastReadNewsTurn ?? 0);
 
   return (
-    <header className="w-full shrink-0 h-14 md:h-16 bg-slate-900 border-b border-slate-700/80 shadow-2xl px-3 md:px-5 py-2 flex items-center justify-between gap-2 md:gap-4 text-slate-100 z-20 select-none">
-      {/* 1. LEFT: Airline Identity & Calendar Turn */}
-      <div className="flex items-center gap-2 md:gap-3 shrink-0">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-700 to-indigo-800 rounded-xl border border-blue-400 font-black shadow-lg">
-          <Plane className="w-4 h-4 md:w-5 md:h-5 text-sky-200 shrink-0" />
-          <span className="text-white text-xs md:text-sm tracking-wide font-bold truncate max-w-[120px] md:max-w-[160px] xl:max-w-[200px]">
+    <header className="w-full shrink-0 h-13 md:h-14 bg-slate-900/95 backdrop-blur-md border-b border-slate-700/80 shadow-2xl px-3 md:px-5 py-1.5 flex items-center justify-between gap-3 text-slate-100 z-20 select-none">
+      {/* 1. LEFT: Consolidated Airline Identity & Calendar Turn */}
+      <div className="flex items-center bg-slate-800/90 border border-slate-700/80 rounded-xl shadow-md divide-x divide-slate-700/80 overflow-hidden shrink-0">
+        {/* Airline Name & Home City */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-700/90 to-indigo-800/90 font-black">
+          <Plane className="w-4 h-4 text-sky-200 shrink-0" />
+          <span className="text-white text-xs md:text-sm tracking-wide font-bold truncate max-w-[130px] md:max-w-[180px]">
             {playerAirline.name}
           </span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/30 text-sky-300 font-mono font-bold shrink-0">
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/40 text-sky-300 font-mono font-bold shrink-0">
             {playerAirline.homeCityId}
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-slate-200 bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-700 shadow font-bold whitespace-nowrap">
+        {/* Date, Quarter & Turn */}
+        <div className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 text-xs md:text-sm text-slate-200 font-bold whitespace-nowrap">
           <Calendar className="w-4 h-4 text-sky-400 shrink-0" />
           <span className="text-white">{gameState.currentYear}</span>
           <span className="text-slate-500">•</span>
@@ -114,23 +116,23 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
         </div>
       </div>
 
-      {/* 2. CENTER: Executive Core KPIs (Cash, Rank, Envoys) */}
-      <div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm font-semibold shrink-0">
-        {/* Cash in $K (Large, highlighted, glowing emerald) */}
-        <div className="flex items-center gap-1.5 md:gap-2 bg-emerald-950/90 border-2 border-emerald-500/80 px-3 py-1.5 rounded-xl shadow-lg">
-          <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-emerald-400 shrink-0" />
-          <span className="text-slate-300 hidden sm:inline">Cash:</span>
-          <span className="text-emerald-300 font-black text-base md:text-lg tracking-wider font-mono">
+      {/* 2. CENTER: Consolidated Performance & Resources (Cash, Rank, Envoys) */}
+      <div className="flex items-center bg-slate-800/90 border border-slate-700/80 rounded-xl shadow-md divide-x divide-slate-700/80 overflow-hidden shrink-0">
+        {/* Cash */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/50">
+          <DollarSign className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span className="text-slate-400 text-xs hidden sm:inline">Cash:</span>
+          <span className="text-emerald-300 font-black text-sm md:text-base tracking-wider font-mono">
             ${playerAirline.cashK.toLocaleString()}K
           </span>
         </div>
 
-        {/* Industry Rank Badge */}
-        <div className="flex items-center gap-1.5 bg-slate-800/90 border border-amber-500/50 px-2.5 md:px-3 py-1.5 rounded-xl shadow">
+        {/* Industry Rank */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5">
           <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
-          <span className="text-slate-300 hidden md:inline">Rank:</span>
+          <span className="text-slate-400 text-xs hidden md:inline">Rank:</span>
           <span
-            className={`font-black font-mono text-sm md:text-base ${
+            className={`font-black font-mono text-xs md:text-sm ${
               playerRank === 1 ? 'text-amber-300' : playerRank === 2 ? 'text-slate-200' : 'text-amber-500'
             }`}
           >
@@ -138,132 +140,49 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
           </span>
         </div>
 
-        {/* 4+1 Executive Delegates Bar */}
+        {/* Compact Envoys Button (Opens Roster) */}
         <button
           onClick={() => setShowRoster(true)}
-          className="hidden 2xl:flex items-center gap-1.5 md:gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-900/80 to-indigo-950/80 hover:from-blue-800 hover:to-indigo-900 border border-sky-400/80 rounded-xl shadow-lg transition active:scale-95 cursor-pointer text-xs shrink-0"
+          className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-700/50 transition cursor-pointer text-xs"
           title="คลิกเพื่อดูทำเนียบทูตเจรจา (Envoys Roster)"
         >
-          <Users className="w-4 h-4 text-sky-300" />
-          <div className="flex flex-col text-left">
-            <span className="text-[10px] text-slate-300 font-bold uppercase hidden xl:inline">Envoys (4+1)</span>
-            <div className="flex items-center gap-1 font-bold font-mono">
-              <span className="text-emerald-300">{availableCount} Free</span>
-              {onMissionCount > 0 && (
-                <span className="text-amber-400 font-bold">• {onMissionCount} Active</span>
-              )}
-            </div>
-          </div>
-          <div className="hidden xl:flex -space-x-1.5 ml-0.5">
-            {fieldDelegates.map((d) => (
-              <div
-                key={d.id}
-                className={`w-5 h-5 rounded-full border-2 ${
-                  d.status === 'AVAILABLE' ? 'border-emerald-400' : 'border-amber-400'
-                } overflow-hidden`}
-              >
-                <NegotiatorAvatar avatarId={d.avatarId} size="sm" className="w-full h-full" />
-              </div>
-            ))}
-          </div>
+          <Users className="w-4 h-4 text-sky-400 shrink-0" />
+          <span className="text-slate-400 hidden xl:inline">Envoys:</span>
+          <span className="text-emerald-300 font-bold font-mono">{availableCount} Free</span>
+          {onMissionCount > 0 && (
+            <span className="text-amber-400 font-bold font-mono">({onMissionCount} Out)</span>
+          )}
         </button>
 
-        {/* Major Active Crisis Event Badge (Compact) */}
+        {/* Major Active Crisis Event Badge (If any active) */}
         {activeEvent && (
-          <button
-            onClick={() => {
-              playSound.click();
-              if (onOpenNews) onOpenNews();
-            }}
-            className={`hidden 2xl:flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs shadow border font-bold cursor-pointer hover:scale-105 transition ${
+          <div
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold ${
               activeEvent.type === 'WAR' ||
               activeEvent.type === 'OIL_CRISIS' ||
               activeEvent.type === 'EPIDEMIC' ||
               activeEvent.type === 'ECONOMIC_CRISIS'
-                ? 'bg-rose-950/90 border-rose-500 text-rose-200 animate-pulse'
-                : 'bg-amber-950/90 border-amber-500 text-amber-200'
+                ? 'bg-rose-950/90 text-rose-200 animate-pulse'
+                : 'bg-amber-950/90 text-amber-200'
             }`}
-            title="คลิกเพื่ออ่านรายละเอียดเหตุการณ์โลกฉบับเต็ม"
+            title={activeEvent.title}
           >
             <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="truncate max-w-[140px]">{activeEvent.title}</span>
-          </button>
+            <span className="truncate max-w-[130px] hidden lg:inline">{activeEvent.title}</span>
+          </div>
         )}
       </div>
 
-      {/* 3. RIGHT: Permanent Save, Load & News Suite */}
-      <div className="flex items-center gap-1.5 md:gap-2 shrink-0 ml-auto">
-        {/* Global News & Chronicles Command Button with pulsating unread indicator */}
-        <button
-          onClick={() => {
-            playSound.click();
-            if (onOpenNews) onOpenNews();
-          }}
-          data-testid="header-news-btn"
-          className={`flex items-center gap-1.5 px-2.5 md:px-3.5 py-1.5 md:py-2 rounded-xl text-xs font-black transition cursor-pointer shadow-md active:scale-95 whitespace-nowrap border ${
-            hasUnreadNews
-              ? 'bg-gradient-to-r from-amber-700 via-rose-700 to-amber-800 text-white border-amber-300 ring-2 ring-amber-400/70 shadow-[0_0_15px_rgba(245,158,11,0.5)]'
-              : 'bg-slate-800 hover:bg-slate-700 border-slate-600 hover:border-amber-400 text-slate-100'
-          }`}
-          title="Global News & Chronicle (ศูนย์รวมข่าวสาร & คลังประวัติศาสตร์ย้อนหลัง)"
-        >
-          <Newspaper className={`w-4 h-4 ${hasUnreadNews ? 'text-amber-200 animate-bounce' : 'text-amber-400'}`} />
-          <span>News</span>
-          {hasUnreadNews && (
-            <span
-              data-testid="header-news-unread-badge"
-              className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black font-mono animate-pulse shadow border border-white/50"
-            >
-              ● NEW
-            </span>
-          )}
-        </button>
-
-        {/* Quick Save Button (Instant 1-Click Save with visual confirmation) */}
-        <button
-          onClick={() => {
-            if (onQuickSave) onQuickSave();
-            setQuickSavedAnimation(true);
-            setSaveToast('💾 บันทึกเกมลงใน Local Storage สำเร็จ!');
-            setTimeout(() => {
-              setQuickSavedAnimation(false);
-              setSaveToast(null);
-            }, 2500);
-          }}
-          className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 md:py-2 border rounded-xl text-xs font-black transition cursor-pointer shadow-md active:scale-95 whitespace-nowrap ${
-            quickSavedAnimation
-              ? 'bg-emerald-600 border-emerald-300 text-white ring-2 ring-emerald-400'
-              : 'bg-gradient-to-r from-emerald-800 to-teal-800 hover:from-emerald-700 hover:to-teal-700 border-emerald-400 text-white shadow-emerald-950/50'
-          }`}
-          title="Quick Save (บันทึกเซฟด่วนทันที)"
-        >
-          {quickSavedAnimation ? (
-            <CheckCircle2 className="w-4 h-4 text-white animate-spin" />
-          ) : (
-            <Save className="w-4 h-4 text-emerald-200" />
-          )}
-          <span className="hidden xl:inline">{quickSavedAnimation ? 'Saved! ✓' : 'Quick Save'}</span>
-        </button>
-
-        {/* Full Save & Load Data Management Modal Trigger */}
-        <button
-          onClick={onOpenSaveLoadModal}
-          className="flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-sky-400 rounded-xl text-xs font-bold text-slate-100 transition cursor-pointer shadow-md active:scale-95 whitespace-nowrap"
-          title="Save & Load Data Management (จัดการข้อมูลเซฟ/โหลด/สำรองไฟล์)"
-        >
-          <Database className="w-4 h-4 text-sky-400" />
-          <span className="hidden 2xl:inline">Save & Load</span>
-        </button>
-
-        {/* System Menu Dropdown Trigger */}
-        <div className="relative" ref={menuRef}>
+      {/* 3. RIGHT: Executive System Hub (Single Clean Dropdown Trigger) */}
+      <div className="flex items-center gap-2 shrink-0 ml-auto" ref={menuRef}>
+        <div className="relative">
           <button
             onClick={() => {
               playSound.click();
               setShowSystemMenu((prev) => !prev);
             }}
             data-testid="header-system-btn"
-            className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 md:py-2 rounded-xl text-xs font-bold transition cursor-pointer shadow-md active:scale-95 whitespace-nowrap border ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 md:py-2 rounded-xl text-xs md:text-sm font-bold transition cursor-pointer shadow-md active:scale-95 whitespace-nowrap border ${
               showSystemMenu
                 ? 'bg-sky-600 border-sky-300 text-white ring-2 ring-sky-400/50'
                 : 'bg-slate-800 hover:bg-slate-700 border-slate-600 hover:border-sky-400 text-slate-200'
@@ -427,7 +346,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
 
       {/* Floating Save Toast Notification */}
       {saveToast && (
-        <div className="fixed top-16 right-6 z-50 px-4 py-2 bg-emerald-950 border-2 border-emerald-400 text-emerald-200 rounded-xl shadow-2xl font-black text-xs flex items-center gap-2 animate-bounce">
+        <div className="fixed bottom-20 right-6 z-50 px-4 py-2 bg-emerald-950 border-2 border-emerald-400 text-emerald-200 rounded-xl shadow-2xl font-black text-xs flex items-center gap-2 animate-bounce">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{saveToast}</span>
         </div>

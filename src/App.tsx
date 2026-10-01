@@ -607,7 +607,7 @@ export function App() {
 
       {/* Floating System Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-16 right-6 z-50 px-4 py-2 bg-emerald-950/95 border-2 border-emerald-400 text-emerald-200 rounded-xl shadow-2xl font-black text-xs flex items-center gap-2 animate-bounce">
+        <div className="fixed bottom-20 right-6 z-50 px-4 py-2 bg-emerald-950/95 border-2 border-emerald-400 text-emerald-200 rounded-xl shadow-2xl font-black text-xs flex items-center gap-2 animate-bounce">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
