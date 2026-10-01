@@ -18,20 +18,23 @@ import {
   Shield,
   Rocket,
   Trophy,
-  Infinity,
   Plane,
   Building2,
   CheckCircle2,
-  Award,
   Zap,
   ChevronRight,
+  ChevronLeft,
   Users,
   Shuffle,
-  Settings2,
-  Swords,
   Upload,
-  FolderOpen,
   ArrowLeft,
+  DollarSign,
+  Calendar,
+  MapPin,
+  Bot,
+  User,
+  Sliders,
+  Check,
 } from 'lucide-react';
 
 interface NewGameSetupModalProps {
@@ -43,11 +46,16 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   onStartGame,
   onBackToTitle,
 }) => {
+  // Wizard Navigation Step: 1 = Era & Mode, 2 = Competitors, 3 = HQ & Capital, 4 = Review & Launch
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4>(1);
+
+  // Configuration States
   const [gameMode, setGameMode] = useState<GameMode>('CAMPAIGN_20YR');
   const [selectedEra, setSelectedEra] = useState<1 | 2 | 3>(1);
   const [airlineName, setAirlineName] = useState<string>('Siam Supersonic Airways');
+  const [playerCeoName, setPlayerCeoName] = useState<string>('You (Chief Executive)');
   const [homeCityId, setHomeCityId] = useState<string>('BKK');
-  const [difficulty, setDifficulty] = useState<number>(2); // 1 = Easy, 2 = Medium, 3 = Expert
+  const [difficulty, setDifficulty] = useState<number>(2); // 1 = $100M, 2 = $75M, 3 = $50M
 
   // AI Rivals Configuration
   const [rivalCount, setRivalCount] = useState<1 | 2 | 3>(3);
@@ -59,6 +67,13 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   });
   const [rerollSeed, setRerollSeed] = useState(0);
 
+  // Editable names for AI rivals
+  const [customAiNames, setCustomAiNames] = useState<Record<string, string>>({});
+  const [customAiCeos, setCustomAiCeos] = useState<Record<string, string>>({});
+
+  // Region filter for HQ selector in Step 3
+  const [selectedRegionFilter, setSelectedRegionFilter] = useState<string>('ALL');
+
   // Dynamically generate AI rival profiles & personalities based on rerollSeed
   const currentRivalProfiles = useMemo(() => {
     return getDynamicAIRivals(rivalCount, rerollSeed);
@@ -69,7 +84,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     return assignDistributedHQs(homeCityId, 3);
   }, [homeCityId, rerollSeed]);
 
-  // Save & Load state
+  // Save & Load state for optional fast-resume
   const [availableSave, setAvailableSave] = useState<{
     isAutoSave: boolean;
     metadata: SaveMetadata;
@@ -85,6 +100,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
   const handleResumeSave = () => {
     if (!availableSave) return;
+    playSound.confirm();
     const loaded = loadGameFromLocalStorage(availableSave.isAutoSave);
     if (loaded) {
       onStartGame(loaded);
@@ -95,6 +111,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     try {
+      playSound.confirm();
       const imported = await importSaveFile(file);
       onStartGame(imported);
     } catch (err: any) {
@@ -107,37 +124,43 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     1: {
       yearRange: '1980 – 2000',
       title: '1980: Widebody Jets & Cold War',
+      tagline: 'ยุคสงครามเย็น & เครื่องบินลำตัวกว้าง',
       subtitle: 'The golden age of 747 jumbos, DC-10, Concorde, and the collapse of the Eastern Bloc.',
       planes: 'B747-200B, B727-200, DC-10-30, Concorde SST, A300B4, Tu-154B',
       events: '1982/1986/1990/1994 World Cups, 1990 Gulf War, 1997 Asian Crisis',
       starterPlane: 'Boeing 727-200 Trijet',
       starterPlaneId: 'B727-200',
       icon: Shield,
-      accent: 'border-blue-500 text-sky-400',
+      accent: 'border-sky-500 text-sky-400 bg-sky-950/30',
+      glow: 'shadow-[0_0_30px_rgba(56,189,248,0.25)]',
       badge: 'HISTORICAL GOLDEN ERA',
     },
     2: {
       yearRange: '2000 – 2020',
-      title: '2000: Modern Mega-Jets & Composite Efficiency',
+      title: '2000: Modern Mega-Jets & Efficiency',
+      tagline: 'ยุคเมกะเจ็ต & ประสิทธิภาพคอมโพสิต',
       subtitle: 'The dawn of the A380 Superjumbo, B787 Dreamliner, and A350 long-range cruising.',
       planes: 'Airbus A380-800, B787-8 Dreamliner, A350-900, B777-200ER',
       events: '2002/2006/2010/2014 World Cups, 2001 Aviation Shock, 2008 Financial Crisis',
       starterPlane: 'Boeing 777-200ER Twin-Jet',
       starterPlaneId: 'B777-200ER',
       icon: Globe2,
-      accent: 'border-amber-500 text-amber-400',
+      accent: 'border-amber-500 text-amber-400 bg-amber-950/30',
+      glow: 'shadow-[0_0_30px_rgba(245,158,11,0.25)]',
       badge: 'MODERN JETLINER AGE',
     },
     3: {
       yearRange: '2020 – 2040+',
       title: '2020: Next-Gen, Supersonic & Future Tech',
+      tagline: 'ยุคอนาคต & ความเร็วเหนือเสียงยุคใหม่',
       subtitle: 'Ultra long-range A321XLR, Boom Overture SST, Airbus ZEROe Hydrogen, Tesla AeroStar & SpaceX.',
       planes: 'Boom SST, A321XLR, B777X, Tesla AeroStar, SpaceX Starship P2P',
       events: '2022/2026/2030 World Cups, 2024 Olympics, Clean Hydrogen Energy, Suborbital Hops',
       starterPlane: 'Airbus A321neo-XLR Ultra-Range',
       starterPlaneId: 'A321XLR',
       icon: Rocket,
-      accent: 'border-emerald-500 text-emerald-400',
+      accent: 'border-emerald-500 text-emerald-400 bg-emerald-950/30',
+      glow: 'shadow-[0_0_30px_rgba(16,185,129,0.25)]',
       badge: 'HYPERSONIC & FUTURE TECH',
     },
   };
@@ -146,19 +169,80 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const activeEraInfo = eraDescriptions[selectedEra];
   const starterModel = AIRCRAFTS.find((a) => a.id === activeEraInfo.starterPlaneId)!;
 
+  // Randomize helper pools
+  const playerPresets = [
+    'Siam Supersonic Airways',
+    'Pan Pacific Airlines',
+    'Trans-Global Airways',
+    'SkyWings International',
+    'Royal Horizon Air',
+    'AeroWorld Express',
+    'Imperial Pacific',
+    'Starlight Airlines',
+  ];
+
+  const handleRandomizePlayerName = () => {
+    playSound.click();
+    const remaining = playerPresets.filter((p) => p !== airlineName);
+    const pick = remaining[Math.floor(Math.random() * remaining.length)];
+    setAirlineName(pick);
+  };
+
+  const handleRandomizeAiName = (rivalIndex: number) => {
+    playSound.click();
+    const profile = currentRivalProfiles[rivalIndex];
+    if (!profile) return;
+    const aiPool = [
+      'Nova Continental',
+      'Solaris Aero',
+      'Vanguard International',
+      'Atlas Global Air',
+      'Condor World Express',
+      'Polaris Orient',
+      'Zephyr Airways',
+      'AeroDynamic International',
+    ];
+    const pick = aiPool[Math.floor(Math.random() * aiPool.length)];
+    setCustomAiNames((prev) => ({ ...prev, [profile.id]: pick }));
+  };
+
+  const handleRerollAllRivals = () => {
+    playSound.click();
+    setRerollSeed((prev) => prev + 1);
+    setCustomAiNames({});
+    setCustomAiCeos({});
+  };
+
+  const handleNextStep = () => {
+    playSound.confirm();
+    if (wizardStep < 4) {
+      setWizardStep((prev) => (prev + 1) as any);
+    }
+  };
+
+  const handlePrevStep = () => {
+    playSound.click();
+    if (wizardStep > 1) {
+      setWizardStep((prev) => (prev - 1) as any);
+    } else if (onBackToTitle) {
+      onBackToTitle();
+    }
+  };
+
+  // Launch Game Simulation
   const handleStart = () => {
+    playSound.confirm();
     const startYear = selectedEra === 1 ? 1980 : selectedEra === 2 ? 2000 : 2020;
     const endYear = gameMode === 'CAMPAIGN_20YR' ? startYear + 20 : 9999;
-
     const initialCash = difficulty === 1 ? 100000 : difficulty === 2 ? 75000 : 50000;
 
-    // Intelligently find top 2 partner cities that are strictly within starterModel's certified range
+    // Intelligently find top 2 partner cities strictly within starterModel's certified range
     const candidatePartnerCities = CITIES.filter((c) => c.id !== homeCityId)
       .map((c) => {
         const dist = calculateDistance(selectedHomeCity.lat, selectedHomeCity.lon, c.lat, c.lon);
         let score = c.population * 2.5 + c.businessIndex * 2 + c.tourismIndex * 1.5;
         if (c.region === selectedHomeCity.region) {
-          score += 100; // Prefer establishing solid regional hub network first
+          score += 100;
         }
         return { city: c, dist, score };
       })
@@ -189,7 +273,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
     const playerAirline: Airline = {
       id: 'AIRLINE_PLAYER',
-      name: airlineName,
+      name: airlineName.trim() || 'Siam Supersonic Airways',
       color: '#38bdf8',
       isHuman: true,
       homeCityId: homeCityId,
@@ -229,7 +313,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       businesses: [],
       pendingOrders: [],
       negotiators: createDefaultNegotiators(),
-      ceoName: 'You (Chief Executive)',
+      ceoName: playerCeoName.trim() || 'You (Chief Executive)',
       personality: 'BALANCED',
     };
 
@@ -273,7 +357,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
       },
     };
 
-    // Dynamically generate active AI Competitor Airlines
+    // Dynamically generate AI Competitor Airlines
     const aiAirlines: Airline[] = [];
     const allInitialRoutes: Route[] = [route1, route2];
 
@@ -284,8 +368,14 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
           ? distributedHQs[i]
           : customHQs[profile.id] || profile.defaultHQs[0];
 
+      const effectiveProfile = {
+        ...profile,
+        name: (customAiNames[profile.id] || profile.name).trim(),
+        ceoName: (customAiCeos[profile.id] || profile.ceoName).trim(),
+      };
+
       const { airline: aiAirline, initialRoutes: aiRoutes } = createAIAirline(
-        profile,
+        effectiveProfile,
         aiHQ,
         starterModel.id,
         initialCash,
@@ -357,43 +447,46 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
     onStartGame(initialGameState);
   };
 
-  const namePresets = [
-    'Siam Supersonic Airways',
-    'Pan Pacific Airlines',
-    'Trans-Global Airways',
-    'SkyWings International',
+  // Regions list for HQ filter
+  const regions = [
+    { id: 'ALL', label: 'All Continents (ทั้งหมด)' },
+    { id: 'EAST_SOUTHEAST_ASIA', label: 'East & SE Asia' },
+    { id: 'EUROPE', label: 'Europe' },
+    { id: 'NORTH_AMERICA', label: 'North America' },
+    { id: 'MIDDLE_EAST_SOUTH_ASIA', label: 'Middle East & South Asia' },
+    { id: 'SOUTH_AMERICA', label: 'South America' },
+    { id: 'OCEANIA', label: 'Oceania' },
+  ];
+
+  const filteredCities = useMemo(() => {
+    if (selectedRegionFilter === 'ALL') return CITIES;
+    return CITIES.filter((c) => c.region === selectedRegionFilter);
+  }, [selectedRegionFilter]);
+
+  const stepLabels = [
+    { num: 1, title: 'Choose Era', thai: 'เลือกยุค' },
+    { num: 2, title: 'Competitors', thai: 'ผู้เล่น & คู่แข่ง' },
+    { num: 3, title: 'HQ & Capital', thai: 'สำนักงานใหญ่ & ทุน' },
+    { num: 4, title: 'Launch', thai: 'สรุป & เริ่มการบิน' },
   ];
 
   return (
-    <div className="w-full h-[100dvh] flex flex-col bg-slate-950 text-slate-100 overflow-hidden relative select-none">
-      {/* Dynamic Background Aerospace Grid & Radar Sweep Glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(14,165,233,0.15),rgba(2,6,23,0.98))] pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b08_1px,transparent_1px),linear-gradient(to_bottom,#1e293b08_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none" />
+    <div className="w-screen h-screen max-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between overflow-hidden select-none relative">
+      {/* Background Graphic Grid */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-[#060e1d] to-[#020612] pointer-events-none" />
+      <div
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, #38bdf8 1px, transparent 1px), linear-gradient(to bottom, #38bdf8 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }}
+      />
 
-      {/* 1. TOP EXECUTIVE TITLE HEADER (shrink-0) */}
-      <header className="relative shrink-0 bg-slate-900/90 border-b border-sky-900/50 backdrop-blur-md px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 z-10 shadow-lg">
-        <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center text-white shadow-lg border border-sky-400">
-            <Plane className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-sky-400 font-mono px-2 py-0.5 rounded bg-sky-950/80 border border-sky-500/40">
-                KOEI SUPERSONIC ENGINE • HD STANDALONE
-              </span>
-              <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">v2.5.0</span>
-            </div>
-            <h1 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2 mt-0.5 font-mono">
-              AIROBIZ SUPERSONIC
-              <span className="text-xs font-normal text-slate-400 font-sans hidden md:inline">
-                — Commercial Airline Tycoon Simulation
-              </span>
-            </h1>
-          </div>
-        </div>
-
-        {/* Top Import Save Button & Quick Status */}
-        <div className="flex items-center gap-3">
+      {/* 1. TOP HEADER & STEP PROGRESS BAR */}
+      <header className="relative z-10 w-full px-6 py-3 bg-slate-900/90 border-b border-slate-800 backdrop-blur-md flex items-center justify-between shrink-0 shadow-md">
+        {/* Left: Back / Title button & Logo */}
+        <div className="flex items-center gap-4">
           {onBackToTitle && (
             <button
               onClick={() => {
@@ -401,33 +494,97 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 onBackToTitle();
               }}
               data-testid="setup-back-title-btn"
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
-              title="Return to Cover / Title Screen (กลับหน้าปก)"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-sky-400 rounded-xl text-xs font-bold font-mono transition cursor-pointer active:scale-95 shadow"
+              title="Return to Title Screen (กลับหน้าปก)"
             >
               <ArrowLeft className="w-4 h-4 text-sky-400" />
-              <span>Title Screen (กลับหน้าปก)</span>
+              <span>Title Screen</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-400 flex items-center justify-center text-sky-400">
+              <Plane className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-sm font-black font-mono tracking-wide text-white">
+                AEROBIZ SUPERSONIC
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono">
+                NEW AIRLINE FOUNDATION WIZARD
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Center: Step Stepper Indicators */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {stepLabels.map((s, idx) => {
+            const isActive = wizardStep === s.num;
+            const isCompleted = wizardStep > s.num;
+            return (
+              <div key={s.num} className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    if (s.num < wizardStep) {
+                      playSound.click();
+                      setWizardStep(s.num as any);
+                    }
+                  }}
+                  className={`flex items-center gap-2 px-3 py-1 rounded-xl text-xs font-mono font-bold transition ${
+                    isActive
+                      ? 'bg-sky-500/20 border border-sky-400 text-sky-300 shadow-[0_0_12px_rgba(56,189,248,0.3)]'
+                      : isCompleted
+                      ? 'bg-slate-800/80 border border-emerald-500/40 text-emerald-400 cursor-pointer hover:bg-slate-700'
+                      : 'bg-slate-900 border border-slate-800 text-slate-500'
+                  }`}
+                >
+                  <span
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
+                      isActive
+                        ? 'bg-sky-500 text-slate-950 font-black'
+                        : isCompleted
+                        ? 'bg-emerald-500 text-slate-950 font-black'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {isCompleted ? <Check className="w-3 h-3 stroke-[3]" /> : s.num}
+                  </span>
+                  <span className="hidden md:inline">{s.title}</span>
+                </button>
+                {idx < stepLabels.length - 1 && (
+                  <div
+                    className={`w-4 h-0.5 ${
+                      isCompleted ? 'bg-emerald-500/60' : 'bg-slate-800'
+                    }`}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Right: Quick Import & Status */}
+        <div className="flex items-center gap-3">
+          {availableSave && (
+            <button
+              onClick={handleResumeSave}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900/90 text-emerald-300 border border-emerald-400/60 rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
+              title="Resume existing save"
+            >
+              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Resume Saved</span>
             </button>
           )}
 
           <button
             onClick={() => importFileRef.current?.click()}
-            className="flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
-            title="Load an exported Aerobiz save file from your PC"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
+            title="Import Save File (.json)"
           >
-            <Upload className="w-4 h-4 text-amber-400" />
-            <span>Load Save File (.json)</span>
+            <Upload className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Import .json</span>
           </button>
-
-          <div className="hidden lg:flex items-center gap-4 text-xs font-mono bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-2 text-slate-300">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>STANDALONE DESKTOP SYSTEM READY</span>
-            </div>
-            <span className="text-slate-600">|</span>
-            <span className="text-amber-300">1980 - 2046+ TIMELINE</span>
-            <span className="text-slate-600">|</span>
-            <span className="text-sky-300">28 AIRCRAFT MODELS</span>
-          </div>
         </div>
       </header>
 
@@ -440,539 +597,835 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         onChange={handleImportFile}
       />
 
-      {/* 2. MAIN WIDESCREEN DASHBOARD (flex-1, zero empty sidebars, adaptively responsive) */}
-      <main className="relative flex-1 min-h-0 overflow-y-auto p-4 md:p-6 lg:p-7 z-10">
-        {/* Continue Saved Career Hero Banner */}
-        {availableSave && (
-          <div className="w-full max-w-[1600px] mx-auto mb-6 p-4 md:p-5 bg-gradient-to-r from-blue-950/90 via-slate-900 to-indigo-950/90 border-2 border-sky-400 rounded-3xl shadow-2xl flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl border-2"
-                style={{ backgroundColor: availableSave.metadata.airlineColor, borderColor: '#38bdf8' }}
-              >
-                ✈️
+      {/* 2. MAIN WIZARD CONTENT AREA (flex-1, zero vertical scroll, perfectly centered) */}
+      <main className="relative z-10 flex-1 min-h-0 flex flex-col justify-center px-6 lg:px-12 py-3 overflow-hidden">
+        {/* ========================================================================= */}
+        {/* STEP 1: CHOOSE STARTING ERA & GAME MODE                                    */}
+        {/* ========================================================================= */}
+        {wizardStep === 1 && (
+          <div className="w-full max-w-6xl mx-auto flex flex-col justify-between h-full py-2 animate-in fade-in duration-200">
+            {/* Step Heading */}
+            <div className="text-center mb-3 shrink-0">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-950/70 border border-sky-400/40 text-sky-300 font-mono text-xs font-bold mb-1">
+                <span>STEP 1 / 4</span>
+                <span>•</span>
+                <span>HISTORICAL TIMELINE & SCENARIO</span>
               </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] px-2 py-0.5 rounded font-black font-mono uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500">
-                    {availableSave.isAutoSave ? 'AUTO-SAVE DETECTED' : 'SAVED CAREER'}
-                  </span>
-                  <span className="text-xs text-slate-400 font-mono">
-                    Saved: {new Date(availableSave.metadata.savedAt).toLocaleString()}
-                  </span>
-                </div>
-                <h2 className="text-lg md:text-xl font-black text-white font-mono mt-0.5">
-                  {availableSave.metadata.airlineName}
-                </h2>
-                <div className="text-xs text-slate-300 flex items-center gap-3 flex-wrap mt-1 font-mono">
-                  <span>
-                    Year {availableSave.metadata.currentYear} • Q{availableSave.metadata.currentQuarter} (Turn {availableSave.metadata.turnNumber})
-                  </span>
-                  <span>•</span>
-                  <span>
-                    Cash: <strong className="text-emerald-400">${availableSave.metadata.cashK.toLocaleString()}K</strong>
-                  </span>
-                  <span>•</span>
-                  <span>
-                    Fleet: <strong className="text-sky-300">{availableSave.metadata.fleetCount} planes</strong>
-                  </span>
-                  <span>•</span>
-                  <span>
-                    Routes: <strong className="text-amber-300">{availableSave.metadata.routesCount} active</strong>
-                  </span>
-                </div>
-              </div>
+              <h2 className="text-2xl lg:text-3xl font-black font-mono text-white tracking-wide">
+                SELECT STARTING ERA & CHRONOLOGY
+              </h2>
+              <p className="text-xs text-slate-400">
+                เลือกยุคประวัติศาสตร์การบินและโหมดการจำลองเพื่อเริ่มต้นก่อตั้งสายการบิน
+              </p>
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
-              <button
-                onClick={() => importFileRef.current?.click()}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl font-bold text-xs md:text-sm shadow transition cursor-pointer flex items-center gap-2"
-              >
-                <Upload className="w-4 h-4 text-amber-400" />
-                <span>Import (.json)</span>
-              </button>
+            {/* 3 Era Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 flex-1 min-h-0 items-stretch my-2">
+              {[1, 2, 3].map((eraNum) => {
+                const eraKey = eraNum as 1 | 2 | 3;
+                const era = eraDescriptions[eraKey];
+                const isSelected = selectedEra === eraKey;
+                const IconComponent = era.icon;
 
-              <button
-                onClick={handleResumeSave}
-                className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-black text-sm md:text-base shadow-xl hover:shadow-emerald-500/30 border-2 border-emerald-400 transition-all active:scale-95 cursor-pointer flex items-center gap-2"
-              >
-                <span>▶ Resume Flight Operations (เล่นต่อ)</span>
-                <ChevronRight className="w-5 h-5 text-emerald-200 animate-pulse" />
-              </button>
+                return (
+                  <div
+                    key={eraNum}
+                    onClick={() => {
+                      playSound.click();
+                      setSelectedEra(eraKey);
+                    }}
+                    className={`relative rounded-3xl p-5 border-2 transition-all cursor-pointer flex flex-col justify-between text-left group ${
+                      isSelected
+                        ? `bg-slate-900/95 ${era.accent} ${era.glow} ring-2 ring-sky-400/40 scale-[1.02]`
+                        : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/80'
+                    }`}
+                  >
+                    {/* Top Era Badge & Radio Check */}
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] font-mono font-black px-2.5 py-1 rounded-full bg-slate-950/80 border border-slate-700 text-slate-300 tracking-wider">
+                          {era.badge}
+                        </span>
+                        <div
+                          className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition ${
+                            isSelected
+                              ? 'border-sky-400 bg-sky-400 text-slate-950 font-bold'
+                              : 'border-slate-700 text-transparent'
+                          }`}
+                        >
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        </div>
+                      </div>
+
+                      {/* Era Icon & Year Range */}
+                      <div className="flex items-center gap-3 mb-2">
+                        <div
+                          className={`p-2.5 rounded-2xl border ${
+                            isSelected ? era.accent : 'border-slate-700 text-slate-400 bg-slate-800'
+                          }`}
+                        >
+                          <IconComponent className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <div className="text-xl font-black font-mono text-white tracking-wide">
+                            {era.yearRange}
+                          </div>
+                          <div className="text-xs font-bold text-sky-400">{era.tagline}</div>
+                        </div>
+                      </div>
+
+                      {/* Subtitle / Context */}
+                      <p className="text-xs text-slate-300 leading-relaxed mt-2">{era.subtitle}</p>
+                    </div>
+
+                    {/* Starter Aircraft & Events Preview */}
+                    <div className="mt-4 pt-3 border-t border-slate-800 space-y-2">
+                      <div className="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80 text-[11px] font-mono">
+                        <span className="text-slate-400 block text-[10px]">STARTER JETLINER:</span>
+                        <span className="font-bold text-white flex items-center gap-1.5 mt-0.5">
+                          <Plane className="w-3 h-3 text-sky-400" />
+                          {era.starterPlane}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono truncate">
+                        <span className="text-slate-500 font-bold">Fleet:</span> {era.planes}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Game Mode Selector Card */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-4 mt-2 shrink-0">
+              <div className="flex items-center gap-3">
+                <Trophy className="w-5 h-5 text-amber-400" />
+                <div>
+                  <div className="text-xs font-bold text-white font-mono uppercase">
+                    Simulation Mode (โหมดการเล่น)
+                  </div>
+                  <div className="text-[11px] text-slate-400">
+                    เลือกเงื่อนไขชัยชนะตามกฎเดิม Koei 20 ปี หรือเล่นแบบไม่จำกัดเวลา
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    playSound.click();
+                    setGameMode('CAMPAIGN_20YR');
+                  }}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition cursor-pointer border ${
+                    gameMode === 'CAMPAIGN_20YR'
+                      ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow'
+                      : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  🏆 Classic 20-Year Campaign (80 Quarters)
+                </button>
+                <button
+                  onClick={() => {
+                    playSound.click();
+                    setGameMode('SANDBOX_INFINITE');
+                  }}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition cursor-pointer border ${
+                    gameMode === 'SANDBOX_INFINITE'
+                      ? 'bg-sky-500/20 border-sky-400 text-sky-300 shadow'
+                      : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  ♾️ Infinite Sandbox Mode
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        <div className="w-full h-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* LEFT COLUMN: SIMULATION MODE & TIMELINE ERA (lg:col-span-7) */}
-          <div className="lg:col-span-7 flex flex-col gap-4">
-            {/* Step 1: Choose Simulation Mode */}
-            <div className="bg-slate-900/80 border border-slate-700/80 rounded-2xl p-3.5 shadow-xl backdrop-blur-sm">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs md:text-sm font-black uppercase tracking-wider text-sky-400 font-mono flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-sky-500/20 text-sky-300 text-xs flex items-center justify-center font-bold">1</span>
-                  Select Simulation Game Mode
-                </label>
-                <span className="text-xs text-slate-400 font-mono">
-                  {gameMode === 'CAMPAIGN_20YR' ? '🏆 20-Year Evaluation' : '♾️ Never-ending Empire'}
-                </span>
+        {/* ========================================================================= */}
+        {/* STEP 2: PLAYERS & COMPETITOR AIRLINES (4 SLOTS TOTAL)                      */}
+        {/* ========================================================================= */}
+        {wizardStep === 2 && (
+          <div className="w-full max-w-6xl mx-auto flex flex-col justify-between h-full py-2 animate-in fade-in duration-200">
+            {/* Step Heading */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-2 shrink-0">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-sky-950/70 border border-sky-400/40 text-sky-300 font-mono text-xs font-bold mb-1">
+                  <span>STEP 2 / 4</span>
+                  <span>•</span>
+                  <span>AIRLINE CONGLOMERATES & RIVALS</span>
+                </div>
+                <h2 className="text-2xl lg:text-3xl font-black font-mono text-white tracking-wide">
+                  PLAYERS & COMPETITORS SETUP
+                </h2>
+                <p className="text-xs text-slate-400">
+                  รองรับการแข่งขันสูงสุด 4 สายการบินในตลาดโลก (สามารถตั้งชื่อหรือใช้ชื่อสุ่มได้ทันที)
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {/* Mode A: Classic 20-Year Campaign */}
-                <div
-                  onClick={() => setGameMode('CAMPAIGN_20YR')}
-                  className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                    gameMode === 'CAMPAIGN_20YR'
-                      ? 'bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 border-sky-400 shadow-xl shadow-sky-500/15'
-                      : 'bg-slate-850/60 border-slate-800 hover:border-slate-600'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span className="font-black text-xs md:text-sm text-white">Classic 20-Year Campaign</span>
-                    </div>
-                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                      80Q
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-300 leading-snug">
-                    เล่นครบ 20 ปี (80 ไตรมาส) วัดผลตัดสินผู้ชนะตามกติกา Koei ดั้งเดิม ชนะด้วยมูลค่าสายการบินและเครือข่ายโลก!
-                  </p>
+              {/* Competitors Count Selector & Re-roll */}
+              <div className="flex items-center gap-3">
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-1 flex items-center gap-1">
+                  <span className="text-[11px] font-mono text-slate-400 px-2 font-bold">
+                    Competitors:
+                  </span>
+                  {[1, 2, 3].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => {
+                        playSound.click();
+                        setRivalCount(num as 1 | 2 | 3);
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition cursor-pointer ${
+                        rivalCount === num
+                          ? 'bg-rose-600 text-white shadow-md'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                      }`}
+                    >
+                      {num} Rival{num > 1 ? 's' : ''} ({num + 1} Total)
+                    </button>
+                  ))}
                 </div>
 
-                {/* Mode B: Infinite Sandbox Mode */}
-                <div
-                  onClick={() => setGameMode('SANDBOX_INFINITE')}
-                  className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                    gameMode === 'SANDBOX_INFINITE'
-                      ? 'bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 border-indigo-400 shadow-xl shadow-indigo-500/15'
-                      : 'bg-slate-850/60 border-slate-800 hover:border-slate-600'
-                  }`}
+                <button
+                  onClick={handleRerollAllRivals}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-sky-400 rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
+                  title="Randomize all AI rival airlines and personalities"
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <Infinity className="w-4 h-4 text-indigo-400 shrink-0" />
-                      <span className="font-black text-xs md:text-sm text-white">Infinite Sandbox Mode</span>
-                    </div>
-                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
-                      UNLIMITED
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-300 leading-snug">
-                    เล่นต่อเนื่องไร้ขีดจำกัด ไม่มีวันหมดเวลา! สู่ทศวรรษ 2030, 2040+ สัมผัส Tesla AeroStar และ SpaceX Starship
-                  </p>
-                </div>
+                  <Shuffle className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Re-roll Rivals</span>
+                </button>
               </div>
             </div>
 
-            {/* Step 2: Choose Era & Historical Timeline */}
-            <div className="bg-slate-900/80 border border-slate-700/80 rounded-2xl p-3.5 shadow-xl backdrop-blur-sm flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs md:text-sm font-black uppercase tracking-wider text-sky-400 font-mono flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-sky-500/20 text-sky-300 text-xs flex items-center justify-center font-bold">2</span>
-                  Select Starting Era & Historical Timeline
-                </label>
-                <span className="text-xs text-amber-300 font-mono font-bold">
-                  {activeEraInfo.yearRange}
-                </span>
+            {/* 4 Airline Slots Grid (4 Columns side by side, 100% no scroll) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-1 min-h-0 my-2">
+              {/* SLOT 1: PLAYER 1 (HUMAN) */}
+              <div className="bg-slate-900/90 border-2 border-sky-400/90 rounded-3xl p-4 shadow-[0_0_25px_rgba(56,189,248,0.2)] flex flex-col justify-between">
+                <div>
+                  {/* Slot Header */}
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse" />
+                      <span className="font-mono text-xs font-black text-sky-400 tracking-wider">
+                        SLOT 1 • PLAYER (HUMAN)
+                      </span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 bg-sky-950 text-sky-300 border border-sky-400/40 rounded-full font-mono font-bold">
+                      YOU
+                    </span>
+                  </div>
+
+                  {/* Airline Name Input */}
+                  <div className="space-y-1 mb-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-slate-300 font-mono">
+                        AIRLINE NAME:
+                      </label>
+                      <button
+                        onClick={handleRandomizePlayerName}
+                        className="text-[10px] text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 cursor-pointer"
+                        title="Randomize name"
+                      >
+                        <Shuffle className="w-3 h-3" />
+                        <span>Random</span>
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={airlineName}
+                      onChange={(e) => setAirlineName(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 focus:border-sky-400 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none"
+                      placeholder="Enter airline name"
+                      maxLength={32}
+                    />
+                  </div>
+
+                  {/* CEO Name Input */}
+                  <div className="space-y-1 mb-3">
+                    <label className="text-[11px] font-bold text-slate-400 font-mono">
+                      CEO / EXECUTIVE:
+                    </label>
+                    <input
+                      type="text"
+                      value={playerCeoName}
+                      onChange={(e) => setPlayerCeoName(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 focus:border-sky-400 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none font-mono"
+                      placeholder="CEO Name"
+                      maxLength={28}
+                    />
+                  </div>
+                </div>
+
+                {/* Slot Footer Meta */}
+                <div className="pt-3 border-t border-slate-800 space-y-1 text-[11px] font-mono">
+                  <div className="flex justify-between text-slate-400">
+                    <span>Executive Role:</span>
+                    <span className="text-white font-bold">Airline President</span>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Headquarters:</span>
+                    <span className="text-sky-400 font-bold">{selectedHomeCity.name}</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
-                {([1, 2, 3] as const).map((eraNum) => {
-                  const info = eraDescriptions[eraNum];
-                  const Icon = info.icon;
-                  const isSelected = selectedEra === eraNum;
+              {/* SLOTS 2, 3, 4: AI COMPETITORS */}
+              {[0, 1, 2].map((idx) => {
+                const slotNum = idx + 2;
+                const isEnabled = idx < rivalCount;
+                const profile = currentRivalProfiles[idx];
 
+                if (!isEnabled || !profile) {
                   return (
                     <div
-                      key={eraNum}
-                      onClick={() => setSelectedEra(eraNum)}
-                      className={`p-2.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                        isSelected
-                          ? 'bg-blue-950/90 border-sky-400 shadow-xl shadow-sky-500/20'
-                          : 'bg-slate-850/60 border-slate-800 hover:border-slate-600'
-                      }`}
+                      key={idx}
+                      className="bg-slate-950/40 border-2 border-dashed border-slate-800 rounded-3xl p-4 flex flex-col items-center justify-center text-slate-600 font-mono text-xs space-y-2 opacity-50"
                     >
-                      <div>
-                        <div className="flex items-center justify-between gap-1 mb-1">
-                          <div className="flex items-center gap-1.5">
-                            <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-sky-300' : 'text-slate-400'}`} />
-                            <span className="font-black text-xs text-slate-100 font-mono">{info.yearRange}</span>
-                          </div>
-                          {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-                        </div>
-                        <h3 className="font-bold text-xs text-white mb-1">{info.title.split(':')[1]}</h3>
-                        <p className="text-[10px] text-slate-300 leading-snug line-clamp-2 mb-1.5">{info.subtitle}</p>
-                      </div>
-
-                      <div className="border-t border-slate-800 pt-1.5 text-[9px] text-slate-400 font-mono">
-                        <span className="text-sky-300 font-bold mr-1">Plane:</span>
-                        <span className="text-slate-200">{info.starterPlane}</span>
+                      <Bot className="w-8 h-8 stroke-1 text-slate-700" />
+                      <div className="font-bold text-slate-500">SLOT {slotNum} INACTIVE</div>
+                      <div className="text-[10px] text-center text-slate-600">
+                        เพิ่มจำนวนคู่แข่งด้านบนเพื่อเปิดสล็อตนี้
                       </div>
                     </div>
                   );
-                })}
-              </div>
+                }
 
-              {/* Historical Fleet & Events Ticker */}
-              <div className="mt-2.5 p-2 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-sky-400 font-black">FLEET:</span>
-                  <span className="text-slate-300 font-sans truncate max-w-sm">{activeEraInfo.planes}</span>
-                </div>
-                <div className="text-[10px] text-amber-300 font-mono">
-                  {activeEraInfo.events.split(',')[0]}
-                </div>
-              </div>
+                const currentAiName = customAiNames[profile.id] || profile.name;
+                const currentAiCeo = customAiCeos[profile.id] || profile.ceoName;
+
+                return (
+                  <div
+                    key={profile.id}
+                    className="bg-slate-900/80 border border-slate-800 hover:border-slate-700 rounded-3xl p-4 flex flex-col justify-between shadow-md"
+                  >
+                    <div>
+                      {/* Slot Header */}
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: profile.color }}
+                          />
+                          <span className="font-mono text-xs font-black text-slate-300 tracking-wider">
+                            SLOT {slotNum} • RIVAL #{idx + 1}
+                          </span>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 bg-slate-800 text-slate-400 border border-slate-700 rounded-full font-mono font-bold">
+                          AI TYCOON
+                        </span>
+                      </div>
+
+                      {/* Airline Name Input */}
+                      <div className="space-y-1 mb-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] font-bold text-slate-400 font-mono">
+                            AIRLINE NAME:
+                          </label>
+                          <button
+                            onClick={() => handleRandomizeAiName(idx)}
+                            className="text-[10px] text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 cursor-pointer"
+                            title="Randomize AI name"
+                          >
+                            <Shuffle className="w-3 h-3" />
+                            <span>Random</span>
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          value={currentAiName}
+                          onChange={(e) =>
+                            setCustomAiNames((prev) => ({
+                              ...prev,
+                              [profile.id]: e.target.value,
+                            }))
+                          }
+                          className="w-full bg-slate-950 border border-slate-700 focus:border-sky-400 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none"
+                          maxLength={32}
+                        />
+                      </div>
+
+                      {/* CEO Name Input */}
+                      <div className="space-y-1 mb-3">
+                        <label className="text-[11px] font-bold text-slate-500 font-mono">
+                          CEO / RIVAL TYCOON:
+                        </label>
+                        <input
+                          type="text"
+                          value={currentAiCeo}
+                          onChange={(e) =>
+                            setCustomAiCeos((prev) => ({
+                              ...prev,
+                              [profile.id]: e.target.value,
+                            }))
+                          }
+                          className="w-full bg-slate-950 border border-slate-700 focus:border-sky-400 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none font-mono"
+                          maxLength={28}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Personality Badge & Description */}
+                    <div className="pt-3 border-t border-slate-800 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase text-amber-400 font-mono">
+                          {profile.personalityLabel}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-tight">
+                        {profile.personalityDesc}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Step 3: AI Competitors & Rival Tycoons */}
-            <div className="bg-slate-900/80 border border-slate-700/80 rounded-2xl p-3.5 shadow-xl backdrop-blur-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                <label className="text-xs md:text-sm font-black uppercase tracking-wider text-sky-400 font-mono flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-sky-500/20 text-sky-300 text-xs flex items-center justify-center font-bold">3</span>
-                  <Swords className="w-4 h-4 text-rose-400" />
-                  <span>AI Competitors & Rival Tycoons (คู่แข่ง AI ดำเนินธุรกิจ)</span>
-                </label>
-                <span className="text-xs text-amber-300 font-mono font-bold">
-                  {rivalCount === 3 ? '4 Airlines Total (Classic Koei)' : `${rivalCount + 1} Airlines Total`}
-                </span>
-              </div>
+            {/* Bottom Tip */}
+            <div className="text-center text-[11px] text-slate-500 font-mono shrink-0">
+              💡 ทิป: ทั้ง 4 สายการบินสามารถแก้ไขชื่อและซีอีโอได้ หรือใช้ชื่อที่ระบบสุ่มมาให้พร้อมเริ่มเล่นได้ทันที
+            </div>
+          </div>
+        )}
 
-              {/* Sub-row: Competitor Count & HQ Placement Mode */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                {/* 1. Rival Count Selector */}
-                <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
-                  <div className="text-[11px] font-mono font-black text-slate-400 uppercase mb-2 flex items-center justify-between">
-                    <span>Number of Competitors:</span>
-                    <span className="text-sky-300 font-bold">{rivalCount} Rivals</span>
+        {/* ========================================================================= */}
+        {/* STEP 3: HEADQUARTERS & STARTING CAPITAL                                   */}
+        {/* ========================================================================= */}
+        {wizardStep === 3 && (
+          <div className="w-full max-w-6xl mx-auto flex flex-col justify-between h-full py-2 animate-in fade-in duration-200">
+            {/* Step Heading */}
+            <div className="text-center mb-2 shrink-0">
+              <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-sky-950/70 border border-sky-400/40 text-sky-300 font-mono text-xs font-bold mb-1">
+                <span>STEP 3 / 4</span>
+                <span>•</span>
+                <span>GLOBAL BASE & VENTURE CAPITAL</span>
+              </div>
+              <h2 className="text-2xl lg:text-3xl font-black font-mono text-white tracking-wide">
+                SELECT HEADQUARTERS & STARTING CAPITAL
+              </h2>
+              <p className="text-xs text-slate-400">
+                เลือกเมืองหลวงศูนย์กลางการบินโลกและระดับเงินทุนในการก่อตั้งสายการบิน
+              </p>
+            </div>
+
+            {/* Two Balanced Panels (Left & Right) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 my-2 items-stretch">
+              {/* LEFT: WORLD HEADQUARTERS SELECTOR (7 Cols) */}
+              <div className="lg:col-span-7 bg-slate-900/80 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-5 h-5 text-sky-400" />
+                      <span className="font-bold text-sm font-mono text-white">
+                        WORLD HEADQUARTERS (PRIMARY HUB)
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-mono px-2 py-0.5 bg-sky-950 text-sky-300 border border-sky-500/40 rounded-full font-bold">
+                      25 Slots Granted
+                    </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {([1, 2, 3] as const).map((cnt) => (
+
+                  {/* Continent Filter Tabs */}
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {regions.map((r) => (
                       <button
-                        key={cnt}
-                        type="button"
-                        onClick={() => setRivalCount(cnt)}
-                        className={`py-2 px-1 rounded-lg text-xs font-bold transition flex flex-col items-center justify-center border cursor-pointer ${
-                          rivalCount === cnt
-                            ? 'bg-rose-950/90 text-rose-200 border-rose-500 shadow-md shadow-rose-900/30'
-                            : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700'
+                        key={r.id}
+                        onClick={() => {
+                          playSound.click();
+                          setSelectedRegionFilter(r.id);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition cursor-pointer border ${
+                          selectedRegionFilter === r.id
+                            ? 'bg-sky-600 border-sky-400 text-white'
+                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
                         }`}
                       >
-                        <span className="font-mono">{cnt} {cnt === 1 ? 'Rival' : 'Rivals'}</span>
-                        <span className="text-[10px] opacity-75 font-sans">
-                          {cnt === 3 ? '4 Total ★' : `${cnt + 1} Total`}
-                        </span>
+                        {r.label}
                       </button>
                     ))}
                   </div>
-                </div>
 
-                {/* 2. HQ Placement Mode */}
-                <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
-                  <div className="text-[11px] font-mono font-black text-slate-400 uppercase mb-2 flex items-center justify-between">
-                    <span>HQ Placement Mode:</span>
-                    {placementMode === 'DISTRIBUTED' && (
-                      <button
-                        type="button"
-                        onClick={() => setRerollSeed((p) => p + 1)}
-                        className="text-[10px] text-amber-300 hover:text-amber-200 flex items-center gap-1 font-mono transition cursor-pointer"
-                        title="Randomize continental cities and rival personalities"
-                      >
-                        <Shuffle className="w-3 h-3" />
-                        <span>Re-roll Rivals & Cities (สุ่มใหม่)</span>
-                      </button>
-                    )}
+                  {/* City Select Dropdown */}
+                  <div className="mb-4">
+                    <select
+                      value={homeCityId}
+                      onChange={(e) => {
+                        playSound.click();
+                        setHomeCityId(e.target.value);
+                      }}
+                      className="w-full bg-slate-950 border-2 border-slate-700 focus:border-sky-400 rounded-2xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none cursor-pointer"
+                    >
+                      {filteredCities.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} ({c.id}) — {c.country} • Pop: {c.population}M
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPlacementMode('DISTRIBUTED')}
-                      className={`py-2 px-2 rounded-lg text-xs font-bold transition flex flex-col items-center justify-center border cursor-pointer ${
-                        placementMode === 'DISTRIBUTED'
-                          ? 'bg-sky-950/90 text-sky-200 border-sky-400 shadow-md shadow-sky-900/30'
-                          : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700'
-                      }`}
-                    >
-                      <span className="flex items-center gap-1">
-                        <span>🎲 Distributed</span>
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-sans mt-0.5">
-                        สุ่มกระจายคนละทวีป
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPlacementMode('CUSTOM')}
-                      className={`py-2 px-2 rounded-lg text-xs font-bold transition flex flex-col items-center justify-center border cursor-pointer ${
-                        placementMode === 'CUSTOM'
-                          ? 'bg-indigo-950/90 text-indigo-200 border-indigo-400 shadow-md shadow-indigo-900/30'
-                          : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700'
-                      }`}
-                    >
-                      <span className="flex items-center gap-1">
-                        <Settings2 className="w-3.5 h-3.5" />
-                        <span>Custom HQ</span>
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-sans mt-0.5">
-                        เลือกเมืองเอง
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </div>
 
-              {/* 3. Rival Dossier Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {currentRivalProfiles.map((rival, idx) => {
-                  const effectiveHQId =
-                    placementMode === 'DISTRIBUTED'
-                      ? distributedHQs[idx]
-                      : customHQs[rival.id] || rival.defaultHQs[0];
-                  const hqCity = CITIES.find((c) => c.id === effectiveHQId) || CITIES[0];
-
-                  return (
-                    <div
-                      key={rival.id}
-                      className="p-3.5 rounded-xl border bg-slate-950/90 flex flex-col justify-between shadow-lg"
-                      style={{ borderColor: `${rival.color}66` }}
-                    >
+                  {/* Selected City Highlight Card */}
+                  <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+                    <div className="flex items-center justify-between mb-2">
                       <div>
-                        {/* Header Badge */}
-                        <div className="flex items-center justify-between gap-1 mb-2">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="w-3 h-3 rounded-full shrink-0 shadow-sm"
-                              style={{ backgroundColor: rival.color }}
-                            />
-                            <span className="font-black text-xs text-white font-mono truncate">
-                              {rival.name}
-                            </span>
-                          </div>
-                          <span
-                            className="text-[10px] font-black font-mono px-1.5 py-0.5 rounded uppercase"
-                            style={{
-                              backgroundColor: `${rival.color}22`,
-                              color: rival.color,
-                              border: `1px solid ${rival.color}55`,
-                            }}
-                          >
-                            AI #{idx + 1}
+                        <div className="text-xl font-black font-mono text-white flex items-center gap-2">
+                          <MapPin className="w-5 h-5 text-sky-400" />
+                          <span>{selectedHomeCity.name}</span>
+                          <span className="text-xs px-2 py-0.5 bg-sky-900/60 text-sky-300 rounded-md">
+                            {selectedHomeCity.id}
                           </span>
                         </div>
-
-                        {/* CEO & Archetype */}
-                        <div className="text-xs text-slate-300 font-bold mb-1">
-                          CEO: <span className="text-slate-100">{rival.ceoName}</span>
+                        <div className="text-xs text-slate-400">
+                          {selectedHomeCity.country} • {selectedHomeCity.region.replace(/_/g, ' ')}
                         </div>
-                        <div className="inline-block text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-amber-300 mb-2">
-                          {rival.personalityLabel}
-                        </div>
-                        <p className="text-[11px] text-slate-400 leading-snug line-clamp-2 mb-3">
-                          {rival.personalityDesc}
-                        </p>
                       </div>
 
-                      {/* Headquarters Location */}
-                      <div className="pt-2 border-t border-slate-800">
-                        <label className="text-[10px] font-mono text-slate-400 block mb-1 uppercase font-bold">
-                          Headquarters (Primary Hub):
-                        </label>
-                        {placementMode === 'DISTRIBUTED' ? (
-                          <div className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-between text-xs">
-                            <span className="font-bold text-white truncate">
-                              {hqCity.name} ({hqCity.id})
-                            </span>
-                            <span className="text-[9px] font-mono text-sky-400 px-1.5 py-0.5 rounded bg-sky-950 border border-sky-800 shrink-0 ml-1">
-                              {hqCity.region.replace(/_/g, ' ')}
+                      <div className="text-right font-mono">
+                        <div className="text-lg font-black text-emerald-400">
+                          {selectedHomeCity.population}M
+                        </div>
+                        <div className="text-[10px] text-slate-400 uppercase font-bold">
+                          Metropolitan Pop
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-800/80 text-center font-mono text-xs">
+                      <div className="bg-slate-900 p-2 rounded-xl border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">Business Rating</span>
+                        <span className="font-bold text-amber-400">{selectedHomeCity.businessIndex}/100</span>
+                      </div>
+                      <div className="bg-slate-900 p-2 rounded-xl border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">Tourism Rating</span>
+                        <span className="font-bold text-sky-400">{selectedHomeCity.tourismIndex}/100</span>
+                      </div>
+                      <div className="bg-slate-900 p-2 rounded-xl border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">Starting Slots</span>
+                        <span className="font-bold text-emerald-400">25 Base Slots</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI Placement Strategy */}
+                <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-mono">
+                  <span className="text-slate-400">AI Rivals Placement:</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setPlacementMode('DISTRIBUTED')}
+                      className={`px-3 py-1 rounded-xl font-bold border transition ${
+                        placementMode === 'DISTRIBUTED'
+                          ? 'bg-sky-500/20 border-sky-400 text-sky-300'
+                          : 'bg-slate-950 border-slate-800 text-slate-400'
+                      }`}
+                    >
+                      🎲 Distributed (คนละทวีป)
+                    </button>
+                    <button
+                      onClick={() => setPlacementMode('CUSTOM')}
+                      className={`px-3 py-1 rounded-xl font-bold border transition ${
+                        placementMode === 'CUSTOM'
+                          ? 'bg-sky-500/20 border-sky-400 text-sky-300'
+                          : 'bg-slate-950 border-slate-800 text-slate-400'
+                      }`}
+                    >
+                      ⚙️ Preset Hubs
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT: STARTING CAPITAL & FINANCIAL DIFFICULTY (5 Cols) */}
+              <div className="lg:col-span-5 bg-slate-900/80 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <DollarSign className="w-5 h-5 text-emerald-400" />
+                    <span className="font-bold text-sm font-mono text-white">
+                      INITIAL CAPITAL & DIFFICULTY
+                    </span>
+                  </div>
+
+                  {/* 3 Difficulty Options */}
+                  <div className="space-y-2.5">
+                    {[
+                      {
+                        level: 1,
+                        title: 'Normal CEO',
+                        cash: '$100,000K',
+                        desc: 'Casual & Forgiving. เหมาะสำหรับผู้เริ่มต้น บริหารกระแสเงินสดคล่องตัว',
+                        border: 'border-emerald-500/60',
+                        color: 'text-emerald-400',
+                      },
+                      {
+                        level: 2,
+                        title: 'Seasoned Tycoon',
+                        cash: '$75,000K',
+                        desc: 'Authentic Koei Standard. สมดุล ท้าทาย และสมจริง (แนะนำ)',
+                        border: 'border-sky-500/60',
+                        color: 'text-sky-400',
+                        recommended: true,
+                      },
+                      {
+                        level: 3,
+                        title: 'Hardcore Tycoon',
+                        cash: '$50,000K',
+                        desc: 'Strict Budget & High Stakes. เงินทุนจำกัด ผิดพลาดไม่ได้แม้แต่เที่ยวบินเดียว',
+                        border: 'border-rose-500/60',
+                        color: 'text-rose-400',
+                      },
+                    ].map((opt) => {
+                      const isSelected = difficulty === opt.level;
+                      return (
+                        <div
+                          key={opt.level}
+                          onClick={() => {
+                            playSound.click();
+                            setDifficulty(opt.level);
+                          }}
+                          className={`p-3 rounded-2xl border-2 transition cursor-pointer ${
+                            isSelected
+                              ? `bg-slate-950 ${opt.border} ring-2 ring-sky-400/30`
+                              : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold font-mono text-white text-xs">
+                                {opt.title}
+                              </span>
+                              {opt.recommended && (
+                                <span className="text-[9px] px-2 py-0.5 bg-amber-950 text-amber-300 border border-amber-500/50 rounded-full font-mono font-bold">
+                                  RECOMMENDED
+                                </span>
+                              )}
+                            </div>
+                            <span className={`font-mono font-black text-sm ${opt.color}`}>
+                              {opt.cash}
                             </span>
                           </div>
-                        ) : (
-                          <select
-                            value={effectiveHQId}
-                            onChange={(e) =>
-                              setCustomHQs((prev) => ({ ...prev, [rival.id]: e.target.value }))
-                            }
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-bold focus:outline-none focus:border-sky-400 cursor-pointer"
-                          >
-                            {CITIES.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name} ({c.id}) — {c.region.replace(/_/g, ' ')}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                        <div className="text-[9px] text-slate-500 font-mono mt-1 flex justify-between">
-                          <span>25 Initial Slots</span>
-                          <span>• 3 Airliners</span>
-                          <span>• 2 Active Routes</span>
+                          <p className="text-[11px] text-slate-400 leading-tight">{opt.desc}</p>
                         </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN: AIRLINE PROFILE & HEADQUARTERS (lg:col-span-5) */}
-          <div className="lg:col-span-5 bg-slate-900/90 border border-slate-700/80 rounded-2xl p-5 shadow-2xl backdrop-blur-md flex flex-col justify-between gap-4">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <div className="flex items-center gap-2 font-mono font-black text-xs md:text-sm text-sky-400 uppercase tracking-wider">
-                  <Building2 className="w-4 h-4 text-sky-400" />
-                  <span>4. Player Airline Executive Dossier</span>
-                </div>
-                <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded">
-                  NEW AIRLINE INC.
-                </span>
-              </div>
-
-              {/* Airline Enterprise Name */}
-              <div className="mt-4">
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5 font-mono">
-                  Airline Enterprise Brand Name:
-                </label>
-                <input
-                  type="text"
-                  value={airlineName}
-                  onChange={(e) => setAirlineName(e.target.value)}
-                  className="w-full bg-slate-950 border-2 border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 font-bold text-sm focus:outline-none focus:border-sky-400"
-                />
-                {/* Presets */}
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {namePresets.map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => setAirlineName(preset)}
-                      className={`text-[11px] font-mono px-2 py-0.5 rounded-lg border transition cursor-pointer ${
-                        airlineName === preset
-                          ? 'bg-sky-600 text-white border-sky-400'
-                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-500'
-                      }`}
-                    >
-                      {preset}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* World Headquarters Hub City */}
-              <div className="mt-4">
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5 font-mono">
-                  World Headquarters (Primary Hub City):
-                </label>
-                <select
-                  value={homeCityId}
-                  onChange={(e) => setHomeCityId(e.target.value)}
-                  className="w-full bg-slate-950 border-2 border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 font-bold text-sm focus:outline-none focus:border-sky-400 cursor-pointer"
-                >
-                  {CITIES.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.id}) — {c.country} • {c.population}M Citizens
-                    </option>
-                  ))}
-                </select>
-
-                {/* Selected City Dossier Card */}
-                <div className="mt-2.5 p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs">
-                  <div>
-                    <span className="font-bold text-white text-sm">{selectedHomeCity.name}</span>
-                    <span className="text-slate-400 ml-1.5 font-mono">({selectedHomeCity.country})</span>
-                    <div className="text-[11px] text-sky-400 font-mono mt-0.5">
-                      Region: {selectedHomeCity.region.replace(/_/g, ' ')}
-                    </div>
+                      );
+                    })}
                   </div>
-                  <div className="text-right">
-                    <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40 font-mono font-bold text-[11px]">
-                      25 Slots Granted
-                    </span>
-                    <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-                      Pop: {selectedHomeCity.population}M
-                    </div>
+                </div>
+
+                {/* Starter Aircraft Info Box */}
+                <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-3 mt-3">
+                  <div className="flex items-center justify-between text-xs font-mono mb-1">
+                    <span className="text-slate-400">Initial Fleet:</span>
+                    <span className="text-sky-300 font-bold">3 Aircraft Included</span>
+                  </div>
+                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Plane className="w-3.5 h-3.5 text-sky-400" />
+                    <span>{starterModel.model}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-1">
+                    <span>Capacity: {starterModel.capacity} seats</span>
+                    <span>•</span>
+                    <span>Range: {starterModel.rangeKm.toLocaleString()} km</span>
+                    <span>•</span>
+                    <span>Speed: {starterModel.speedKmh} km/h</span>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
 
-              {/* CEO Difficulty & Initial Capital */}
-              <div className="mt-4">
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5 font-mono">
-                  4. Initial Starting Capital & Difficulty:
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { level: 1, name: 'Normal CEO', cash: '$100,000K' },
-                    { level: 2, name: 'Seasoned Tycoon', cash: '$75,000K' },
-                    { level: 3, name: 'Hardcore', cash: '$50,000K' },
-                  ].map((d) => (
-                    <div
-                      key={d.level}
-                      onClick={() => setDifficulty(d.level)}
-                      className={`p-2.5 rounded-xl border-2 text-center cursor-pointer transition-all ${
-                        difficulty === d.level
-                          ? 'bg-emerald-950 border-emerald-400 text-emerald-200 font-black shadow-md'
-                          : 'bg-slate-850 border-slate-800 text-slate-300 hover:border-slate-600'
-                      }`}
-                    >
-                      <div className="text-xs font-bold">{d.name}</div>
-                      <div className="font-mono text-xs text-emerald-400 font-black mt-0.5">
-                        {d.cash}
-                      </div>
+        {/* ========================================================================= */}
+        {/* STEP 4: FLIGHT CLEARANCE & EXECUTIVE LAUNCH                                */}
+        {/* ========================================================================= */}
+        {wizardStep === 4 && (
+          <div className="w-full max-w-6xl mx-auto flex flex-col justify-between h-full py-2 animate-in fade-in duration-200">
+            {/* Step Heading */}
+            <div className="text-center mb-2 shrink-0">
+              <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-400/60 text-emerald-300 font-mono text-xs font-bold mb-1">
+                <span>STEP 4 / 4</span>
+                <span>•</span>
+                <span>FINAL DOSSIER & CLEARANCE</span>
+              </div>
+              <h2 className="text-2xl lg:text-3xl font-black font-mono text-white tracking-wide">
+                EXECUTIVE FLIGHT CLEARANCE
+              </h2>
+              <p className="text-xs text-slate-400">
+                ตรวจสอบความถูกต้องของแผนธุรกิจและข้อมูลสายการบินก่อนเริ่มเปิดเส้นทางบิน
+              </p>
+            </div>
+
+            {/* 4 Summary Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-1 min-h-0 my-2 items-stretch">
+              {/* 1. ERA & TIMELINE */}
+              <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-sky-400 text-xs font-mono font-bold uppercase mb-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>1. TIMELINE & MODE</span>
+                  </div>
+                  <div className="text-lg font-black font-mono text-white mb-1">
+                    {activeEraInfo.yearRange}
+                  </div>
+                  <div className="text-xs text-sky-300 font-bold mb-2">{activeEraInfo.tagline}</div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {gameMode === 'CAMPAIGN_20YR'
+                      ? 'Classic 20-Year Campaign (80 Quarters) ประเมินผลแพ้ชนะเมื่อครบ 20 ปี'
+                      : 'Infinite Sandbox Mode เล่นต่อเนื่องแบบไม่จำกัดเวลา'}
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-slate-800 text-[11px] font-mono text-slate-400">
+                  Start: <span className="text-white font-bold">{selectedEra === 1 ? '1980 Q1' : selectedEra === 2 ? '2000 Q1' : '2020 Q1'}</span>
+                </div>
+              </div>
+
+              {/* 2. YOUR AIRLINE */}
+              <div className="bg-slate-900/80 border-2 border-sky-400/60 rounded-3xl p-4 flex flex-col justify-between shadow-[0_0_20px_rgba(56,189,248,0.15)]">
+                <div>
+                  <div className="flex items-center gap-2 text-sky-400 text-xs font-mono font-bold uppercase mb-2">
+                    <Plane className="w-4 h-4" />
+                    <span>2. YOUR AIRLINE</span>
+                  </div>
+                  <div className="text-base font-black font-mono text-white mb-1 truncate">
+                    {airlineName}
+                  </div>
+                  <div className="text-xs text-slate-300 mb-2">
+                    CEO: <span className="text-white font-bold">{playerCeoName}</span>
+                  </div>
+                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1 text-xs font-mono">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Headquarters:</span>
+                      <span className="text-sky-300 font-bold">{selectedHomeCity.name} ({selectedHomeCity.id})</span>
                     </div>
-                  ))}
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Starting Slots:</span>
+                      <span className="text-emerald-400 font-bold">25 Slots</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Capital:</span>
+                      <span className="text-emerald-400 font-bold">
+                        ${(difficulty === 1 ? 100000 : difficulty === 2 ? 75000 : 50000).toLocaleString()}K
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-slate-800 text-[11px] font-mono text-slate-400">
+                  Fleet: <span className="text-white font-bold">3x {starterModel.model}</span>
+                </div>
+              </div>
+
+              {/* 3. COMPETITOR ROSTER */}
+              <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-rose-400 text-xs font-mono font-bold uppercase mb-2">
+                    <Users className="w-4 h-4" />
+                    <span>3. RIVALS ({rivalCount} AI)</span>
+                  </div>
+                  <div className="space-y-2">
+                    {currentRivalProfiles.slice(0, rivalCount).map((p, i) => {
+                      const name = customAiNames[p.id] || p.name;
+                      const hq = placementMode === 'DISTRIBUTED' ? distributedHQs[i] : (customHQs[p.id] || p.defaultHQs[0]);
+                      return (
+                        <div key={p.id} className="bg-slate-950 p-2 rounded-xl border border-slate-800/80 text-[11px] font-mono">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-white truncate max-w-[120px]">{name}</span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">
+                              {hq}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-amber-400 mt-0.5">{p.personalityLabel}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-slate-800 text-[11px] font-mono text-slate-400">
+                  Total Industry: <span className="text-white font-bold">{rivalCount + 1} Airlines</span>
+                </div>
+              </div>
+
+              {/* 4. VICTORY CONDITIONS */}
+              <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-amber-400 text-xs font-mono font-bold uppercase mb-2">
+                    <Trophy className="w-4 h-4" />
+                    <span>4. VICTORY MATRIX</span>
+                  </div>
+                  <div className="text-sm font-bold text-white mb-2">
+                    Koei Tycoon Evaluation
+                  </div>
+                  <ul className="text-xs text-slate-300 space-y-1.5 leading-relaxed">
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400 font-bold">✓</span>
+                      <span>ขยายเส้นทางบินเชื่อมต่อทุกทวีปทั่วโลก</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400 font-bold">✓</span>
+                      <span>รักษาผลกำไรต่อเนื่องและเลี่ยงภาวะล้มละลาย</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <span className="text-emerald-400 font-bold">✓</span>
+                      <span>ครองอันดับ 1 มูลค่ากิจการในไตรมาสที่ 80</span>
+                    </li>
+                  </ul>
+                </div>
+                <div className="pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-500">
+                  Ready for take-off clearance.
                 </div>
               </div>
             </div>
-
-            {/* Starter Fleet & Alliance Briefing */}
-            <div className="p-3.5 rounded-xl bg-gradient-to-r from-blue-950/70 to-slate-900 border border-sky-800/60 text-xs">
-              <div className="font-mono font-black text-sky-300 mb-1 flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span>INCORPORATION PACKAGE (DAY 1 PROVISIONS):</span>
-              </div>
-              <ul className="text-slate-300 space-y-1 font-mono text-[11px]">
-                <li>• 3x Commercial Airliners: <span className="text-white font-bold">{starterModel.manufacturer} {starterModel.model}</span></li>
-                <li>• 2x Turnkey International Routes open immediately from <span className="text-sky-300 font-bold">{selectedHomeCity.id}</span></li>
-                <li>• Certified Airline Operating Certificate (AOC) with Global Slots</li>
-              </ul>
-            </div>
           </div>
-        </div>
+        )}
       </main>
 
-      {/* 3. BOTTOM COMMAND BAR (shrink-0, always in view, 100% visible, never cut off) */}
-      <footer className="relative shrink-0 bg-slate-900/95 border-t border-slate-800 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 z-20 shadow-2xl backdrop-blur-md">
-        <div className="flex items-center gap-3 text-xs md:text-sm font-mono text-slate-300">
-          <span className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-700 text-sky-400 font-bold">
-            {gameMode === 'CAMPAIGN_20YR' ? '🏆 20-Year Campaign (80Q)' : '♾️ Infinite Sandbox'}
-          </span>
-          <span className="hidden sm:inline text-slate-400">
-            Era: <strong className="text-white">{activeEraInfo.yearRange}</strong>
-          </span>
-          <span className="hidden md:inline text-slate-400">
-            HQ: <strong className="text-white">{selectedHomeCity.name}</strong>
-          </span>
-          <span className="text-slate-400">
-            Cash: <strong className="text-emerald-400">${difficulty === 1 ? '100,000K' : difficulty === 2 ? '75,000K' : '50,000K'}</strong>
-          </span>
-          <span className="hidden lg:inline text-slate-400">
-            Rivals: <strong className="text-rose-400">{rivalCount} AI Competitors</strong>
-          </span>
+      {/* 3. BOTTOM WIZARD NAVIGATION BAR (Always Visible, 100% fits in viewport) */}
+      <footer className="relative z-10 w-full px-6 py-3.5 bg-slate-900/95 border-t border-slate-800 backdrop-blur-md flex items-center justify-between shrink-0 shadow-2xl">
+        {/* Left: Previous / Back button */}
+        <div>
+          <button
+            onClick={handlePrevStep}
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-500 rounded-2xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>
+              {wizardStep === 1
+                ? 'Back to Title (กลับหน้าปก)'
+                : `Back to Step ${wizardStep - 1} (ย้อนกลับ)`}
+            </span>
+          </button>
         </div>
 
-        {/* Big Launch Button */}
-        <button
-          onClick={handleStart}
-          data-testid="setup-start-game-btn"
-          className="px-8 py-3.5 bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-sm md:text-base rounded-xl shadow-xl shadow-sky-500/25 transition-all active:scale-[0.98] border-2 border-sky-400 cursor-pointer flex items-center gap-2.5"
-        >
-          <span>COMMENCE AIRLINE OPERATION (START SIMULATION)</span>
-          <ChevronRight className="w-5 h-5 text-sky-200" />
-        </button>
+        {/* Center: Current Step Summary text */}
+        <div className="hidden md:flex items-center gap-3 text-xs font-mono text-slate-400">
+          <span>Era: <strong className="text-sky-400">{activeEraInfo.yearRange}</strong></span>
+          <span>•</span>
+          <span>Airline: <strong className="text-white">{airlineName}</strong></span>
+          <span>•</span>
+          <span>HQ: <strong className="text-emerald-400">{selectedHomeCity.name}</strong></span>
+          <span>•</span>
+          <span>Cash: <strong className="text-emerald-300">${(difficulty === 1 ? 100000 : difficulty === 2 ? 75000 : 50000).toLocaleString()}K</strong></span>
+        </div>
+
+        {/* Right: Next Step or Launch Game Button */}
+        <div>
+          {wizardStep < 4 ? (
+            <button
+              onClick={handleNextStep}
+              data-testid={`wizard-next-step-${wizardStep}`}
+              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white rounded-2xl text-xs font-black font-mono transition cursor-pointer shadow-lg shadow-sky-950/50 hover:shadow-sky-500/25 active:scale-95"
+            >
+              <span>Next: {stepLabels[wizardStep].title} (ถัดไป)</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={handleStart}
+              data-testid="setup-start-game-btn"
+              className="flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-500 hover:via-teal-500 hover:to-sky-500 text-white rounded-2xl text-sm font-black font-mono transition cursor-pointer shadow-2xl shadow-emerald-950/80 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-95"
+            >
+              <Plane className="w-5 h-5 text-emerald-200" />
+              <span>COMMENCE AIRLINE OPERATION (เริ่มต้นการบิน)</span>
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       </footer>
     </div>
   );
