@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { GameSettings, loadSettings, saveSettings } from '../utils/settings';
 import { playSound } from '../utils/audio';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   X,
   Volume2,
@@ -23,6 +24,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   onSettingsChanged,
 }) => {
+  useEscapeKey(onClose, isOpen);
   const [settings, setSettings] = useState<GameSettings>(() => loadSettings());
   const [savedFeedback, setSavedFeedback] = useState(false);
 
@@ -70,8 +72,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               playSound.click();
               onClose();
             }}
-            data-testid="settings-close-btn"
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            data-testid="modal-close-header-btn"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
+            title="Close (Esc)"
           >
             <X className="w-5 h-5" />
           </button>
@@ -203,7 +206,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-950 px-6 py-4 border-t border-slate-800 flex justify-between items-center">
+        <div className="bg-slate-950 px-6 py-4 border-t border-slate-800 flex justify-between items-center shrink-0">
           <div className="text-xs text-slate-500 font-mono">
             Settings auto-saved to LocalStorage
           </div>
@@ -212,9 +215,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               playSound.click();
               onClose();
             }}
-            className="px-5 py-2 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition active:scale-95 cursor-pointer"
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold font-mono transition cursor-pointer border border-slate-700 shadow flex items-center gap-2 active:scale-95"
+            data-testid="modal-close-footer-btn"
           >
-            Done (เสร็จสิ้น)
+            <X className="w-4 h-4 text-slate-400" />
+            <span>Close (ปิดหน้าต่าง)</span>
           </button>
         </div>
       </div>

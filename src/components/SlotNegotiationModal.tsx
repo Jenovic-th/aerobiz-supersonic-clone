@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Airline, NegotiatorMission, City, GameState, AirportExpansionNotice, OngoingAirportExpansion } from '../types/game';
 import { CITIES, REGIONS } from '../data/cities';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   calculateNegotiationQuarters,
   calculateNegotiationCostK,
@@ -26,6 +27,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
   initialCityId,
   gameState,
 }) => {
+  useEscapeKey(onClose);
   const initialCity = initialCityId ? CITIES.find((c) => c.id === initialCityId) : null;
   const [selectedRegion, setSelectedRegion] = useState<string>(
     initialCity ? initialCity.region : 'ALL'
@@ -95,7 +97,12 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-2 rounded-xl">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
+            title="Close (Esc)"
+            data-testid="modal-close-header-btn"
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -493,6 +500,21 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
               );
             })}
           </div>
+        </div>
+
+        {/* Standardized Modal Footer */}
+        <div className="bg-slate-950 px-6 py-3.5 border-t border-slate-800 flex justify-between items-center text-xs font-mono shrink-0">
+          <div className="text-slate-400">
+            Available Envoys: <strong className="text-emerald-400 font-bold">{availableNegotiators.length} Free</strong>
+          </div>
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold font-mono transition cursor-pointer border border-slate-700 shadow flex items-center gap-2 active:scale-95"
+            data-testid="modal-close-footer-btn"
+          >
+            <X className="w-4 h-4 text-slate-400" />
+            <span>Close (ปิดหน้าต่าง)</span>
+          </button>
         </div>
       </div>
     </div>

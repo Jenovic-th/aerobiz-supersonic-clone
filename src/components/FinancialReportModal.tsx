@@ -1,6 +1,7 @@
 import React from 'react';
 import { GameState, Airline } from '../types/game';
 import { REGIONS } from '../data/cities';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { X, BarChart3, Trophy } from 'lucide-react';
 
 interface FinancialReportModalProps {
@@ -14,6 +15,7 @@ export const FinancialReportModal: React.FC<FinancialReportModalProps> = ({
   playerAirline,
   onClose,
 }) => {
+  useEscapeKey(onClose);
   const history = gameState.quarterHistory;
 
   // Calculate cumulative stats
@@ -24,14 +26,19 @@ export const FinancialReportModal: React.FC<FinancialReportModalProps> = ({
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
       <div className="bg-slate-900 border-2 border-slate-600 rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="bg-gradient-to-r from-pink-950 via-slate-900 to-slate-900 px-7 py-5 border-b border-slate-700 flex justify-between items-center">
+        <div className="bg-gradient-to-r from-pink-950 via-slate-900 to-slate-900 px-7 py-4 border-b border-slate-700 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
             <BarChart3 className="w-6 h-6 text-pink-400" />
             <h2 className="text-lg md:text-xl font-black text-slate-100">
               Corporate Ledger & Global Market Dominance
             </h2>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-2 rounded-xl">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
+            title="Close (Esc)"
+            data-testid="modal-close-header-btn"
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -158,6 +165,18 @@ export const FinancialReportModal: React.FC<FinancialReportModalProps> = ({
               </table>
             </div>
           </div>
+        </div>
+
+        {/* Standardized Modal Footer */}
+        <div className="bg-slate-950 px-7 py-3.5 border-t border-slate-800 flex justify-end shrink-0">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold font-mono transition cursor-pointer border border-slate-700 shadow flex items-center gap-2 active:scale-95"
+            data-testid="modal-close-footer-btn"
+          >
+            <X className="w-4 h-4 text-slate-400" />
+            <span>Close (ปิดหน้าต่าง)</span>
+          </button>
         </div>
       </div>
     </div>

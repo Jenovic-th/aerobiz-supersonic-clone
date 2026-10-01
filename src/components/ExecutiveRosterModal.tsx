@@ -1,6 +1,7 @@
 import React from 'react';
 import { Airline } from '../types/game';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { X, Users, Clock, CheckCircle2, Shield, MapPin, Building2, Briefcase } from 'lucide-react';
 
 interface ExecutiveRosterModalProps {
@@ -12,6 +13,7 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
   playerAirline,
   onClose,
 }) => {
+  useEscapeKey(onClose);
   const negotiators = playerAirline.negotiators || [];
   const fieldDelegates = negotiators.filter((n) => n.role === 'FIELD');
   const hqDirector = negotiators.find((n) => n.role === 'HQ') || negotiators[4];
@@ -40,7 +42,9 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
 
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition cursor-pointer"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
+            title="Close (Esc)"
+            data-testid="modal-close-header-btn"
           >
             <X className="w-6 h-6" />
           </button>
@@ -165,12 +169,14 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-950 px-6 py-3 border-t border-slate-800 flex justify-end shrink-0">
+        <div className="bg-slate-950 px-6 py-3.5 border-t border-slate-800 flex justify-end shrink-0">
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-xs shadow border border-slate-700 transition cursor-pointer"
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold font-mono transition cursor-pointer border border-slate-700 shadow flex items-center gap-2 active:scale-95"
+            data-testid="modal-close-footer-btn"
           >
-            Close Roster
+            <X className="w-4 h-4 text-slate-400" />
+            <span>Close (ปิดหน้าต่าง)</span>
           </button>
         </div>
       </div>

@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Sliders,
   X,
+  Newspaper,
 } from 'lucide-react';
 import { ExecutiveRosterModal } from './ExecutiveRosterModal';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
@@ -32,6 +33,7 @@ interface ExecutiveHeaderProps {
   onRestartGame?: () => void;
   onReturnToTitle?: () => void;
   onOpenSettings?: () => void;
+  onOpenNews?: () => void;
 }
 
 export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
@@ -44,6 +46,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
   onRestartGame,
   onReturnToTitle,
   onOpenSettings,
+  onOpenNews,
 }) => {
   const [showRoster, setShowRoster] = useState(false);
   const [quickSavedAnimation, setQuickSavedAnimation] = useState(false);
@@ -81,6 +84,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
   const totalAirlines = gameState.airlines.length;
 
   const activeEvent = gameState.activeEvents?.[0];
+  const hasUnreadNews = gameState.turnNumber > (gameState.lastReadNewsTurn ?? 0);
 
   return (
     <header className="w-full shrink-0 h-14 md:h-16 bg-slate-900 border-b border-slate-700/80 shadow-2xl px-3 md:px-5 py-2 flex items-center justify-between gap-2 md:gap-4 text-slate-100 z-20 select-none">
@@ -166,8 +170,12 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
 
         {/* Major Active Crisis Event Badge (Compact) */}
         {activeEvent && (
-          <div
-            className={`hidden 2xl:flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs shadow border font-bold ${
+          <button
+            onClick={() => {
+              playSound.click();
+              if (onOpenNews) onOpenNews();
+            }}
+            className={`hidden 2xl:flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs shadow border font-bold cursor-pointer hover:scale-105 transition ${
               activeEvent.type === 'WAR' ||
               activeEvent.type === 'OIL_CRISIS' ||
               activeEvent.type === 'EPIDEMIC' ||
@@ -175,16 +183,42 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
                 ? 'bg-rose-950/90 border-rose-500 text-rose-200 animate-pulse'
                 : 'bg-amber-950/90 border-amber-500 text-amber-200'
             }`}
-            title={activeEvent.description}
+            title="คลิกเพื่ออ่านรายละเอียดเหตุการณ์โลกฉบับเต็ม"
           >
             <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span className="truncate max-w-[140px]">{activeEvent.title}</span>
-          </div>
+          </button>
         )}
       </div>
 
-      {/* 3. RIGHT: Permanent Save & Load Command Suite (ALWAYS VISIBLE & LOCKED IN PLACE) */}
+      {/* 3. RIGHT: Permanent Save, Load & News Suite */}
       <div className="flex items-center gap-1.5 md:gap-2 shrink-0 ml-auto">
+        {/* Global News & Chronicles Command Button with pulsating unread indicator */}
+        <button
+          onClick={() => {
+            playSound.click();
+            if (onOpenNews) onOpenNews();
+          }}
+          data-testid="header-news-btn"
+          className={`flex items-center gap-1.5 px-2.5 md:px-3.5 py-1.5 md:py-2 rounded-xl text-xs font-black transition cursor-pointer shadow-md active:scale-95 whitespace-nowrap border ${
+            hasUnreadNews
+              ? 'bg-gradient-to-r from-amber-700 via-rose-700 to-amber-800 text-white border-amber-300 ring-2 ring-amber-400/70 shadow-[0_0_15px_rgba(245,158,11,0.5)]'
+              : 'bg-slate-800 hover:bg-slate-700 border-slate-600 hover:border-amber-400 text-slate-100'
+          }`}
+          title="Global News & Chronicle (ศูนย์รวมข่าวสาร & คลังประวัติศาสตร์ย้อนหลัง)"
+        >
+          <Newspaper className={`w-4 h-4 ${hasUnreadNews ? 'text-amber-200 animate-bounce' : 'text-amber-400'}`} />
+          <span>News</span>
+          {hasUnreadNews && (
+            <span
+              data-testid="header-news-unread-badge"
+              className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black font-mono animate-pulse shadow border border-white/50"
+            >
+              ● NEW
+            </span>
+          )}
+        </button>
+
         {/* Quick Save Button (Instant 1-Click Save with visual confirmation) */}
         <button
           onClick={() => {
@@ -252,6 +286,26 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
               </div>
 
               <div className="p-1.5 space-y-1 text-xs">
+                {/* 0. Global News & Chronicles */}
+                <button
+                  onClick={() => {
+                    setShowSystemMenu(false);
+                    if (onOpenNews) onOpenNews();
+                  }}
+                  data-testid="menu-news-btn"
+                  className="w-full px-3 py-2 text-left rounded-xl hover:bg-slate-800 text-slate-200 hover:text-white flex items-center justify-between gap-2.5 transition cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 font-semibold">
+                    <Newspaper className="w-4 h-4 text-amber-400" />
+                    <span>Global News Chronicle</span>
+                  </div>
+                  {hasUnreadNews && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-mono font-bold animate-pulse">
+                      NEW
+                    </span>
+                  )}
+                </button>
+
                 {/* 1. Quick Save */}
                 <button
                   onClick={() => {

@@ -4,6 +4,7 @@ import { getCityVisual } from '../data/cityVisuals';
 import { calculateNegotiationQuarters, calculateNegotiationCostK, calculateSlotNegotiationLimits } from '../data/negotiators';
 import { CityLandmarkDiorama } from './CityLandmarkDiorama';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   X,
   Plane,
@@ -50,6 +51,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
   onEstablishHub,
   gameState,
 }) => {
+  useEscapeKey(onClose);
   const visualData = getCityVisual(city.id);
   const isHQ = playerAirline.homeCityId === city.id;
   const isHub = playerAirline.hubCityIds.includes(city.id);
@@ -241,7 +243,9 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer shrink-0"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700 shrink-0"
+            title="Close (Esc)"
+            data-testid="modal-close-header-btn"
           >
             <X className="w-5 h-5" />
           </button>
@@ -860,6 +864,21 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
             </div>
           </div>
         )}
+
+        {/* Standardized Modal Footer */}
+        <div className="bg-slate-950 px-5 sm:px-6 py-3 border-t border-slate-800 flex justify-between items-center text-xs font-mono shrink-0">
+          <div className="text-slate-400">
+            {city.name} ({city.id}) • {city.country} • Regional Metro
+          </div>
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold font-mono transition cursor-pointer border border-slate-700 shadow flex items-center gap-2 active:scale-95"
+            data-testid="modal-close-footer-btn"
+          >
+            <X className="w-4 h-4 text-slate-400" />
+            <span>Close (ปิดหน้าต่าง)</span>
+          </button>
+        </div>
       </div>
     </div>
   );

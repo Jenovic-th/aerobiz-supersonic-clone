@@ -309,15 +309,7 @@ export interface GameState {
   activeEvents: WorldEvent[];
   upcomingEvents?: UpcomingWorldEvent[]; // Forecast of major events arriving in the next 1-4 quarters (3-12 months)
   airlineStandings?: AirlineStanding[];
-  quarterHistory: {
-    year: number;
-    quarter: number;
-    humanProfitK: number;
-    humanRevenueK: number;
-    humanPassengers: number;
-    events: string[];
-    standings?: AirlineStanding[];
-  }[];
+  quarterHistory: QuarterHistoryEntry[];
   diplomaticReports?: DiplomaticReport[];
   isGameOver?: boolean;
   victoryType?: 'EARLY_VICTORY' | 'BANKRUPTCY' | 'TIME_LIMIT_EXPIRED' | 'RIVAL_VICTORY';
@@ -350,6 +342,19 @@ export interface GameState {
     destCityId: string;
     lossK: number;
   }[];
+  lastQuarterNewRoutes?: {
+    airlineId: string;
+    airlineName: string;
+    airlineColor: string;
+    originCityId: string;
+    destCityId: string;
+  }[];
+  competitorActions?: {
+    airlineId: string;
+    airlineName: string;
+    airlineColor: string;
+    actions: string[];
+  }[];
   routeIncidents?: {
     routeId: string;
     airlineId: string;
@@ -360,5 +365,41 @@ export interface GameState {
     incident: RouteIncident;
   }[];
   aircraftDeliveries?: AircraftDeliveryReport[]; // Aircraft delivered or delayed this quarter
+  lastReadNewsTurn?: number; // Turn number when player last opened/read the news
+}
+
+export interface QuarterHistoryEntry {
+  year: number;
+  quarter: number;
+  humanProfitK: number;
+  humanRevenueK: number;
+  humanPassengers: number;
+  events: string[];
+  standings?: AirlineStanding[];
+  activeEvents?: WorldEvent[];
+  activeDiscountDeal?: AircraftDiscountDeal;
+  newlyIntroducedAircraft?: AircraftModel[];
+  diplomaticReports?: DiplomaticReport[];
+  closedRoutes?: {
+    airlineId: string;
+    airlineName: string;
+    airlineColor: string;
+    originCityId: string;
+    destCityId: string;
+    lossK: number;
+  }[];
+  newRoutes?: {
+    airlineId: string;
+    airlineName: string;
+    airlineColor: string;
+    originCityId: string;
+    destCityId: string;
+  }[];
+  competitorActions?: {
+    airlineId: string;
+    airlineName: string;
+    airlineColor: string;
+    actions: string[];
+  }[];
 }
 

@@ -7,6 +7,7 @@ import {
   loadGameFromLocalStorage,
   exportSaveFile,
 } from '../utils/saveLoad';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   X,
   Save,
@@ -45,6 +46,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
   onExportSave,
   onImportSave,
 }) => {
+  useEscapeKey(onClose, isOpen);
   const [manualMeta, setManualMeta] = useState<SaveMetadata | null>(null);
   const [autoMeta, setAutoMeta] = useState<SaveMetadata | null>(null);
   const [statusMessage, setStatusMessage] = useState<{
@@ -152,7 +154,9 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-2 rounded-xl transition cursor-pointer"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
+            title="Close (Esc)"
+            data-testid="modal-close-header-btn"
           >
             <X className="w-6 h-6" />
           </button>
@@ -411,13 +415,15 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
         />
 
         {/* Footer */}
-        <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-end">
+        <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-end shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold text-xs md:text-sm transition cursor-pointer"
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold font-mono transition cursor-pointer border border-slate-700 shadow flex items-center gap-2 active:scale-95"
+            data-testid="modal-close-footer-btn"
           >
-            ปิดหน้าต่าง
+            <X className="w-4 h-4 text-slate-400" />
+            <span>Close (ปิดหน้าต่าง)</span>
           </button>
         </div>
       </div>

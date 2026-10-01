@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Airline, BusinessVenture, RegionalCampaign, RegionId } from '../types/game';
 import { CITIES } from '../data/cities';
 import { REGIONS, RegionZone } from '../data/regions';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   X,
   Building2,
@@ -173,6 +174,7 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
   onSellBusiness,
   onLaunchCampaign,
 }) => {
+  useEscapeKey(onClose);
   const [activeTab, setActiveTab] = useState<'VENTURES' | 'CAMPAIGNS'>('VENTURES');
   const [selectedCityId, setSelectedCityId] = useState<string>(playerAirline.homeCityId);
   const [selectedFilterCategory, setSelectedFilterCategory] = useState<string>('ALL');
@@ -329,9 +331,11 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
 
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 transition cursor-pointer"
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
+              title="Close (Esc)"
+              data-testid="modal-close-header-btn"
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </button>
           </div>
         </div>
@@ -675,9 +679,11 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition cursor-pointer"
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold font-mono transition cursor-pointer border border-slate-700 shadow flex items-center gap-2 active:scale-95"
+            data-testid="modal-close-footer-btn"
           >
-            Close Window (ปิดหน้าต่าง)
+            <X className="w-4 h-4 text-slate-400" />
+            <span>Close (ปิดหน้าต่าง)</span>
           </button>
         </div>
       </div>

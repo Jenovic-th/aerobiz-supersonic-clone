@@ -20,6 +20,7 @@ import { VictoryDefeatModal } from './components/VictoryDefeatModal';
 import { SaveLoadModal } from './components/SaveLoadModal';
 import { TitleScreen } from './components/TitleScreen';
 import { SettingsModal } from './components/SettingsModal';
+import { NewsChronicleModal } from './components/NewsChronicleModal';
 import { loadSettings, GameSettings } from './utils/settings';
 import { CheckCircle2 } from 'lucide-react';
 
@@ -28,6 +29,7 @@ export function App() {
   const [currentScreen, setCurrentScreen] = useState<'TITLE' | 'SETUP' | 'GAME'>('TITLE');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showNewsModal, setShowNewsModal] = useState(false);
   const [userSettings, setUserSettings] = useState<GameSettings>(() => loadSettings());
 
   const showToast = (msg: string) => {
@@ -61,7 +63,19 @@ export function App() {
     (window as any).__setShowVictoryDefeatModal = setShowVictoryDefeatModal;
     (window as any).__setShowQuarterReport = setShowQuarterReport;
     (window as any).__setShowBoardMeeting = setShowBoardMeeting;
+    (window as any).__setShowNewsModal = setShowNewsModal;
   }, [gameState, currentScreen]);
+
+  const handleOpenNews = () => {
+    if (!gameState) return;
+    if (gameState.turnNumber > (gameState.lastReadNewsTurn ?? 0)) {
+      setGameState({
+        ...gameState,
+        lastReadNewsTurn: gameState.turnNumber,
+      });
+    }
+    setShowNewsModal(true);
+  };
 
   const handleQuickSave = () => {
     if (!gameState) return;
@@ -582,6 +596,7 @@ export function App() {
           showToast('🏠 กลับสู่หน้าปกหลักของเกม');
         }}
         onOpenSettings={() => setShowSettingsModal(true)}
+        onOpenNews={handleOpenNews}
       />
 
       {/* Floating System Toast Notification */}
@@ -622,6 +637,7 @@ export function App() {
         onOpenFinancialReport={() => setShowFinancialReport(true)}
         onOpenBoardMeeting={() => setShowBoardMeeting(true)}
         onAdvanceQuarter={handleAdvanceQuarter}
+        onOpenNews={handleOpenNews}
       />
 
       {/* MODALS */}
@@ -801,6 +817,29 @@ export function App() {
         onClose={() => setShowSettingsModal(false)}
         onSettingsChanged={(newSettings) => setUserSettings(newSettings)}
       />
+
+      {/* Global News & Chronicle Intelligence Modal */}
+      {showNewsModal && gameState && (
+        <NewsChronicleModal
+          gameState={gameState}
+          playerAirline={playerAirline}
+          onClose={() => setShowNewsModal(false)}
+          onOpenAircraftShop={() => {
+            setShowNewsModal(false);
+            setShowAircraftShop(true);
+          }}
+          onOpenSlotModal={() => {
+            setShowNewsModal(false);
+            setShowSlotModal(true);
+          }}
+          onOpenRouteModal={() => {
+            setShowNewsModal(false);
+            setRouteOriginCity(selectedCity);
+            setRouteDestCity(null);
+            setShowRouteModal(true);
+          }}
+        />
+      )}
 
       {/* City Detail & Inspector Modal */}
       {inspectingCity && (

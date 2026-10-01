@@ -687,6 +687,19 @@ export function advanceQuarter(currentState: GameState): GameState {
     destCityId: string;
     lossK: number;
   }[] = [];
+  const allNewAIRoutes: {
+    airlineId: string;
+    airlineName: string;
+    airlineColor: string;
+    originCityId: string;
+    destCityId: string;
+  }[] = [];
+  const allCompetitorActions: {
+    airlineId: string;
+    airlineName: string;
+    airlineColor: string;
+    actions: string[];
+  }[] = [];
 
   for (const airline of currentState.airlines) {
     if (!airline.isHuman) {
@@ -699,6 +712,25 @@ export function advanceQuarter(currentState: GameState): GameState {
       });
       intermediateAirlines.push(aiTurnResult.updatedAirline);
       allClosedRoutes.push(...aiTurnResult.closedRoutes);
+      if (aiTurnResult.newRoutes && aiTurnResult.newRoutes.length > 0) {
+        for (const nr of aiTurnResult.newRoutes) {
+          allNewAIRoutes.push({
+            airlineId: airline.id,
+            airlineName: airline.name,
+            airlineColor: airline.color,
+            originCityId: nr.originCityId,
+            destCityId: nr.destCityId,
+          });
+        }
+      }
+      if (aiTurnResult.aiActions && aiTurnResult.aiActions.length > 0) {
+        allCompetitorActions.push({
+          airlineId: airline.id,
+          airlineName: airline.name,
+          airlineColor: airline.color,
+          actions: aiTurnResult.aiActions,
+        });
+      }
 
       // Keep other airline routes and replace this airline's routes with surviving + new routes
       const otherAirlineRoutes = allRoutes.filter((r) => r.airlineId !== airline.id);
@@ -1331,6 +1363,8 @@ export function advanceQuarter(currentState: GameState): GameState {
     airportExpansions: airportExpansionNotices,
     ongoingAirportExpansions: updatedOngoingExpansions,
     lastQuarterClosedRoutes: allClosedRoutes,
+    lastQuarterNewRoutes: allNewAIRoutes,
+    competitorActions: allCompetitorActions,
     routeIncidents: routeIncidents,
     quarterHistory: [
       ...(currentState.quarterHistory || []),
@@ -1342,6 +1376,13 @@ export function advanceQuarter(currentState: GameState): GameState {
         humanPassengers: humanPassengers,
         events: eventTitles,
         standings,
+        activeEvents: currentState.activeEvents || [],
+        activeDiscountDeal: currentState.activeDiscountDeal,
+        newlyIntroducedAircraft: currentState.newlyIntroducedAircraft || [],
+        diplomaticReports: currentState.diplomaticReports || [],
+        closedRoutes: allClosedRoutes,
+        newRoutes: allNewAIRoutes,
+        competitorActions: allCompetitorActions,
       },
     ],
   };

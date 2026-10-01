@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
 import { AIRCRAFTS, getAllAircraftModels } from '../data/aircrafts';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface QuarterReportModalProps {
   gameState: GameState;
@@ -51,6 +52,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
   onContinueSandbox,
   onOpenAircraftShop,
 }) => {
+  useEscapeKey(onClose);
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'INSPECTOR' | 'NEWS'>('OVERVIEW');
   const [selectedAirlineId, setSelectedAirlineId] = useState<string>(playerAirline.id);
 
@@ -197,7 +199,12 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-2 rounded-xl cursor-pointer">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
+            title="Close (Esc)"
+            data-testid="modal-close-header-btn"
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -1964,7 +1971,15 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-900 border-t border-slate-700 px-6 py-3.5 flex justify-end shrink-0">
+        <div className="bg-slate-900 border-t border-slate-700 px-6 py-3.5 flex justify-end items-center gap-3 shrink-0">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs sm:text-sm font-bold font-mono transition cursor-pointer border border-slate-700 shadow flex items-center gap-2 active:scale-95"
+            data-testid="modal-close-footer-btn"
+          >
+            <X className="w-4 h-4 text-slate-400" />
+            <span>Close (ปิดหน้าต่าง)</span>
+          </button>
           <button
             onClick={onClose}
             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-black text-xs md:text-sm shadow-xl transition-all active:scale-95 border-2 border-sky-400 cursor-pointer"

@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   Sparkles,
   TrendingUp,
+  Newspaper,
 } from 'lucide-react';
 
 interface BottomToolbarProps {
@@ -32,6 +33,7 @@ interface BottomToolbarProps {
   onOpenFinancialReport: () => void;
   onOpenBoardMeeting: () => void;
   onAdvanceQuarter: () => void;
+  onOpenNews?: () => void;
 }
 
 export const BottomToolbar: React.FC<BottomToolbarProps> = ({
@@ -45,6 +47,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
   onOpenFinancialReport,
   onOpenBoardMeeting,
   onAdvanceQuarter,
+  onOpenNews,
 }) => {
   const [showOperationsDrawer, setShowOperationsDrawer] = useState(false);
 
@@ -70,6 +73,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
   const isFuelHigh = fuelMultiplier > 1.2;
   const activeEvents = gameState.activeEvents || [];
   const upcomingEvents = gameState.upcomingEvents || [];
+  const hasUnreadNews = gameState.turnNumber > (gameState.lastReadNewsTurn ?? 0);
 
   return (
     <footer className="w-full shrink-0 relative bg-slate-900 border-t border-slate-700/80 shadow-2xl z-20 select-none">
@@ -285,13 +289,22 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
               )}
 
               <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
-                <span className="text-slate-400">Board Meeting:</span>
+                <button
+                  onClick={() => {
+                    setShowOperationsDrawer(false);
+                    if (onOpenNews) onOpenNews();
+                  }}
+                  className="text-amber-300 font-bold hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <Newspaper className="w-3.5 h-3.5" />
+                  <span>Read News Chronicle →</span>
+                </button>
                 <button
                   onClick={() => {
                     setShowOperationsDrawer(false);
                     onOpenBoardMeeting();
                   }}
-                  className="text-amber-300 font-bold hover:underline cursor-pointer"
+                  className="text-slate-400 font-bold hover:text-white cursor-pointer"
                 >
                   Consult Board →
                 </button>
@@ -383,6 +396,29 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           >
             <BarChart3 className="w-4 h-4 text-pink-400" />
             <span>Financials</span>
+          </button>
+
+          {/* News Chronicle Button */}
+          <button
+            onClick={onOpenNews}
+            data-testid="toolbar-news-btn"
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs md:text-sm shadow transition-all active:scale-95 cursor-pointer whitespace-nowrap border ${
+              hasUnreadNews
+                ? 'bg-gradient-to-r from-amber-700 via-rose-700 to-amber-800 text-white border-amber-300 ring-2 ring-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.5)]'
+                : 'bg-slate-800 hover:bg-slate-700 text-slate-100 border-slate-600 hover:border-amber-400'
+            }`}
+            title="Global News & Chronicle (ศูนย์รวมข่าวสาร & คลังเหตุการณ์โลก)"
+          >
+            <Newspaper className={`w-4 h-4 ${hasUnreadNews ? 'text-amber-200 animate-bounce' : 'text-amber-400'}`} />
+            <span>News</span>
+            {hasUnreadNews && (
+              <span
+                data-testid="toolbar-news-unread-badge"
+                className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-mono font-black animate-pulse"
+              >
+                ● NEW
+              </span>
+            )}
           </button>
         </div>
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { GameState, Airline } from '../types/game';
 import { Trophy, AlertOctagon, Globe2, Plane, DollarSign, Users, Award, RotateCcw, ArrowRight, X } from 'lucide-react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface VictoryDefeatModalProps {
   gameState: GameState;
@@ -17,6 +18,7 @@ export const VictoryDefeatModal: React.FC<VictoryDefeatModalProps> = ({
   onContinueSandbox,
   onRestartGame,
 }) => {
+  useEscapeKey(onClose);
   const isBankruptcy = gameState.victoryType === 'BANKRUPTCY';
   const isRivalWinner = gameState.victoryType === 'RIVAL_VICTORY';
 

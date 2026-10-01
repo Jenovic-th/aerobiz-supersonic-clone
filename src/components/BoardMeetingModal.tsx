@@ -4,6 +4,7 @@ import { CITIES } from '../data/cities';
 import { AIRCRAFTS } from '../data/aircrafts';
 import { calculateDistance, calculateBaseFare, calculateRouteDemand } from '../simulation/engine';
 import { getCityVisual } from '../data/cityVisuals';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   Users,
   Compass,
@@ -62,15 +63,7 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
   const [showFormulaExplanation, setShowFormulaExplanation] = useState<boolean>(true);
 
   // Keyboard Escape listener to dismiss meeting instantly
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   const cityMap = new Map(CITIES.map((c) => [c.id, c]));
   const playerRoutes = gameState.routes.filter((r) => r.airlineId === playerAirline.id);
