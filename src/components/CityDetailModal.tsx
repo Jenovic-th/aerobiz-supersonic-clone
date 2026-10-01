@@ -4,6 +4,7 @@ import { getCityVisual } from '../data/cityVisuals';
 import { calculateNegotiationQuarters, calculateNegotiationCostK, calculateSlotNegotiationLimits } from '../data/negotiators';
 import { CityLandmarkDiorama } from './CityLandmarkDiorama';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
+import { VentureCardVisual } from './VentureCardVisual';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   X,
@@ -178,97 +179,97 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-3 animate-in fade-in duration-150">
-      {/* ZERO-SCROLL SINGLE SCREEN MODAL CONTAINER */}
-      <div className="bg-slate-900 border-2 border-sky-500/70 rounded-3xl shadow-2xl w-full max-w-6xl h-[92vh] max-h-[760px] overflow-hidden flex flex-col text-slate-100 font-sans relative">
-        {/* 1. TOP EXECUTIVE TITLE & METRICS RIBBON (Compact unified bar: 48px) */}
-        <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 px-4 py-2 border-b border-sky-800/80 flex items-center justify-between shrink-0 shadow-lg gap-2">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150">
+      {/* WIDESCREEN HIGH-LEGIBILITY EXECUTIVE MODAL CONTAINER */}
+      <div className="bg-slate-900 border-2 border-sky-500/80 rounded-3xl shadow-2xl w-[96vw] max-w-[1720px] h-[94vh] min-h-[720px] overflow-hidden flex flex-col text-slate-100 font-sans relative">
+        {/* 1. TOP EXECUTIVE TITLE & METRICS RIBBON */}
+        <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 px-5 sm:px-6 py-3 border-b border-sky-800/80 flex items-center justify-between shrink-0 shadow-lg gap-3">
           {/* City Identity */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div className="p-1.5 rounded-lg bg-sky-900/80 border border-sky-400">
-              <MapPin className="w-5 h-5 text-sky-300" />
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="p-2 sm:p-2.5 rounded-xl bg-sky-900/80 border border-sky-400 shadow">
+              <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-sky-300" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-black text-white tracking-wide">{city.name}</h2>
-                <span className="px-2 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-400 font-mono font-black text-xs">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2 className="text-xl sm:text-2xl font-black text-white tracking-wide">{city.name}</h2>
+                <span className="px-2.5 py-0.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-400 font-mono font-black text-xs sm:text-sm">
                   {city.id}
                 </span>
                 {isHQ && (
-                  <span className="px-2 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-400 font-black text-[10px]">
+                  <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-400 font-black text-xs">
                     👑 HQ
                   </span>
                 )}
                 {isHub && !isHQ && (
-                  <span className="px-2 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-400 font-black text-[10px]">
+                  <span className="px-2.5 py-0.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-400 font-black text-xs">
                     🌐 HUB
                   </span>
                 )}
-                <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-800 border border-slate-700 text-slate-300">
+                <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300">
                   {city.bloc}
                 </span>
               </div>
-              <div className="text-[10px] text-sky-200/80">
+              <div className="text-xs sm:text-sm text-sky-200/80 mt-0.5">
                 {city.country} • {city.region.replace(/_/g, ' ')}
               </div>
             </div>
           </div>
 
-          {/* Unified Compact Metrics Strip */}
-          <div className="hidden sm:flex items-center gap-2 text-xs">
-            <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800">
-              <Users className="w-3.5 h-3.5 text-sky-400" />
-              <span className="text-[10px] text-slate-400">Pop:</span>
-              <span className="font-mono font-bold text-white">{city.population}M</span>
+          {/* Unified High-Legibility Metrics Strip */}
+          <div className="hidden md:flex items-center gap-2.5 sm:gap-3">
+            <div className="flex items-center gap-2 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-slate-800 shadow">
+              <Users className="w-4 h-4 text-sky-400" />
+              <span className="text-xs text-slate-400 font-medium">Pop:</span>
+              <span className="font-mono font-bold text-sm text-white">{city.population}M</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800">
-              <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-[10px] text-slate-400">Slots:</span>
-              <span className="font-mono font-bold text-emerald-400">
+            <div className="flex items-center gap-2 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-slate-800 shadow">
+              <KeyRound className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs text-slate-400 font-medium">Slots:</span>
+              <span className="font-mono font-bold text-sm text-emerald-400">
                 {slotsOwned}/{totalAirportCap}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800">
-              <Briefcase className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-[10px] text-slate-400">Biz:</span>
-              <span className="font-mono font-bold text-amber-300">{city.businessIndex}/100</span>
+            <div className="flex items-center gap-2 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-slate-800 shadow">
+              <Briefcase className="w-4 h-4 text-amber-400" />
+              <span className="text-xs text-slate-400 font-medium">Biz:</span>
+              <span className="font-mono font-bold text-sm text-amber-300">{city.businessIndex}/100</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800">
-              <Palmtree className="w-3.5 h-3.5 text-pink-400" />
-              <span className="text-[10px] text-slate-400">Tour:</span>
-              <span className="font-mono font-bold text-pink-300">{city.tourismIndex}/100</span>
+            <div className="flex items-center gap-2 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-slate-800 shadow">
+              <Palmtree className="w-4 h-4 text-pink-400" />
+              <span className="text-xs text-slate-400 font-medium">Tour:</span>
+              <span className="font-mono font-bold text-sm text-pink-300">{city.tourismIndex}/100</span>
             </div>
           </div>
 
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700 shrink-0"
+            className="p-2 sm:p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700 shrink-0"
             title="Close (Esc)"
             data-testid="modal-close-header-btn"
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* 2. MAIN WORKSPACE (Single-Screen 2-Column Layout, zero scrollbar needed) */}
-        <div className="flex-1 min-h-0 p-3 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-3 overflow-hidden">
+        {/* 2. MAIN WORKSPACE (Widescreen 2-Column Dashboard, Zero Mouse-Scroll Required) */}
+        <div className="flex-1 min-h-0 p-3.5 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 overflow-hidden">
           {/* LEFT COLUMN: LANDMARK ART, ROUTES & DIPLOMATIC CORPS (4 Cols) */}
-          <div className="lg:col-span-4 flex flex-col gap-2 min-h-0 h-full overflow-hidden">
-            {/* Real 8K Panoramic Landmark Photograph */}
-            <div className="h-32 sm:h-36 shrink-0 rounded-2xl overflow-hidden shadow-lg border border-sky-500/60">
+          <div className="lg:col-span-4 flex flex-col gap-2.5 min-h-0 h-full overflow-hidden">
+            {/* Real Panoramic Landmark Photograph */}
+            <div className="h-36 sm:h-40 shrink-0 rounded-2xl overflow-hidden shadow-lg border border-sky-500/60">
               <CityLandmarkDiorama city={city} visualData={visualData} className="h-full w-full" />
             </div>
 
-            {/* Flight Routes Bar (Clean separate bar, zero overlap!) */}
-            <div className="flex items-center justify-between px-3 py-1.5 bg-slate-950/90 rounded-xl border border-slate-800 shrink-0">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <Plane className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                <span className="text-xs font-bold text-slate-300 font-mono">
+            {/* Flight Routes Bar */}
+            <div className="flex items-center justify-between px-3.5 py-2 bg-slate-950/90 rounded-xl border border-slate-800 shrink-0 shadow">
+              <div className="flex items-center gap-2 min-w-0">
+                <Plane className="w-4 h-4 text-sky-400 shrink-0" />
+                <span className="text-xs sm:text-sm font-bold text-slate-200 font-mono">
                   Routes: <span className="text-sky-300">{cityRoutes.length} Active</span>
                 </span>
                 {cityRoutes.length > 0 && (
-                  <span className="text-[10px] text-slate-400 truncate max-w-[120px]">
+                  <span className="text-xs text-slate-400 truncate max-w-[160px]">
                     ({cityRoutes.map(r => r.destCityId === city.id ? r.originCityId : r.destCityId).join(', ')})
                   </span>
                 )}
@@ -279,28 +280,28 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                   onOpenRouteFromCity(city);
                 }}
                 disabled={slotsOwned < 2}
-                className="px-2.5 py-1 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-lg font-bold text-[11px] shadow flex items-center gap-1 cursor-pointer transition active:scale-95 border border-sky-400 shrink-0"
+                className="px-3 py-1.5 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-lg font-bold text-xs shadow flex items-center gap-1.5 cursor-pointer transition active:scale-95 border border-sky-400 shrink-0"
               >
-                <Plane className="w-3 h-3" />
+                <Plane className="w-3.5 h-3.5" />
                 <span>Launch Route</span>
               </button>
             </div>
 
-            {/* DIPLOMATIC CORPS STATION (4 Field Envoys) - Filling the entire space with 4 spacious cards */}
-            <div className="flex-1 min-h-0 bg-slate-950/80 p-2.5 rounded-2xl border border-slate-800 flex flex-col justify-between overflow-hidden">
+            {/* DIPLOMATIC CORPS STATION (4 Field Envoys with Prominent Portraits) */}
+            <div className="flex-1 min-h-0 bg-slate-950/80 p-2.5 sm:p-3 rounded-2xl border border-slate-800 flex flex-col justify-between overflow-hidden shadow-inner">
               <div className="flex items-center justify-between mb-1 pb-1 border-b border-slate-800/80 shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs">💼</span>
-                  <span className="text-xs font-black text-slate-200 font-mono uppercase tracking-wider">
-                    Diplomatic Envoys
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">💼</span>
+                  <span className="text-xs sm:text-sm font-black text-slate-200 font-mono uppercase tracking-wider">
+                    Diplomatic Envoys (คณะทูตเจรจา)
                   </span>
                 </div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800">
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800">
                   {availableFieldNegotiators.length} of 4 Available
                 </span>
               </div>
 
-              {/* 4 Envoy Cards (Stacked vertically, spacious and perfectly fitted with zero scroll) */}
+              {/* 4 Envoy Cards with Large High-Res Portraits */}
               <div className="flex-1 min-h-0 flex flex-col justify-between gap-1.5">
                 {fieldNegotiators.map((neg) => {
                   const isStationedHere =
@@ -315,51 +316,55 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                       key={neg.id}
                       className={`flex items-center gap-2.5 p-2 rounded-xl border transition-all ${
                         isStationedHere
-                          ? 'bg-gradient-to-r from-amber-950/60 to-slate-900 border-amber-500/90 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+                          ? 'bg-gradient-to-r from-amber-950/70 to-slate-900 border-amber-500/90 shadow-[0_0_15px_rgba(245,158,11,0.25)]'
                           : isStationedElsewhere
                           ? 'bg-slate-900/50 border-slate-800/80 opacity-70'
                           : 'bg-slate-900/90 border-slate-700/80 hover:border-slate-600'
                       }`}
                     >
-                      {/* Avatar */}
+                      {/* Prominent High-Definition Avatar */}
                       <div className="relative shrink-0">
                         <NegotiatorAvatar
                           avatarId={neg.avatarId}
-                          size="sm"
-                          className="w-10 h-11 rounded-lg border border-slate-600"
+                          size="md"
+                          className="w-12 h-14 sm:w-14 sm:h-16 rounded-xl border-2 border-slate-600 shadow-md"
                         />
                         {isStationedHere && (
-                          <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 ring-2 ring-slate-900 animate-pulse" />
+                          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-amber-400 ring-2 ring-slate-900 animate-pulse" />
                         )}
                       </div>
 
-                      {/* Content */}
+                      {/* Content Stack */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-1">
-                          <span className="font-bold text-xs text-white truncate">
+                          <span className="font-black text-sm text-white truncate block">
                             {neg.name}
                           </span>
                           {isStationedHere && (
-                            <span className="text-[10px] font-mono font-black px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
+                            <span className="text-xs font-mono font-black px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
                               {mission?.quartersRemaining}Q Left
                             </span>
                           )}
                           {isAvail && (
-                            <span className="text-[9px] font-mono font-bold text-emerald-400 flex items-center gap-0.5 shrink-0">
-                              <CheckCircle2 className="w-2.5 h-2.5" /> Ready
+                            <span className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-1 shrink-0">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Ready
                             </span>
                           )}
                           {isStationedElsewhere && (
-                            <span className="text-[9px] font-mono text-slate-400 truncate shrink-0">
+                            <span className="text-xs font-mono text-slate-400 truncate shrink-0">
                               {mission?.targetCityId} ({mission?.quartersRemaining}Q)
                             </span>
                           )}
                         </div>
 
+                        <div className="text-[11px] font-mono text-sky-300/80 truncate">
+                          {neg.title || 'Senior Field Envoy'}
+                        </div>
+
                         {/* Subtitle / Live Mission description */}
-                        <div className="text-[10px] mt-0.5 leading-tight truncate">
+                        <div className="text-xs mt-0.5 leading-snug truncate">
                           {isStationedHere ? (
-                            <span className="text-amber-200/90 font-medium">
+                            <span className="text-amber-200 font-bold">
                               {mission?.type === 'SLOT_NEGOTIATION'
                                 ? `Negotiating ${mission.requestedSlots || 10} Landing Slots`
                                 : mission?.type === 'SUBSIDIARY_ACQUISITION'
@@ -371,8 +376,8 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                               Stationed in {mission?.targetCityName}
                             </span>
                           ) : (
-                            <span className="text-slate-400">
-                              Available for treaties & buyouts
+                            <span className="text-slate-300 font-medium">
+                              Ready for treaties & buyouts
                             </span>
                           )}
                         </div>
@@ -384,22 +389,22 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
             </div>
           </div>
 
-          {/* RIGHT COLUMN: 6 SUBSIDIARY TILES (8 Cols - Compact 2x3 Grid) */}
-          <div className="lg:col-span-8 flex flex-col min-h-0 h-full bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
-            <div className="flex items-center justify-between mb-2 shrink-0">
-              <div className="flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-indigo-400" />
-                <h3 className="text-xs font-black text-slate-200 font-mono tracking-wide uppercase">
+          {/* RIGHT COLUMN: 6 SUBSIDIARY TILES (8 Cols - Rich Commercial Matrix with Vivid Photos) */}
+          <div className="lg:col-span-8 flex flex-col min-h-0 h-full bg-slate-950/60 p-3.5 sm:p-4 rounded-2xl border border-slate-800 overflow-hidden">
+            <div className="flex items-center justify-between mb-2.5 shrink-0">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-indigo-400" />
+                <h3 className="text-sm sm:text-base font-black text-slate-200 font-mono tracking-wide uppercase">
                   Local Commercial Subsidiaries (6 Opportunities)
                 </h3>
               </div>
-              <span className="text-[11px] text-slate-400 font-mono">
+              <span className="text-xs sm:text-sm text-slate-300 font-mono">
                 Duration: {requiredQuarters} Quarter{requiredQuarters > 1 ? 's' : ''} ({requiredQuarters * 3} mo)
               </span>
             </div>
 
-            {/* 6-Tile Matrix (2 cols x 3 rows) */}
-            <div className="flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {/* 6-Tile Matrix (2 cols x 3 rows with Side-by-Side Visual & Info, Zero Overlap) */}
+            <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5 overflow-hidden">
               {visualData.ventures.map((v) => {
                 // Check if player already owns this exact venture
                 const isOwned = playerAirline.businesses.some(
@@ -420,7 +425,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                 return (
                   <div
                     key={v.slotIndex}
-                    className={`p-2.5 rounded-xl border flex flex-col justify-between transition-all ${
+                    className={`p-3 rounded-2xl border flex items-stretch gap-3 transition-all shadow-md min-h-0 ${
                       isOwned
                         ? 'bg-emerald-950/30 border-emerald-500/80 shadow'
                         : activeNegotiator
@@ -428,64 +433,96 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                         : 'bg-slate-900/90 border-slate-700/80 hover:border-slate-600'
                     }`}
                   >
-                    <div>
-                      {/* Top Header of Tile */}
-                      <div className="flex items-center justify-between gap-1.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-lg p-1 bg-slate-800 rounded-md border border-slate-700 shrink-0">
-                            {v.icon}
-                          </span>
+                    {/* Visual Photographic Thumbnail (Full vertical height of the card) */}
+                    <VentureCardVisual
+                      name={v.name}
+                      type={v.type}
+                      icon={v.icon}
+                      className="w-28 sm:w-36 self-stretch rounded-xl shrink-0 shadow-md"
+                    />
+
+                    {/* Right Column: Info, Metrics & Actions */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-start justify-between gap-1.5">
                           <div className="min-w-0">
-                            <div className="font-bold text-xs text-white truncate leading-tight">
+                            <h4
+                              className="font-black text-sm sm:text-base text-white truncate leading-tight"
+                              title={v.name}
+                            >
                               {v.name}
+                            </h4>
+                            <div className="text-[11px] sm:text-xs text-sky-400/90 font-mono mt-0.5">
+                              {v.type.replace(/_/g, ' ')}
                             </div>
-                            <div className="text-[10px] text-slate-400">{v.type}</div>
                           </div>
+
+                          {/* Status Pill */}
+                          {isOwned ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-400 shrink-0">
+                              OWNED
+                            </span>
+                          ) : activeNegotiator ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-400 shrink-0">
+                              TALKS ONGOING
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+                              AVAILABLE
+                            </span>
+                          )}
                         </div>
 
-                        {/* Status Badge */}
-                        {isOwned ? (
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-400 shrink-0">
-                            OWNED
-                          </span>
-                        ) : activeNegotiator ? (
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-400 shrink-0">
-                            TALKS ONGOING ({activeNegotiator.name.split(' ')[0]})
-                          </span>
-                        ) : (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-800 text-slate-400 border border-slate-700 shrink-0">
-                            AVAILABLE
-                          </span>
-                        )}
+                        {/* Rich Venture Description */}
+                        <p
+                          className="text-xs text-slate-300 line-clamp-2 leading-relaxed mt-1"
+                          title={v.description}
+                        >
+                          {v.description}
+                        </p>
                       </div>
 
-                      {/* Financial Yield Details */}
-                      <div className="mt-1.5 pt-1 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
-                        <span className="text-slate-400">
+                      {/* Financial Metrics Strip */}
+                      <div className="mt-1.5 pt-1 border-t border-slate-800/80 flex items-center justify-between text-xs flex-wrap gap-1">
+                        <span className="text-slate-400 font-mono">
                           Cost: <strong className="text-white">${v.costK.toLocaleString()}K</strong>
                         </span>
-                        <span className="text-emerald-400 font-mono font-bold">
-                          +${v.dividendK}K/qtr
-                        </span>
-                        <span className="text-pink-300 font-mono font-bold">
-                          +{v.tourismBoost}% Pax
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-emerald-400 font-mono font-black bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-700/60 text-[11px] sm:text-xs">
+                            +${v.dividendK}K/qtr
+                          </span>
+                          <span className="text-pink-300 font-mono font-black bg-pink-950/60 px-2 py-0.5 rounded border border-pink-700/60 text-[11px] sm:text-xs">
+                            +{v.tourismBoost}% Pax
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Action / Status Button */}
+                      <div className="mt-2">
+                        {isOwned ? (
+                          <div className="w-full py-1.5 bg-emerald-950/50 border border-emerald-500/40 rounded-xl text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Acquired Subsidiary Asset (ส่งผลกำไรทุกไตรมาส)</span>
+                          </div>
+                        ) : activeNegotiator ? (
+                          <div className="w-full py-1.5 bg-amber-950/50 border border-amber-500/50 rounded-xl text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm animate-pulse">
+                            <Clock className="w-3.5 h-3.5 text-amber-400" />
+                            <span className="truncate">
+                              Envoy {activeNegotiator.name.split(' ')[0]} in Talks ({activeNegotiator.currentMission?.quartersRemaining}Q)
+                            </span>
+                          </div>
+                        ) : (
+                          <button
+                            disabled={availableFieldNegotiators.length === 0 || !canAfford}
+                            onClick={() => promptSubsidiaryBuyout(v)}
+                            className="w-full py-1.5 sm:py-2 bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 hover:from-indigo-500 hover:to-blue-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-xl font-black text-xs sm:text-sm shadow-md border border-indigo-400 transition active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                          >
+                            <Clock className="w-4 h-4" />
+                            <span>Acquire Subsidiary (${v.costK.toLocaleString()}K • {requiredQuarters}Q)</span>
+                          </button>
+                        )}
                       </div>
                     </div>
-
-                    {/* Action Button: Opens Confirmation Modal! */}
-                    {!isOwned && !activeNegotiator && (
-                      <div className="mt-2">
-                        <button
-                          disabled={availableFieldNegotiators.length === 0 || !canAfford}
-                          onClick={() => promptSubsidiaryBuyout(v)}
-                          className="w-full py-1 bg-indigo-700 hover:bg-indigo-600 disabled:opacity-30 disabled:pointer-events-none text-white rounded-lg font-bold text-[11px] shadow border border-indigo-400 transition active:scale-95 cursor-pointer flex items-center justify-center gap-1"
-                        >
-                          <Clock className="w-3 h-3" />
-                          <span>Acquire (${v.costK.toLocaleString()}K • {requiredQuarters}Q)</span>
-                        </button>
-                      </div>
-                    )}
                   </div>
                 );
               })}
@@ -494,34 +531,34 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
         </div>
 
         {/* 3. BOTTOM EXECUTIVE DECK: CITY SLOTS STATUS & PRIMARY ACTIONS */}
-        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 px-5 py-2.5 border-t-2 border-sky-500/60 shrink-0 flex items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 px-5 sm:px-6 py-3 border-t-2 border-sky-500/60 shrink-0 flex items-center justify-between gap-4">
           {/* Left: City Status & Negotiation Summary */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400 font-bold uppercase font-mono">Status:</span>
-              <span className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 font-mono font-bold text-xs text-sky-300">
+              <span className="px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 font-mono font-bold text-xs sm:text-sm text-sky-300">
                 {slotsOwned} / {totalAirportCap} Slots (Airport: {totalAllocated}/{totalAirportCap})
               </span>
             </div>
 
             {ongoingExpansion && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500 font-bold flex items-center gap-1 animate-pulse">
-                <Hammer className="w-3 h-3" />
+              <span className="text-xs px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500 font-bold flex items-center gap-1.5 animate-pulse">
+                <Hammer className="w-3.5 h-3.5" />
                 <span>+{ongoingExpansion.addedSlots} in {ongoingExpansion.quartersRemaining}Q ({ongoingExpansion.quartersRemaining * 3}mo)</span>
               </span>
             )}
 
             {limits.isAntiMonopolyActive && !isAirportFull && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500 font-bold flex items-center gap-1">
-                <Scale className="w-3 h-3" />
+              <span className="text-xs px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500 font-bold flex items-center gap-1.5">
+                <Scale className="w-3.5 h-3.5" />
                 <span>Fair-Share: Max {limits.maxRequestableSlots}</span>
               </span>
             )}
 
             {/* If slots negotiation ongoing */}
             {activeSlotNegotiator && (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-950/60 border border-amber-500/70 text-amber-300 text-xs font-bold animate-pulse">
-                <Clock className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-950/70 border border-amber-500/80 text-amber-300 text-xs sm:text-sm font-bold animate-pulse shadow">
+                <Clock className="w-4 h-4 text-amber-400" />
                 <span>
                   Slot Treaty: {activeSlotNegotiator.currentMission?.quartersRemaining}Q Remaining ({activeSlotNegotiator.name.split(' ')[0]})
                 </span>
@@ -529,8 +566,8 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
             )}
           </div>
 
-          {/* Right: Direct Actions (Negotiate Slots & HQ Director) */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          {/* Right: Direct Actions (Negotiate Slots, Charter Hub & HQ Director) */}
+          <div className="flex items-center gap-3 shrink-0">
             {/* Negotiate Slots Button */}
             {!activeSlotNegotiator && (
               <button
@@ -540,7 +577,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                   playerAirline.cashK < slotCostK
                 }
                 onClick={promptSlotNegotiation}
-                className="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-xl font-black text-xs md:text-sm shadow-xl transition-all active:scale-95 border border-emerald-400 cursor-pointer flex items-center gap-2"
+                className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-xl font-black text-xs sm:text-sm shadow-xl transition-all active:scale-95 border border-emerald-400 cursor-pointer flex items-center gap-2"
               >
                 <KeyRound className="w-4 h-4 text-emerald-200" />
                 <span>
@@ -580,7 +617,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                   disabled={!canCharter}
                   onClick={() => onEstablishHub?.(city.id, 15000)}
                   title={tooltipMsg}
-                  className={`px-4 py-2 rounded-xl font-black text-xs md:text-sm shadow-xl transition-all border flex items-center gap-1.5 ${
+                  className={`px-5 py-2.5 rounded-xl font-black text-xs sm:text-sm shadow-xl transition-all border flex items-center gap-2 ${
                     canCharter
                       ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white border-sky-400 cursor-pointer active:scale-95 shadow-[0_0_15px_rgba(56,189,248,0.35)]'
                       : 'bg-slate-900/90 text-slate-400 border-slate-700/80 cursor-not-allowed opacity-80'
@@ -593,7 +630,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
             })()}
 
             {isHub && !isHQ && (
-              <div className="px-3 py-1.5 rounded-xl bg-sky-950/90 border border-sky-400 text-sky-300 text-xs font-bold flex items-center gap-1.5 shadow-[0_0_12px_rgba(56,189,248,0.25)]">
+              <div className="px-3.5 py-2 rounded-xl bg-sky-950/90 border border-sky-400 text-sky-300 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-[0_0_12px_rgba(56,189,248,0.25)]">
                 <span>🌐</span>
                 <span>Regional Hub (+18% Transit Boost)</span>
               </div>
@@ -602,7 +639,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
             {/* HQ Operations Button (David Sterling) */}
             <button
               onClick={() => setShowHQOperations(true)}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold text-xs border border-slate-600 flex items-center gap-1.5 transition cursor-pointer"
+              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold text-xs sm:text-sm border border-slate-600 flex items-center gap-2 transition cursor-pointer"
             >
               <Shield className="w-4 h-4 text-amber-400" />
               <span>HQ Director</span>

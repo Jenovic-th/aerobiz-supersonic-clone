@@ -22,6 +22,7 @@ import { TitleScreen } from './components/TitleScreen';
 import { SettingsModal } from './components/SettingsModal';
 import { NewsChronicleModal } from './components/NewsChronicleModal';
 import { loadSettings, GameSettings } from './utils/settings';
+import { CITIES } from './data/cities';
 import { CheckCircle2 } from 'lucide-react';
 
 export function App() {
@@ -64,6 +65,11 @@ export function App() {
     (window as any).__setShowQuarterReport = setShowQuarterReport;
     (window as any).__setShowBoardMeeting = setShowBoardMeeting;
     (window as any).__setShowNewsModal = setShowNewsModal;
+    (window as any).__setInspectingCity = setInspectingCity;
+    (window as any).__openCityDetail = (cityId: string) => {
+      const c = CITIES.find((x) => x.id === cityId);
+      if (c) setInspectingCity(c);
+    };
   }, [gameState, currentScreen]);
 
   const handleOpenNews = () => {

@@ -19,6 +19,7 @@ import {
   TrendingUp,
   Award,
 } from 'lucide-react';
+import { VentureCardVisual } from './VentureCardVisual';
 
 interface BusinessModalProps {
   playerAirline: Airline;
@@ -287,7 +288,7 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-5 animate-in fade-in duration-150">
-      <div className="bg-slate-900 border-2 border-indigo-500/90 rounded-3xl shadow-[0_0_70px_rgba(99,102,241,0.35)] w-full max-w-5xl overflow-hidden flex flex-col text-slate-100 max-h-[94vh]">
+      <div className="bg-slate-900 border-2 border-indigo-500/90 rounded-3xl shadow-[0_0_70px_rgba(99,102,241,0.35)] w-[95vw] max-w-6xl xl:max-w-7xl overflow-hidden flex flex-col text-slate-100 max-h-[94vh]">
         {/* Header with Dual Tabs */}
         <div className="bg-gradient-to-r from-indigo-950 via-slate-900 to-slate-900 px-6 py-4 border-b border-indigo-800/80 flex flex-wrap justify-between items-center gap-3 shrink-0">
           <div className="flex items-center gap-3">
@@ -399,15 +400,28 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                   >
                     <div>
                       <div className="flex justify-between items-start gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2.5 rounded-xl bg-indigo-950 border border-indigo-700 text-indigo-300 shrink-0">
-                            <Icon className="w-5 h-5" />
-                          </div>
+                        <div className="flex items-start gap-3">
+                          <VentureCardVisual
+                            name={template.name}
+                            type={template.type}
+                            icon={
+                              template.category === 'HOTEL'
+                                ? '🏨'
+                                : template.category === 'CULTURE'
+                                ? '🏛️'
+                                : template.category === 'AMUSEMENT'
+                                ? '🎡'
+                                : template.category === 'SERVICE'
+                                ? '🚌'
+                                : '🎫'
+                            }
+                            className="w-20 h-20 rounded-xl shrink-0 shadow-md"
+                          />
                           <div>
-                            <div className="font-mono font-black text-sm text-white">
+                            <div className="font-mono font-black text-sm sm:text-base text-white">
                               {template.name}
                             </div>
-                            <div className="text-[11px] text-slate-400 font-mono">
+                            <div className="text-xs text-sky-400 font-mono mt-0.5">
                               {city.name} ({city.id}) • {template.category}
                             </div>
                           </div>
