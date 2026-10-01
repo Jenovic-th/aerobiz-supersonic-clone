@@ -81,7 +81,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-5">
-      <div className="bg-slate-900 border-2 border-slate-600 rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="bg-slate-900 border-2 border-slate-600 rounded-3xl shadow-2xl w-full max-w-6xl xl:max-w-7xl overflow-hidden flex flex-col max-h-[94vh]">
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 px-6 py-4 border-b border-slate-700 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
@@ -176,7 +176,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
 
         {/* City Slots Table */}
         <div className="p-6 overflow-y-auto space-y-3 text-sm flex-1">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
             {filteredCities.map((city) => {
               const currentSlots = playerAirline.slots[city.id] || 0;
               const totalAirportCap = gameState?.airportSlots?.[city.id] ?? city.baseSlots;
