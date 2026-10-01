@@ -106,7 +106,7 @@ function getAircraftPhotoUrl(model) {
     return 'b777.jpg';
   }
   if (
-    id.includes('300') ||
+    id.includes('A300') ||
     id.includes('310') ||
     id.includes('330') ||
     id.includes('340') ||
