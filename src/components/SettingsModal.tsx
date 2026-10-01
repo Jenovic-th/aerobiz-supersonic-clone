@@ -53,7 +53,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 select-none animate-in fade-in duration-200">
-      <div className="bg-slate-900 border-2 border-slate-700 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+      <div className="bg-slate-900 border-2 border-slate-700 rounded-3xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-800 via-indigo-950 to-slate-900 px-6 py-4 border-b border-slate-700 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
@@ -81,7 +81,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-5 overflow-y-auto">
+        <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
           {/* 1. Audio SFX Toggle */}
           <div className="flex items-center justify-between p-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl">
             <div className="flex items-center gap-3">

@@ -152,7 +152,7 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
 
       {/* 3. Main Aircraft Presentation Stage */}
       {viewMode === 'PHOTO' ? (
-        <div className="relative flex-1 min-h-[300px] w-full flex items-center justify-center p-3 md:p-5 overflow-hidden bg-slate-950/80">
+        <div className="relative flex-1 min-h-[160px] sm:min-h-[220px] md:min-h-[260px] w-full flex items-center justify-center p-2 sm:p-3 md:p-5 overflow-hidden bg-slate-950/80">
           <div className="relative w-full max-w-5xl h-full max-h-[460px] rounded-2xl overflow-hidden border border-sky-500/40 shadow-[0_20px_50px_rgba(0,0,0,0.85)] bg-slate-950 flex items-center justify-center group">
             {/* Real High-Resolution Aviation Photograph */}
             <img
@@ -208,7 +208,7 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
           </div>
         </div>
       ) : (
-        <div className="relative flex-1 min-h-[260px] p-3 md:p-4 flex flex-col justify-center items-center overflow-hidden">
+        <div className="relative flex-1 min-h-[140px] sm:min-h-[180px] md:min-h-[220px] p-2 sm:p-3 md:p-4 flex flex-col justify-center items-center overflow-hidden">
           {/* Tarmac Runway Light & Dimension Banner */}
           <div className="w-full max-w-3xl flex items-center justify-between text-xs font-mono px-4 mb-1 z-10">
             <div className="flex items-center gap-2 text-slate-400">

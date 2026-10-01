@@ -112,9 +112,9 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       </header>
 
       {/* 3. CENTER HERO: TITLE LOGO & MAIN MENU ACTION SUITE */}
-      <main className="relative z-10 max-w-4xl mx-auto w-full px-6 py-4 flex flex-col items-center justify-center flex-1 my-auto">
+      <main className="relative z-10 max-w-4xl mx-auto w-full px-4 sm:px-6 py-3 sm:py-6 flex flex-col items-center justify-center flex-1 my-auto overflow-y-auto custom-scrollbar">
         {/* Supersonic Jet Icon & Title Heading */}
-        <div className="flex flex-col items-center text-center mb-8">
+        <div className="flex flex-col items-center text-center mb-4 sm:mb-7">
           <div className="relative mb-3">
             <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-sky-600 to-indigo-600 p-0.5 shadow-[0_0_40px_rgba(56,189,248,0.4)] flex items-center justify-center">
               <div className="w-full h-full bg-slate-900 rounded-[22px] flex items-center justify-center">

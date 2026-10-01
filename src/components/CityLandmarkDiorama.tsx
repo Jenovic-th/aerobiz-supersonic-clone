@@ -81,17 +81,6 @@ export const CityLandmarkDiorama: React.FC<CityLandmarkDioramaProps> = ({
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-r from-slate-950/50 via-transparent to-transparent pointer-events-none" />
 
-      {/* Top Badges */}
-      <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-        <span className="px-3 py-1 rounded-xl bg-slate-950/85 backdrop-blur-md border border-sky-400/80 text-xs font-bold text-sky-300 font-mono shadow-lg flex items-center gap-1.5">
-          <MapPin className="w-4 h-4 text-sky-400" />
-          <span>{city.country} • {city.region.replace(/_/g, ' ')}</span>
-        </span>
-
-        <span className="px-2.5 py-1 rounded-lg bg-blue-600/90 backdrop-blur-md text-xs font-black text-white font-mono shadow">
-          {city.id}
-        </span>
-      </div>
 
       {/* Landmark Title Glassmorphic Banner (Retro Koei aesthetic) */}
       <div className="absolute bottom-3 left-3 right-3 pointer-events-none">

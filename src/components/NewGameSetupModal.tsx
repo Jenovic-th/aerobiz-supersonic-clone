@@ -597,13 +597,13 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         onChange={handleImportFile}
       />
 
-      {/* 2. MAIN WIZARD CONTENT AREA (flex-1, zero vertical scroll, perfectly centered) */}
-      <main className="relative z-10 flex-1 min-h-0 flex flex-col justify-center px-6 lg:px-12 py-3 overflow-hidden">
+      {/* 2. MAIN WIZARD CONTENT AREA (flex-1, responsive vertical scroll, perfectly centered) */}
+      <main className="relative z-10 flex-1 min-h-0 flex flex-col overflow-y-auto px-3 sm:px-6 lg:px-12 py-3 custom-scrollbar">
         {/* ========================================================================= */}
         {/* STEP 1: CHOOSE STARTING ERA & GAME MODE                                    */}
         {/* ========================================================================= */}
         {wizardStep === 1 && (
-          <div className="w-full max-w-6xl mx-auto flex flex-col justify-between h-full py-2 animate-in fade-in duration-200">
+          <div className="w-full max-w-6xl mx-auto flex flex-col justify-between min-h-full my-auto py-2 animate-in fade-in duration-200">
             {/* Step Heading */}
             <div className="text-center mb-3 shrink-0">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-950/70 border border-sky-400/40 text-sky-300 font-mono text-xs font-bold mb-1">
@@ -746,7 +746,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         {/* STEP 2: PLAYERS & COMPETITOR AIRLINES (4 SLOTS TOTAL)                      */}
         {/* ========================================================================= */}
         {wizardStep === 2 && (
-          <div className="w-full max-w-6xl mx-auto flex flex-col justify-between h-full py-2 animate-in fade-in duration-200">
+          <div className="w-full max-w-6xl mx-auto flex flex-col justify-between min-h-full my-auto py-2 animate-in fade-in duration-200">
             {/* Step Heading */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-2 shrink-0">
               <div>
@@ -992,7 +992,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         {/* STEP 3: HEADQUARTERS & STARTING CAPITAL                                   */}
         {/* ========================================================================= */}
         {wizardStep === 3 && (
-          <div className="w-full max-w-6xl mx-auto flex flex-col justify-between h-full py-2 animate-in fade-in duration-200">
+          <div className="w-full max-w-6xl mx-auto flex flex-col justify-between min-h-full my-auto py-2 animate-in fade-in duration-200">
             {/* Step Heading */}
             <div className="text-center mb-2 shrink-0">
               <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-sky-950/70 border border-sky-400/40 text-sky-300 font-mono text-xs font-bold mb-1">
@@ -1236,7 +1236,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
         {/* STEP 4: FLIGHT CLEARANCE & EXECUTIVE LAUNCH                                */}
         {/* ========================================================================= */}
         {wizardStep === 4 && (
-          <div className="w-full max-w-6xl mx-auto flex flex-col justify-between h-full py-2 animate-in fade-in duration-200">
+          <div className="w-full max-w-6xl mx-auto flex flex-col justify-between min-h-full my-auto py-2 animate-in fade-in duration-200">
             {/* Step Heading */}
             <div className="text-center mb-2 shrink-0">
               <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-400/60 text-emerald-300 font-mono text-xs font-bold mb-1">
