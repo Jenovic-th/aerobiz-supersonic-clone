@@ -23,7 +23,7 @@ const CITY_LABEL_OFFSETS: Record<
   { dx: number; dy: number; align: CanvasTextAlign; baseline: CanvasTextBaseline }
 > = {
   // Dense European Cluster
-  FRA: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
+  FRA: { dx: -14, dy: -8, align: 'right', baseline: 'bottom' },
   ZRH: { dx: 14, dy: 10, align: 'left', baseline: 'top' },
   LON: { dx: -14, dy: -8, align: 'right', baseline: 'bottom' },
   PAR: { dx: -14, dy: 10, align: 'right', baseline: 'top' },
@@ -33,7 +33,7 @@ const CITY_LABEL_OFFSETS: Record<
   MOW: { dx: 0, dy: -14, align: 'center', baseline: 'bottom' },
   KEF: { dx: 14, dy: 0, align: 'left', baseline: 'middle' },
   BER: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
-  AMS: { dx: -14, dy: -8, align: 'right', baseline: 'bottom' },
+  AMS: { dx: -14, dy: 10, align: 'right', baseline: 'top' },
   VIE: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
   BCN: { dx: 14, dy: 8, align: 'left', baseline: 'top' },
   IST: { dx: 14, dy: -8, align: 'left', baseline: 'bottom' },
@@ -433,6 +433,33 @@ export const WorldMap: React.FC<WorldMapProps> = ({
 
   const cityMap = useMemo(() => new Map(CITIES.map((c) => [c.id, c])), []);
 
+  // Interactive off-screen intercontinental exit beacons
+  const interconBadgesRef = useRef<
+    Array<{ x: number; y: number; width: number; height: number; city: City }>
+  >([]);
+  const [hoveredBadgeCity, setHoveredBadgeCity] = useState<City | null>(null);
+
+  // External gateway cities connected to activeRegion via active routes
+  const connectedOverseasCityIds = useMemo(() => {
+    if (!activeRegion) return new Set<string>();
+    const set = new Set<string>();
+    (routes || []).forEach((r) => {
+      if (airlineFilter !== 'ALL') {
+        if (airlineFilter === 'PLAYER' && r.airlineId !== playerAirline.id) return;
+        if (airlineFilter !== 'PLAYER' && r.airlineId !== airlineFilter) return;
+      }
+      const o = cityMap.get(r.originCityId);
+      const d = cityMap.get(r.destCityId);
+      if (!o || !d) return;
+      if (o.region === activeRegion && d.region !== activeRegion) {
+        set.add(d.id);
+      } else if (d.region === activeRegion && o.region !== activeRegion) {
+        set.add(o.id);
+      }
+    });
+    return set;
+  }, [routes, activeRegion, airlineFilter, cityMap, playerAirline.id]);
+
   // Animation frame loop for continuous 60fps flight motion & holographic pulses
   useEffect(() => {
     let animId: number;
@@ -813,7 +840,10 @@ export const WorldMap: React.FC<WorldMapProps> = ({
       }
     }
 
-    // 4. Flight Routes: Curved Great Circle Arcs & Animated Airliners
+    // 4. Flight Routes: Curved Great Circle Arcs, Intercontinental Highways & Animated Airliners
+    // Reset interactive intercontinental exit badges list for this frame
+    interconBadgesRef.current = [];
+
     routes.forEach((route) => {
       // Filter routes based on selected airline network
       if (airlineFilter !== 'ALL') {
@@ -825,13 +855,12 @@ export const WorldMap: React.FC<WorldMapProps> = ({
       const dest = cityMap.get(route.destCityId);
       if (!origin || !dest) return;
 
-      const p1 = projectCoords(origin.lat, origin.lon, width, height);
-      const p2 = projectCoords(dest.lat, dest.lon, width, height);
-
-      // In continental view, ONLY draw routes where both origin and destination are in this continent!
-      if (activeRegion && (origin.region !== activeRegion || dest.region !== activeRegion)) {
+      // In continental view, draw routes where origin OR destination is in activeRegion
+      if (activeRegion && origin.region !== activeRegion && dest.region !== activeRegion) {
         return;
       }
+
+      const isCrossRegion = origin.region !== dest.region;
 
       // Determine owning airline livery color
       const owningAirline =
@@ -846,64 +875,304 @@ export const WorldMap: React.FC<WorldMapProps> = ({
         ? (flashPulse > 0.5 ? '#ef4444' : '#fca5a5')
         : normalRouteColor;
 
-      ctx.save();
+      // Unique phase offset per route so commercial flights don't fly in strict lockstep
+      const routePhase =
+        (route.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 100) / 100;
 
-      // Compute curved Bezier control point
-      const midX = (p1.x + p2.x) / 2;
-      const midY = (p1.y + p2.y) / 2;
-      const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-      const curveHeight = Math.min(130, dist * 0.22);
-      const controlY = midY - curveHeight;
+      // Check for Antimeridian (180° meridian / Pacific) wrapping
+      const dLon = dest.lon - origin.lon;
+      const crossesAntimeridian = Math.abs(dLon) > 180;
 
-      if (isDeficit) {
-        // Red pulsating alarm glow for loss-making route
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.quadraticCurveTo(midX, controlY, p2.x, p2.y);
-        ctx.strokeStyle = `rgba(239, 68, 68, ${0.4 + 0.45 * flashPulse})`;
-        ctx.lineWidth = (5 + 3 * flashPulse) * Math.min(1.4, zoom);
-        ctx.shadowColor = '#ef4444';
-        ctx.shadowBlur = 14 * flashPulse;
-        ctx.stroke();
+      if (!crossesAntimeridian) {
+        // Standard Great Circle Arc (Single Segment)
+        const p1 = projectCoords(origin.lat, origin.lon, width, height);
+        const p2 = projectCoords(dest.lat, dest.lon, width, height);
 
-        // Sharp pulsing red core line
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.quadraticCurveTo(midX, controlY, p2.x, p2.y);
-        ctx.strokeStyle = '#ef4444';
-        ctx.lineWidth = 2.4 * Math.min(1.4, zoom);
-        ctx.stroke();
+        const midX = (p1.x + p2.x) / 2;
+        const midY = (p1.y + p2.y) / 2;
+        const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        const curveHeight = Math.min(130, dist * 0.22);
+        const controlY = midY - curveHeight;
 
-        // Pulsing warning indicator node at arc apex
-        const apexX = midX;
-        const apexY = midY - curveHeight * 0.5;
-        ctx.beginPath();
-        ctx.arc(apexX, apexY, 4 + 2 * flashPulse, 0, Math.PI * 2);
-        ctx.fillStyle = '#ef4444';
-        ctx.shadowColor = '#ef4444';
-        ctx.shadowBlur = 10;
-        ctx.fill();
+        ctx.save();
+
+        if (isDeficit) {
+          // Red pulsating alarm glow for loss-making route
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.quadraticCurveTo(midX, controlY, p2.x, p2.y);
+          ctx.strokeStyle = `rgba(239, 68, 68, ${0.4 + 0.45 * flashPulse})`;
+          ctx.lineWidth = (5 + 3 * flashPulse) * Math.min(1.4, zoom);
+          ctx.shadowColor = '#ef4444';
+          ctx.shadowBlur = 14 * flashPulse;
+          ctx.stroke();
+
+          // Sharp pulsing red core line
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.quadraticCurveTo(midX, controlY, p2.x, p2.y);
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 2.4 * Math.min(1.4, zoom);
+          ctx.stroke();
+
+          // Pulsing warning indicator node at arc apex
+          const apexX = midX;
+          const apexY = midY - curveHeight * 0.5;
+          ctx.beginPath();
+          ctx.arc(apexX, apexY, 4 + 2 * flashPulse, 0, Math.PI * 2);
+          ctx.fillStyle = '#ef4444';
+          ctx.shadowColor = '#ef4444';
+          ctx.shadowBlur = 10;
+          ctx.fill();
+        } else {
+          // Normal route in livery color
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.quadraticCurveTo(midX, controlY, p2.x, p2.y);
+          ctx.strokeStyle = `${routeColor}55`;
+          ctx.lineWidth = (isCrossRegion ? 5 : 4) * Math.min(1.4, zoom);
+          ctx.stroke();
+
+          // Sharp core route line in airline company color
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.quadraticCurveTo(midX, controlY, p2.x, p2.y);
+          ctx.strokeStyle = routeColor;
+          ctx.lineWidth = (isCrossRegion ? 2.2 : 1.8) * Math.min(1.4, zoom);
+          ctx.stroke();
+
+          // Intercontinental route stylish dashed tracer
+          if (isCrossRegion) {
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.quadraticCurveTo(midX, controlY, p2.x, p2.y);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([6, 6]);
+            ctx.lineDashOffset = -flightTick * 30;
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
+
+        // Outbound animated airliner
+        const t1 = (flightTick + routePhase) % 1;
+        drawFlyingPlane(
+          ctx,
+          p1,
+          p2,
+          midX,
+          controlY,
+          t1,
+          Math.min(1.4, zoom),
+          isDeficit ? '#ef4444' : normalRouteColor
+        );
+
+        // Inbound animated airliner (for active daily/high-frequency routes >= 4 flights/wk)
+        if (route.weeklyFrequency >= 4) {
+          const t2 = (flightTick + routePhase + 0.5) % 1;
+          drawFlyingPlane(
+            ctx,
+            p2,
+            p1,
+            midX,
+            controlY,
+            t2,
+            Math.min(1.4, zoom),
+            isDeficit ? '#ef4444' : normalRouteColor
+          );
+        }
+
+        ctx.restore();
+
+        // Check if destination or origin is off-screen in Continental View -> render Exit Beacon
+        if (activeRegion && isCrossRegion) {
+          const isOriginLocal = origin.region === activeRegion;
+          const localCity = isOriginLocal ? origin : dest;
+          const remoteCity = isOriginLocal ? dest : origin;
+          const pLocal = isOriginLocal ? p1 : p2;
+          const pRemote = isOriginLocal ? p2 : p1;
+
+          // If remote city is outside visible canvas
+          if (pRemote.x < 0 || pRemote.x > width || pRemote.y < 0 || pRemote.y > height) {
+            // Find exit point using binary search along arc
+            let low = 0,
+              high = 1;
+            for (let step = 0; step < 8; step++) {
+              const m = (low + high) / 2;
+              const bx =
+                (1 - m) * (1 - m) * pLocal.x + 2 * (1 - m) * m * midX + m * m * pRemote.x;
+              const by =
+                (1 - m) * (1 - m) * pLocal.y + 2 * (1 - m) * m * controlY + m * m * pRemote.y;
+              if (bx >= 0 && bx <= width && by >= 0 && by <= height) {
+                low = m;
+              } else {
+                high = m;
+              }
+            }
+            const exitT = low;
+            const ex =
+              (1 - exitT) * (1 - exitT) * pLocal.x +
+              2 * (1 - exitT) * exitT * midX +
+              exitT * exitT * pRemote.x;
+            const ey =
+              (1 - exitT) * (1 - exitT) * pLocal.y +
+              2 * (1 - exitT) * exitT * controlY +
+              exitT * exitT * pRemote.y;
+
+            // Clamp beacon on edge
+            const padX = 100;
+            const padY = 45;
+            let badgeCenterX = Math.max(padX, Math.min(width - padX, ex));
+            let badgeCenterY = Math.max(padY, Math.min(height - padY, ey));
+
+            const dirArrow = ex <= 20 ? '◄ ' : ex >= width - 20 ? ' ►' : ey <= 20 ? '▲ ' : '▼ ';
+            const badgeText = `${ex <= 20 ? dirArrow : ''}✈ ${remoteCity.name.toUpperCase()} (${remoteCity.id}) • ${route.weeklyFrequency}x/wk${ex > 20 ? dirArrow : ''}`;
+
+            ctx.save();
+            ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            const textMetrics = ctx.measureText(badgeText);
+            const badgeW = textMetrics.width + 18;
+            const badgeH = 24;
+
+            // Avoid overlapping another beacon badge
+            for (const existing of interconBadgesRef.current) {
+              const dx = Math.abs(existing.x + existing.width / 2 - badgeCenterX);
+              const dy = Math.abs(existing.y + existing.height / 2 - badgeCenterY);
+              if (dx < (existing.width + badgeW) / 2 + 6 && dy < 28) {
+                if (badgeCenterY > height - 80) {
+                  badgeCenterY -= 28; // Stack upwards along bottom edge
+                } else if (badgeCenterY < 80) {
+                  badgeCenterY += 28; // Stack downwards along top edge
+                } else {
+                  badgeCenterY += 28; // Stack vertically along side edge
+                }
+              }
+            }
+
+            const badgeLeft = badgeCenterX - badgeW / 2;
+            const badgeTop = badgeCenterY - badgeH / 2;
+
+            // Draw high-tech HUD pill
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+            ctx.beginPath();
+            ctx.roundRect(badgeLeft, badgeTop, badgeW, badgeH, 11);
+            ctx.fill();
+
+            ctx.strokeStyle = normalRouteColor;
+            ctx.lineWidth = 1.5;
+            ctx.shadowColor = normalRouteColor;
+            ctx.shadowBlur = 8;
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(badgeText, badgeCenterX, badgeCenterY);
+
+            ctx.restore();
+
+            // Record for hover & click
+            interconBadgesRef.current.push({
+              x: badgeLeft,
+              y: badgeTop,
+              width: badgeW,
+              height: badgeH,
+              city: remoteCity,
+            });
+          }
+        }
       } else {
-        // Normal profitable route in livery color
+        // Cross-Antimeridian (180° Meridian / Pacific) Route (2-Segment Split)
+        const isEastbound = dLon < -180;
+        const totalDelta = isEastbound
+          ? 180 - origin.lon + (dest.lon + 180)
+          : origin.lon + 180 + (180 - dest.lon);
+        const splitFrac = isEastbound
+          ? (180 - origin.lon) / totalDelta
+          : (origin.lon + 180) / totalDelta;
+        const latCross = origin.lat + (dest.lat - origin.lat) * splitFrac;
+
+        const borderLonA = isEastbound ? 180 : -180;
+        const borderLonB = isEastbound ? -180 : 180;
+
+        const p1 = projectCoords(origin.lat, origin.lon, width, height);
+        const pEdgeA = projectCoords(latCross, borderLonA, width, height);
+        const pEdgeB = projectCoords(latCross, borderLonB, width, height);
+        const p2 = projectCoords(dest.lat, dest.lon, width, height);
+
+        const midXA = (p1.x + pEdgeA.x) / 2;
+        const midYA = (p1.y + pEdgeA.y) / 2;
+        const distA = Math.hypot(pEdgeA.x - p1.x, pEdgeA.y - p1.y);
+        const controlYA = midYA - Math.min(80, distA * 0.18);
+
+        const midXB = (pEdgeB.x + p2.x) / 2;
+        const midYB = (pEdgeB.y + p2.y) / 2;
+        const distB = Math.hypot(p2.x - pEdgeB.x, p2.y - pEdgeB.y);
+        const controlYB = midYB - Math.min(80, distB * 0.18);
+
+        ctx.save();
+        // Segment A
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
-        ctx.quadraticCurveTo(midX, controlY, p2.x, p2.y);
+        ctx.quadraticCurveTo(midXA, controlYA, pEdgeA.x, pEdgeA.y);
         ctx.strokeStyle = `${routeColor}55`;
         ctx.lineWidth = 4 * Math.min(1.4, zoom);
         ctx.stroke();
 
-        // Sharp core route line in airline company color
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
-        ctx.quadraticCurveTo(midX, controlY, p2.x, p2.y);
+        ctx.quadraticCurveTo(midXA, controlYA, pEdgeA.x, pEdgeA.y);
         ctx.strokeStyle = routeColor;
-        ctx.lineWidth = 1.8 * Math.min(1.4, zoom);
+        ctx.lineWidth = 2 * Math.min(1.4, zoom);
         ctx.stroke();
-      }
 
-      // Animated Commercial Airliner flying along the curve with company livery color (or warning red)
-      drawFlyingPlane(ctx, p1, p2, midX, controlY, flightTick, Math.min(1.4, zoom), isDeficit ? '#ef4444' : normalRouteColor);
-      ctx.restore();
+        // Segment B
+        ctx.beginPath();
+        ctx.moveTo(pEdgeB.x, pEdgeB.y);
+        ctx.quadraticCurveTo(midXB, controlYB, p2.x, p2.y);
+        ctx.strokeStyle = `${routeColor}55`;
+        ctx.lineWidth = 4 * Math.min(1.4, zoom);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(pEdgeB.x, pEdgeB.y);
+        ctx.quadraticCurveTo(midXB, controlYB, p2.x, p2.y);
+        ctx.strokeStyle = routeColor;
+        ctx.lineWidth = 2 * Math.min(1.4, zoom);
+        ctx.stroke();
+
+        // Airliners across Antimeridian
+        const tProgress = (flightTick + routePhase) % 1;
+        if (tProgress < splitFrac) {
+          const segT = tProgress / splitFrac;
+          drawFlyingPlane(
+            ctx,
+            p1,
+            pEdgeA,
+            midXA,
+            controlYA,
+            segT,
+            Math.min(1.4, zoom),
+            normalRouteColor
+          );
+        } else {
+          const segT = (tProgress - splitFrac) / (1 - splitFrac);
+          drawFlyingPlane(
+            ctx,
+            pEdgeB,
+            p2,
+            midXB,
+            controlYB,
+            segT,
+            Math.min(1.4, zoom),
+            normalRouteColor
+          );
+        }
+
+        ctx.restore();
+      }
     });
 
     // 5. Equator & Coordinates Line
@@ -922,8 +1191,9 @@ export const WorldMap: React.FC<WorldMapProps> = ({
 
     // 6. CITIES: High-Contrast, Crystal-Clear Typography (Zero Opaque Boxes!)
     CITIES.forEach((city) => {
-      // In continental view, ONLY draw cities belonging to this active continent!
-      if (activeRegion && city.region !== activeRegion) return;
+      const isOverseasGateway = !!(activeRegion && connectedOverseasCityIds.has(city.id));
+      // In continental view, ONLY draw cities belonging to this active continent OR connected overseas gateways!
+      if (activeRegion && city.region !== activeRegion && !isOverseasGateway) return;
 
       const { x, y } = projectCoords(city.lat, city.lon, width, height);
 
@@ -938,17 +1208,37 @@ export const WorldMap: React.FC<WorldMapProps> = ({
 
       ctx.save();
 
-      // Pulsing Hub Rings
-      if (isHome || isHub || rivalHQ) {
-        const ringColor = isHome ? '#facc15' : rivalHQ ? rivalHQ.color : '#38bdf8';
+      // Pulsing Hub Rings & Overseas Gateway Beacon Rings
+      if (isHome || isHub || rivalHQ || isOverseasGateway) {
+        const ringColor = isHome
+          ? '#facc15'
+          : rivalHQ
+          ? rivalHQ.color
+          : isOverseasGateway
+          ? '#38bdf8'
+          : '#38bdf8';
         ctx.beginPath();
-        ctx.arc(x, y, (isHome || rivalHQ ? 13 : 10) * Math.min(1.5, zoom), 0, Math.PI * 2);
+        ctx.arc(
+          x,
+          y,
+          (isHome || rivalHQ ? 13 : isOverseasGateway ? 12 : 10) * Math.min(1.5, zoom),
+          0,
+          Math.PI * 2
+        );
         ctx.strokeStyle = ringColor;
         ctx.lineWidth = 2 * Math.min(1.4, zoom);
+        if (isOverseasGateway) ctx.setLineDash([3, 3]);
         ctx.stroke();
+        if (isOverseasGateway) ctx.setLineDash([]);
 
         ctx.beginPath();
-        ctx.arc(x, y, (isHome || rivalHQ ? 19 : 15) * Math.min(1.5, zoom), 0, Math.PI * 2);
+        ctx.arc(
+          x,
+          y,
+          (isHome || rivalHQ ? 19 : isOverseasGateway ? 16 : 15) * Math.min(1.5, zoom),
+          0,
+          Math.PI * 2
+        );
         ctx.strokeStyle = `${ringColor}55`;
         ctx.lineWidth = 1.5 * Math.min(1.4, zoom);
         ctx.stroke();
@@ -957,7 +1247,15 @@ export const WorldMap: React.FC<WorldMapProps> = ({
       // City Center Dot
       ctx.beginPath();
       const dotRadius =
-        (isSelected || isHovered ? 7 : isHome || rivalHQ ? 6 : isHub ? 5 : 4) * Math.min(1.4, zoom);
+        (isSelected || isHovered
+          ? 7
+          : isHome || rivalHQ
+          ? 6
+          : isOverseasGateway
+          ? 5.5
+          : isHub
+          ? 5
+          : 4) * Math.min(1.4, zoom);
       ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
 
       if (isHome) {
@@ -965,6 +1263,8 @@ export const WorldMap: React.FC<WorldMapProps> = ({
       } else if (rivalHQ) {
         ctx.fillStyle = rivalHQ.color;
       } else if (isHub) {
+        ctx.fillStyle = '#38bdf8';
+      } else if (isOverseasGateway) {
         ctx.fillStyle = '#38bdf8';
       } else if (slots > 0) {
         ctx.fillStyle = '#10b981';
@@ -987,7 +1287,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
         const auraPulse = (Math.sin(flightTick * Math.PI * 6) + 1) / 2;
         ctx.save();
         ctx.beginPath();
-        ctx.arc(x, y, (dotRadius + 6) + auraPulse * 4, 0, Math.PI * 2);
+        ctx.arc(x, y, dotRadius + 6 + auraPulse * 4, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(250, 204, 21, 0.9)';
         ctx.lineWidth = 2.5;
         ctx.shadowColor = '#facc15';
@@ -1022,7 +1322,11 @@ export const WorldMap: React.FC<WorldMapProps> = ({
             : `${slots} SLOTS (${freeSlots} ว่าง)`
           : 'NO SLOTS';
 
-        const statusText = (isHome
+        const targetZone = REGION_ZONES[city.region];
+        const regionLabel = targetZone ? targetZone.name.split(' ')[0] : city.region;
+        const statusText = isOverseasGateway
+          ? `🌍 OVERSEAS STATION • ${city.country} [${regionLabel}] • ${slotBadge}`
+          : (isHome
           ? `★ HEADQUARTERS • ${slotBadge}`
           : isHub
           ? `◆ REGIONAL HUB • ${slotBadge}`
@@ -1054,7 +1358,15 @@ export const WorldMap: React.FC<WorldMapProps> = ({
         ctx.lineWidth = 4.5;
         ctx.strokeText(cityNameText, lx, line1Y);
 
-        ctx.fillStyle = isHome ? '#fde047' : isHub ? '#7dd3fc' : slots > 0 ? '#34d399' : '#ffffff';
+        ctx.fillStyle = isHome
+          ? '#fde047'
+          : isHub
+          ? '#7dd3fc'
+          : isOverseasGateway
+          ? '#38bdf8'
+          : slots > 0
+          ? '#34d399'
+          : '#ffffff';
         ctx.fillText(cityNameText, lx, line1Y);
 
         // 2. Country & Slots Subtext (Bold 11px)
@@ -1067,6 +1379,8 @@ export const WorldMap: React.FC<WorldMapProps> = ({
           ? '#facc15'
           : isHub
           ? '#38bdf8'
+          : isOverseasGateway
+          ? '#7dd3fc'
           : cityEnvoys.length > 0
           ? '#fde047'
           : slots > 0
@@ -1164,6 +1478,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
     hoveredCity,
     hoveredRegion,
     activeRegion,
+    connectedOverseasCityIds,
     mousePos,
     flightTick,
     zoom,
@@ -1207,6 +1522,15 @@ export const WorldMap: React.FC<WorldMapProps> = ({
   ) => {
     const curX = (1 - t) * (1 - t) * pStart.x + 2 * (1 - t) * t * midX + t * t * pEnd.x;
     const curY = (1 - t) * (1 - t) * pStart.y + 2 * (1 - t) * t * controlY + t * t * pEnd.y;
+
+    if (
+      curX < -70 ||
+      curX > ctx.canvas.width + 70 ||
+      curY < -70 ||
+      curY > ctx.canvas.height + 70
+    ) {
+      return;
+    }
 
     const dx = 2 * (1 - t) * (midX - pStart.x) + 2 * t * (pEnd.x - midX);
     const dy = 2 * (1 - t) * (controlY - pStart.y) + 2 * t * (pEnd.y - controlY);
@@ -1284,8 +1608,9 @@ export const WorldMap: React.FC<WorldMapProps> = ({
     // 1. Check City Hover
     let foundCity: City | null = null;
     for (const city of CITIES) {
-      // In regional view, only allow hovering active region's cities
-      if (activeRegion && city.region !== activeRegion) continue;
+      const isOverseasGateway = !!(activeRegion && connectedOverseasCityIds.has(city.id));
+      // In regional view, only allow hovering active region's cities AND connected overseas gateways
+      if (activeRegion && city.region !== activeRegion && !isOverseasGateway) continue;
 
       const { x, y } = projectCoords(city.lat, city.lon, rect.width, rect.height);
       const dist = Math.hypot(mouseX - x, mouseY - y);
@@ -1313,9 +1638,26 @@ export const WorldMap: React.FC<WorldMapProps> = ({
     }
     setHoveredCity(foundCity);
 
-    // 2. Check Continental Region Hover via real geographic land and islands (when in Global View)
+    // 2. Check Intercontinental Exit Badges Hover
+    let foundBadgeCity: City | null = null;
+    if (interconBadgesRef.current && interconBadgesRef.current.length > 0) {
+      for (const badge of interconBadgesRef.current) {
+        if (
+          mouseX >= badge.x &&
+          mouseX <= badge.x + badge.width &&
+          mouseY >= badge.y &&
+          mouseY <= badge.y + badge.height
+        ) {
+          foundBadgeCity = badge.city;
+          break;
+        }
+      }
+    }
+    setHoveredBadgeCity(foundBadgeCity);
+
+    // 3. Check Continental Region Hover via real geographic land and islands (when in Global View)
     if (!activeRegion) {
-      if (foundCity) {
+      if (foundCity || foundBadgeCity) {
         setHoveredRegion(null);
       } else {
         const { lat, lon } = unprojectCoords(mouseX, mouseY, rect.width, rect.height);
@@ -1324,13 +1666,19 @@ export const WorldMap: React.FC<WorldMapProps> = ({
       }
     }
 
-    canvas.style.cursor = foundCity || (!activeRegion && hoveredRegion) ? 'pointer' : isDragging ? 'grabbing' : 'grab';
+    canvas.style.cursor =
+      foundCity || foundBadgeCity || (!activeRegion && hoveredRegion)
+        ? 'pointer'
+        : isDragging
+        ? 'grabbing'
+        : 'grab';
   };
 
   const handleMouseLeave = () => {
     setIsDragging(false);
     setMousePos(null);
     setHoveredCity(null);
+    setHoveredBadgeCity(null);
     setHoveredRegion(null);
   };
 
@@ -1347,6 +1695,8 @@ export const WorldMap: React.FC<WorldMapProps> = ({
   const handleClick = () => {
     if (hoveredCity) {
       onSelectCity(hoveredCity);
+    } else if (hoveredBadgeCity) {
+      focusCity(hoveredBadgeCity);
     } else if (!activeRegion && hoveredRegion) {
       // Clicked highlighted continental zone on map -> enter regional sector!
       handleSelectRegion(hoveredRegion);
