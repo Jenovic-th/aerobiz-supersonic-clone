@@ -16,7 +16,9 @@ import {
   DollarSign,
   ChevronRight,
   Globe2,
+  Music,
 } from 'lucide-react';
+import { bgmPlayer } from '../utils/lofiBgm';
 
 interface TitleScreenProps {
   onNewGame: () => void;
@@ -35,12 +37,14 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
     isAutoSave: boolean;
     metadata: SaveMetadata;
   } | null>(null);
+  const [bgmActive, setBgmActive] = useState<boolean>(() => bgmPlayer.getIsPlaying());
 
   useEffect(() => {
     const save = getLatestAvailableSave();
     if (save) {
       setLatestSave(save);
     }
+    setBgmActive(bgmPlayer.getIsPlaying());
   }, []);
 
   const handleResume = () => {
@@ -95,9 +99,35 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         </div>
 
         <div className="flex items-center gap-3 font-mono text-slate-400">
-          <span className="px-2.5 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-amber-300 font-bold">
+          <span className="px-2.5 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-amber-300 font-bold hidden sm:inline">
             v2.6.0 HD STANDALONE
           </span>
+
+          {/* Quick Lo-Fi Ambient BGM Toggle */}
+          <button
+            onClick={() => {
+              playSound.click();
+              const nextState = !bgmPlayer.getIsPlaying();
+              if (nextState) {
+                bgmPlayer.start();
+              } else {
+                bgmPlayer.stop();
+              }
+              setBgmActive(nextState);
+            }}
+            data-testid="title-bgm-quick-btn"
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs font-mono font-bold transition cursor-pointer shadow-sm active:scale-95 ${
+              bgmActive
+                ? 'bg-purple-950/80 border-purple-400 text-purple-200 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
+                : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-500'
+            }`}
+            title="เปิด/ปิด ดนตรีคลอ Lo-Fi (Background Music)"
+          >
+            <Music className={`w-3.5 h-3.5 ${bgmActive ? 'text-purple-300 animate-pulse' : 'text-slate-500'}`} />
+            <span>Lo-Fi BGM:</span>
+            <span className={bgmActive ? 'text-emerald-400' : 'text-slate-500'}>{bgmActive ? 'ON' : 'OFF'}</span>
+          </button>
+
           <button
             onClick={() => {
               playSound.click();

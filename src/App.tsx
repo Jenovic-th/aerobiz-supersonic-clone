@@ -22,6 +22,7 @@ import { TitleScreen } from './components/TitleScreen';
 import { SettingsModal } from './components/SettingsModal';
 import { NewsChronicleModal } from './components/NewsChronicleModal';
 import { loadSettings, GameSettings } from './utils/settings';
+import { bgmPlayer } from './utils/lofiBgm';
 import { CITIES } from './data/cities';
 import { CheckCircle2 } from 'lucide-react';
 
@@ -36,6 +37,27 @@ export function App() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Background Lo-Fi Music lifecycle
+  React.useEffect(() => {
+    if (userSettings.bgmEnabled) {
+      bgmPlayer.start();
+    } else {
+      bgmPlayer.stop();
+    }
+  }, [userSettings.bgmEnabled]);
+
+  const handleSettingsChanged = (newSettings: GameSettings) => {
+    setUserSettings(newSettings);
+    if (newSettings.bgmEnabled) {
+      bgmPlayer.setVolume(newSettings.bgmVolume);
+      if (!bgmPlayer.getIsPlaying()) {
+        bgmPlayer.start();
+      }
+    } else {
+      bgmPlayer.stop();
+    }
   };
 
   // Modal display toggles
@@ -153,7 +175,7 @@ export function App() {
         <SettingsModal
           isOpen={showSettingsModal}
           onClose={() => setShowSettingsModal(false)}
-          onSettingsChanged={(newSettings) => setUserSettings(newSettings)}
+          onSettingsChanged={handleSettingsChanged}
         />
       </div>
     );
@@ -185,7 +207,7 @@ export function App() {
         <SettingsModal
           isOpen={showSettingsModal}
           onClose={() => setShowSettingsModal(false)}
-          onSettingsChanged={(newSettings) => setUserSettings(newSettings)}
+          onSettingsChanged={handleSettingsChanged}
         />
       </div>
     );
@@ -821,7 +843,7 @@ export function App() {
       <SettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
-        onSettingsChanged={(newSettings) => setUserSettings(newSettings)}
+        onSettingsChanged={handleSettingsChanged}
       />
 
       {/* Global News & Chronicle Intelligence Modal */}

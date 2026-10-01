@@ -2,7 +2,7 @@ import { loadSettings } from './settings';
 
 let audioCtx: AudioContext | null = null;
 
-function getAudioContext(): AudioContext | null {
+export function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
   if (!audioCtx) {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -17,59 +17,93 @@ function getAudioContext(): AudioContext | null {
 }
 
 export const playSound = {
-  // Gentle tactile retro UI blip
+  // Authentic, soft, subtle tactile mouse click (กิ๊กๆ เบาๆ สบายหู ไม่แหลม ไม่ปิ้ว)
   click: () => {
     const settings = loadSettings();
     if (!settings.sfxEnabled) return;
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const vol = (settings.sfxVolume / 100) * 0.15;
+      const now = ctx.currentTime;
+      const vol = (settings.sfxVolume / 100) * 0.12;
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.05);
+      // 1. High-frequency microswitch snap (2.4kHz highpass click, ~5ms)
+      const snapOsc = ctx.createOscillator();
+      const snapGain = ctx.createGain();
+      const snapFilter = ctx.createBiquadFilter();
 
-      gain.gain.setValueAtTime(vol, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      snapFilter.type = 'highpass';
+      snapFilter.frequency.setValueAtTime(2200, now);
 
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+      snapOsc.type = 'square';
+      snapOsc.frequency.setValueAtTime(2400, now);
 
-      osc.start();
-      osc.stop(ctx.currentTime + 0.05);
+      snapGain.gain.setValueAtTime(vol * 0.35, now);
+      snapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.005);
+
+      snapOsc.connect(snapFilter);
+      snapFilter.connect(snapGain);
+      snapGain.connect(ctx.destination);
+
+      snapOsc.start(now);
+      snapOsc.stop(now + 0.006);
+
+      // 2. Low-frequency mouse body tap (320Hz lowpass tap, ~8ms)
+      const bodyOsc = ctx.createOscillator();
+      const bodyGain = ctx.createGain();
+      const bodyFilter = ctx.createBiquadFilter();
+
+      bodyFilter.type = 'lowpass';
+      bodyFilter.frequency.setValueAtTime(700, now);
+
+      bodyOsc.type = 'triangle';
+      bodyOsc.frequency.setValueAtTime(320, now);
+
+      bodyGain.gain.setValueAtTime(vol * 0.45, now);
+      bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.008);
+
+      bodyOsc.connect(bodyFilter);
+      bodyFilter.connect(bodyGain);
+      bodyGain.connect(ctx.destination);
+
+      bodyOsc.start(now);
+      bodyOsc.stop(now + 0.009);
     } catch (e) {
       // Ignore audio failure
     }
   },
 
-  // Pleasant positive confirmation chime (C5 - E5 - G5 arpeggio)
+  // Soft, pleasant double-tap tactile confirmation (กิ๊ก-กิ๊ก ยืนยันคำสั่งอย่างนุ่มนวล)
   confirm: () => {
     const settings = loadSettings();
     if (!settings.sfxEnabled) return;
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
-      const vol = (settings.sfxVolume / 100) * 0.18;
+      const vol = (settings.sfxVolume / 100) * 0.14;
 
-      [523.25, 659.25, 783.99].forEach((freq, i) => {
+      [0, 0.038].forEach((offset, idx) => {
+        const now = ctx.currentTime + offset;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        const start = ctx.currentTime + i * 0.07;
+        const filter = ctx.createBiquadFilter();
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(idx === 0 ? 2000 : 2600, now);
+        filter.Q.setValueAtTime(1.8, now);
 
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, start);
+        osc.frequency.setValueAtTime(idx === 0 ? 300 : 380, now);
 
-        gain.gain.setValueAtTime(vol, start);
-        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.2);
+        gain.gain.setValueAtTime(vol * (idx === 0 ? 0.35 : 0.5), now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.007);
 
-        osc.connect(gain);
+        osc.connect(filter);
+        filter.connect(gain);
         gain.connect(ctx.destination);
 
-        osc.start(start);
-        osc.stop(start + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.009);
       });
     } catch (e) {}
   },

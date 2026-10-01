@@ -1,6 +1,8 @@
 export interface GameSettings {
   sfxEnabled: boolean;
   sfxVolume: number; // 0 - 100
+  bgmEnabled: boolean;
+  bgmVolume: number; // 0 - 100
   autoSaveEnabled: boolean;
   fastAnimation: boolean;
   crtFilter: boolean;
@@ -10,7 +12,9 @@ const SETTINGS_KEY = 'aerobiz_user_settings';
 
 export const DEFAULT_SETTINGS: GameSettings = {
   sfxEnabled: true,
-  sfxVolume: 80,
+  sfxVolume: 75,
+  bgmEnabled: true,
+  bgmVolume: 55,
   autoSaveEnabled: true,
   fastAnimation: false,
   crtFilter: false,

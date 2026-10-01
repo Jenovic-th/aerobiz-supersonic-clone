@@ -6,12 +6,15 @@ import {
   X,
   Volume2,
   VolumeX,
+  Music,
+  Headphones,
   Save,
   Zap,
   Monitor,
   CheckCircle2,
   Sliders,
 } from 'lucide-react';
+import { bgmPlayer } from '../utils/lofiBgm';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -38,10 +41,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     if (onSettingsChanged) onSettingsChanged(updated);
   };
 
+  const handleToggleBgm = () => {
+    playSound.click();
+    const nextBgm = !settings.bgmEnabled;
+    const updated = { ...settings, bgmEnabled: nextBgm };
+    setSettings(updated);
+    saveSettings(updated);
+    if (nextBgm) {
+      bgmPlayer.start();
+    } else {
+      bgmPlayer.stop();
+    }
+    if (onSettingsChanged) onSettingsChanged(updated);
+  };
+
   const handleVolumeChange = (vol: number) => {
     const updated = { ...settings, sfxVolume: vol };
     setSettings(updated);
     saveSettings(updated);
+    if (onSettingsChanged) onSettingsChanged(updated);
+  };
+
+  const handleBgmVolumeChange = (vol: number) => {
+    const updated = { ...settings, bgmVolume: vol };
+    setSettings(updated);
+    saveSettings(updated);
+    bgmPlayer.setVolume(vol);
     if (onSettingsChanged) onSettingsChanged(updated);
   };
 
@@ -82,7 +107,64 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
-          {/* 1. Audio SFX Toggle */}
+          {/* 1. Lo-Fi Ambient Background Music (BGM) Toggle */}
+          <div className="flex items-center justify-between p-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-400/40 shadow">
+                <Music className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="font-bold text-sm text-white flex items-center gap-2">
+                  <span>Background Music (ดนตรีคลอ Lo-Fi)</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-500/50 font-bold">
+                    {bgmPlayer.getIsCustomTrack() ? 'Custom MP3 Track' : 'Lo-Fi Jazz Ambient'}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-400">
+                  ดนตรีแจ๊สเปียโน Lo-Fi คลอเบาๆ สร้างสมาธิขณะเล่น (ไม่รบกวนเสียงคลิก)
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={handleToggleBgm}
+              data-testid="settings-bgm-toggle"
+              className={`w-13 h-7 rounded-full transition-colors relative cursor-pointer p-0.5 ${
+                settings.bgmEnabled ? 'bg-purple-500' : 'bg-slate-700'
+              }`}
+            >
+              <div
+                className={`w-6 h-6 rounded-full bg-white transition-transform transform shadow ${
+                  settings.bgmEnabled ? 'translate-x-6' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* BGM Volume Slider */}
+          {settings.bgmEnabled && (
+            <div className="p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-2xl space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-300 font-bold flex items-center gap-1.5">
+                  <Headphones className="w-3.5 h-3.5 text-purple-400" />
+                  <span>BGM Volume Level (ระดับเสียงดนตรีคลอ)</span>
+                </span>
+                <span className="font-mono text-purple-400 font-bold">{settings.bgmVolume}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={settings.bgmVolume}
+                onChange={(e) => handleBgmVolumeChange(parseInt(e.target.value, 10))}
+                className="w-full accent-purple-400 cursor-pointer"
+              />
+              <div className="text-[11px] text-slate-400 flex items-center justify-between pt-0.5">
+                <span>💡 รองรับไฟล์เพลงส่วนตัว: วางไฟล์ <code className="text-amber-300 font-mono">lofi.mp3</code> ใน <code className="text-sky-300 font-mono">public/audio/bgm/</code></span>
+              </div>
+            </div>
+          )}
+
+          {/* 2. Audio SFX Toggle */}
           <div className="flex items-center justify-between p-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl">
             <div className="flex items-center gap-3">
               {settings.sfxEnabled ? (
