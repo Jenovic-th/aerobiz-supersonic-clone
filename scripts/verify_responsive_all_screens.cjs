@@ -89,6 +89,31 @@ async function run() {
     return res;
   };
 
+  // Helper to assert End Quarter button is completely inside viewport and never cut off
+  const assertToolbarAndEndQuarter = async (resName) => {
+    const res = await evalJs(
+      '(() => {' +
+      '  const endBtn = document.querySelector(\'[data-testid="toolbar-end-quarter-btn"]\');' +
+      '  if (!endBtn) return { found: false };' +
+      '  const r = endBtn.getBoundingClientRect();' +
+      '  const inViewport = r.top >= 0 && r.left >= 0 && r.bottom <= window.innerHeight && r.right <= window.innerWidth;' +
+      '  return {' +
+      '    found: true,' +
+      '    inViewport,' +
+      '    left: Math.round(r.left),' +
+      '    right: Math.round(r.right),' +
+      '    winW: window.innerWidth,' +
+      '    marginRight: Math.round(window.innerWidth - r.right)' +
+      '  };' +
+      '})()'
+    );
+    if (!res.found) throw new Error('End Quarter button not found at ' + resName);
+    console.log('[TOOLBAR CHECK ' + resName + '] End Quarter: left=' + res.left + ', right=' + res.right + ', winW=' + res.winW + ', margin=' + res.marginRight + ', inViewport=' + res.inViewport);
+    if (!res.inViewport || res.right > res.winW) {
+      throw new Error('End Quarter button is cut off or outside window at ' + resName + '!');
+    }
+  };
+
   console.log('=== TEST 1: TITLE SCREEN AT 1024x768 ===');
   await new Promise((r) => setTimeout(r, 400));
   await assertInViewport('[data-testid="title-new-game-btn"]', 'Title New Game Button');
@@ -125,6 +150,7 @@ async function run() {
   console.log('=== TEST 3: MAIN GAME HUD AT 1024x768 ===');
   await assertInViewport('header', 'Executive Top Bar');
   await assertInViewport('footer', 'Bottom Toolbar');
+  await assertToolbarAndEndQuarter('1024x768');
   await capture('responsive_6_game_hud_1024x768.png');
 
   console.log('=== TEST 4: AIRCRAFT SHOP & BLUEPRINT VIEWER AT 1024x768 ===');
@@ -204,6 +230,7 @@ async function run() {
   console.log('=== TEST 6: RESIZING TO 1280x720 (HD COMPACT) ===');
   win.setSize(1280, 720);
   await new Promise((r) => setTimeout(r, 400));
+  await assertToolbarAndEndQuarter('1280x720');
 
   // Re-verify City Detail at 1280x720
   await evalJs('window.__openCityDetail("BKK")');
@@ -229,6 +256,7 @@ async function run() {
   console.log('=== TEST 8: RESIZING TO WIDESCREEN 1600x900 ===');
   win.setSize(1600, 900);
   await new Promise((r) => setTimeout(r, 400));
+  await assertToolbarAndEndQuarter('1600x900');
   await capture('responsive_11_game_1600x900.png');
 
   console.log('[ALL TESTS PASS] Responsive scaling verified across all screens and window resolutions without hangs or clipping!');

@@ -315,13 +315,13 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
       )}
 
       {/* 2. MAIN BOTTOM COMMAND BAR */}
-      <div className="h-14 md:h-16 px-3 md:px-5 py-2 flex items-center justify-between gap-2 md:gap-3 overflow-x-auto select-none">
-        {/* Left: Primary Action Buttons */}
-        <div className="flex items-center gap-2 flex-nowrap shrink-0">
+      <div className="h-14 md:h-16 px-2 sm:px-4 py-1.5 md:py-2 flex items-center justify-between gap-2 select-none relative bg-slate-900 border-t border-slate-700/80">
+        {/* Left: Primary Action Buttons (Smooth scrollable if screen is narrow, fits cleanly on standard displays) */}
+        <div className="flex-1 flex items-center gap-1.5 md:gap-2 flex-nowrap overflow-x-auto no-scrollbar py-1 min-w-0">
           {/* Open Route */}
           <button
             onClick={onOpenRouteModal}
-            className="flex items-center gap-1.5 md:gap-2 px-3.5 py-2 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white rounded-xl font-bold text-xs md:text-sm shadow-lg transition-all active:scale-95 border border-sky-400 cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 md:gap-2 px-3 sm:px-3.5 py-1.5 md:py-2 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white rounded-xl font-bold text-xs md:text-sm shadow-lg transition-all active:scale-95 border border-sky-400 cursor-pointer whitespace-nowrap shrink-0"
           >
             <PlusCircle className="w-4 h-4 md:w-5 md:h-5 text-sky-100" />
             <span>Open Route</span>
@@ -330,7 +330,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           {/* My Routes */}
           <button
             onClick={onOpenFleetModal}
-            className="flex items-center gap-1.5 md:gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-sky-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 md:gap-2 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-sky-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <Plane className="w-4 h-4 text-sky-400" />
             <span>My Routes</span>
@@ -339,7 +339,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           {/* Fleet Status Badge (Placed right beside My Routes as requested!) */}
           <button
             onClick={() => setShowOperationsDrawer((prev) => !prev)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 hover:border-sky-400 rounded-xl text-xs font-bold transition shadow cursor-pointer active:scale-95 whitespace-nowrap"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 hover:border-sky-400 rounded-xl text-xs font-bold transition shadow cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
             title="Fleet Status: คลิกเพื่อเปิดดูรายละเอียดฝูงบิน"
           >
             <span className="text-slate-400 hidden xl:inline">Fleet:</span>
@@ -356,7 +356,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           {/* Aircraft Market */}
           <button
             onClick={onOpenAircraftShop}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-amber-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-amber-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <ShoppingCart className="w-4 h-4 text-amber-400" />
             <span>Market</span>
@@ -365,7 +365,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           {/* Airport Slots */}
           <button
             onClick={onOpenSlotModal}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-emerald-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-emerald-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <Handshake className="w-4 h-4 text-emerald-400" />
             <span>Slots</span>
@@ -374,7 +374,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           {/* Hotels & Ventures */}
           <button
             onClick={onOpenBusinessModal}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-indigo-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-indigo-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <Building2 className="w-4 h-4 text-indigo-400" />
             <span>Ventures</span>
@@ -383,7 +383,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           {/* Board Meeting */}
           <button
             onClick={onOpenBoardMeeting}
-            className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-amber-700/80 to-amber-800/80 hover:from-amber-600 hover:to-amber-700 text-amber-100 rounded-xl font-bold text-xs md:text-sm shadow border border-amber-500/50 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 bg-gradient-to-r from-amber-700/80 to-amber-800/80 hover:from-amber-600 hover:to-amber-700 text-amber-100 rounded-xl font-bold text-xs md:text-sm shadow border border-amber-500/50 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <Users className="w-4 h-4 text-amber-300" />
             <span>Board</span>
@@ -392,7 +392,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           {/* Financials */}
           <button
             onClick={onOpenFinancialReport}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-pink-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-pink-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <BarChart3 className="w-4 h-4 text-pink-400" />
             <span>Financials</span>
@@ -402,7 +402,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           <button
             onClick={onOpenNews}
             data-testid="toolbar-news-btn"
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs md:text-sm shadow transition-all active:scale-95 cursor-pointer whitespace-nowrap border ${
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 rounded-xl font-bold text-xs md:text-sm shadow transition-all active:scale-95 cursor-pointer whitespace-nowrap border shrink-0 ${
               hasUnreadNews
                 ? 'bg-gradient-to-r from-amber-700 via-rose-700 to-amber-800 text-white border-amber-300 ring-2 ring-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.5)]'
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-100 border-slate-600 hover:border-amber-400'
@@ -420,82 +420,40 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
               </span>
             )}
           </button>
-        </div>
-
-        {/* Center / Gap Area: Live Operations Indicators (Relocated from Top Bar into the open space!) */}
-        <div className="flex items-center gap-2 flex-nowrap shrink-0">
-          {/* Fuel Price Indicator */}
-          <button
-            onClick={() => setShowOperationsDrawer((prev) => !prev)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 md:py-2 rounded-xl border text-xs font-bold transition shadow cursor-pointer active:scale-95 whitespace-nowrap ${
-              isFuelHigh
-                ? 'bg-rose-950/80 border-rose-500 text-rose-200 animate-pulse'
-                : 'bg-slate-800/90 border-slate-700 hover:border-amber-400 text-slate-200'
-            }`}
-            title="Fuel Market Index: คลิกเพื่อเปิดดูรายงานเชื้อเพลิง"
-          >
-            <Flame className="w-4 h-4 text-amber-400" />
-            <span className="text-slate-400 hidden xl:inline">Fuel:</span>
-            <strong className="font-mono text-xs md:text-sm text-white font-black">
-              {fuelMultiplier.toFixed(1)}x
-            </strong>
-          </button>
-
-          {/* Active Routes Count */}
-          <button
-            onClick={onOpenFleetModal}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 md:py-2 rounded-xl border bg-slate-800/90 border-slate-700 hover:border-indigo-400 text-slate-200 text-xs font-bold transition shadow cursor-pointer active:scale-95 whitespace-nowrap"
-            title="Active Network Routes: คลิกเพื่อดูเส้นทางบินทั้งหมด"
-          >
-            <Globe2 className="w-4 h-4 text-indigo-400" />
-            <span className="text-slate-400 hidden xl:inline">Routes:</span>
-            <strong className="font-mono text-xs md:text-sm text-white font-black">
-              {playerRoutes.length}
-            </strong>
-          </button>
-
-          {/* Upcoming Event Radar Indicator */}
-          {upcomingEvents.length > 0 && (
-            <button
-              onClick={() => setShowOperationsDrawer((prev) => !prev)}
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 md:py-2 rounded-xl border bg-purple-950/70 border-purple-500/70 hover:border-purple-300 text-purple-200 text-xs font-bold transition shadow cursor-pointer active:scale-95 whitespace-nowrap"
-              title={`${upcomingEvents[0].event.title}: คลิกเพื่อเปิดดูเรดาร์เหตุการณ์โลก`}
-            >
-              <span className="text-sm">🔮</span>
-              <span className="truncate max-w-[110px] xl:max-w-[150px]">
-                {upcomingEvents[0].event.title}
-              </span>
-              <span className="text-emerald-400 font-mono text-[10px]">
-                ({upcomingEvents[0].quartersUntil * 3}mo)
-              </span>
-            </button>
-          )}
 
           {/* Interactive Operations HUD Toggle Button */}
           <button
             onClick={() => setShowOperationsDrawer((prev) => !prev)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 md:py-2 rounded-xl border text-xs font-black transition shadow cursor-pointer active:scale-95 whitespace-nowrap ${
+            data-testid="toolbar-hud-toggle-btn"
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 rounded-xl border text-xs font-bold transition shadow cursor-pointer active:scale-95 whitespace-nowrap shrink-0 ${
               showOperationsDrawer
                 ? 'bg-sky-600 text-white border-sky-300 ring-2 ring-sky-400/50'
                 : 'bg-slate-800 text-sky-300 border-slate-700 hover:bg-slate-700 hover:border-sky-400'
             }`}
-            title="เปิด/ปิด แถบสรุปข้อมูลด่วน (Operations HUD Drawer)"
+            title="เปิด/ปิด แผงสรุปปฏิบัติการ & เรดาร์ (Operations HUD Drawer)"
           >
             <LayoutGrid className="w-4 h-4" />
-            <span className="hidden xl:inline">HUD</span>
+            <span>HUD</span>
+            {isFuelHigh && (
+              <span className="w-2 h-2 rounded-full bg-rose-500 ring-2 ring-slate-900 animate-pulse" title="เตือน: น้ำมันแพง" />
+            )}
+            {upcomingEvents.length > 0 && (
+              <span className="text-[11px]" title={`เหตุการณ์ใกล้เคียง: ${upcomingEvents[0].event.title}`}>🔮</span>
+            )}
             {showOperationsDrawer ? (
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="w-3.5 h-3.5 text-sky-200" />
             ) : (
-              <ChevronUp className="w-4 h-4" />
+              <ChevronUp className="w-3.5 h-3.5 text-sky-400" />
             )}
           </button>
         </div>
 
-        {/* Right: Prominent End Quarter Button */}
-        <div className="shrink-0 ml-auto pl-2">
+        {/* Right: Permanently Pinned End Quarter Button (Never cut off, never pushed out) */}
+        <div className="shrink-0 flex items-center pl-2 sm:pl-3 bg-gradient-to-l from-slate-900 via-slate-900/90 to-transparent z-20">
           <button
             onClick={onAdvanceQuarter}
-            className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-black text-xs md:text-sm shadow-xl hover:shadow-emerald-500/30 transition-all active:scale-95 border-2 border-emerald-400 cursor-pointer whitespace-nowrap shrink-0"
+            data-testid="toolbar-end-quarter-btn"
+            className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 md:py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-black text-xs md:text-sm shadow-xl hover:shadow-emerald-500/30 transition-all active:scale-95 border-2 border-emerald-400 cursor-pointer whitespace-nowrap shrink-0"
           >
             <span>End Quarter</span>
             <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-emerald-200 animate-pulse" />
