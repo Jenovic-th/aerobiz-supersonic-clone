@@ -11,6 +11,7 @@ import {
   importSaveFile,
   SaveMetadata,
 } from '../utils/saveLoad';
+import { playSound } from '../utils/audio';
 import {
   Sparkles,
   Globe2,
@@ -30,13 +31,18 @@ import {
   Swords,
   Upload,
   FolderOpen,
+  ArrowLeft,
 } from 'lucide-react';
 
 interface NewGameSetupModalProps {
   onStartGame: (initialState: GameState) => void;
+  onBackToTitle?: () => void;
 }
 
-export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({ onStartGame }) => {
+export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
+  onStartGame,
+  onBackToTitle,
+}) => {
   const [gameMode, setGameMode] = useState<GameMode>('CAMPAIGN_20YR');
   const [selectedEra, setSelectedEra] = useState<1 | 2 | 3>(1);
   const [airlineName, setAirlineName] = useState<string>('Siam Supersonic Airways');
@@ -388,6 +394,21 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({ onStartGam
 
         {/* Top Import Save Button & Quick Status */}
         <div className="flex items-center gap-3">
+          {onBackToTitle && (
+            <button
+              onClick={() => {
+                playSound.click();
+                onBackToTitle();
+              }}
+              data-testid="setup-back-title-btn"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
+              title="Return to Cover / Title Screen (กลับหน้าปก)"
+            >
+              <ArrowLeft className="w-4 h-4 text-sky-400" />
+              <span>Title Screen (กลับหน้าปก)</span>
+            </button>
+          )}
+
           <button
             onClick={() => importFileRef.current?.click()}
             className="flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
@@ -946,6 +967,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({ onStartGam
         {/* Big Launch Button */}
         <button
           onClick={handleStart}
+          data-testid="setup-start-game-btn"
           className="px-8 py-3.5 bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-sm md:text-base rounded-xl shadow-xl shadow-sky-500/25 transition-all active:scale-[0.98] border-2 border-sky-400 cursor-pointer flex items-center gap-2.5"
         >
           <span>COMMENCE AIRLINE OPERATION (START SIMULATION)</span>

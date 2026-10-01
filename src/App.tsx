@@ -18,11 +18,17 @@ import { CityDetailModal } from './components/CityDetailModal';
 import { BoardMeetingModal } from './components/BoardMeetingModal';
 import { VictoryDefeatModal } from './components/VictoryDefeatModal';
 import { SaveLoadModal } from './components/SaveLoadModal';
+import { TitleScreen } from './components/TitleScreen';
+import { SettingsModal } from './components/SettingsModal';
+import { loadSettings, GameSettings } from './utils/settings';
 import { CheckCircle2 } from 'lucide-react';
 
 export function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [currentScreen, setCurrentScreen] = useState<'TITLE' | 'SETUP' | 'GAME'>('TITLE');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [userSettings, setUserSettings] = useState<GameSettings>(() => loadSettings());
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -50,14 +56,119 @@ export function App() {
   React.useEffect(() => {
     (window as any).__gameState = gameState;
     (window as any).__setGameState = setGameState;
+    (window as any).__setCurrentScreen = setCurrentScreen;
+    (window as any).__currentScreen = currentScreen;
     (window as any).__setShowVictoryDefeatModal = setShowVictoryDefeatModal;
     (window as any).__setShowQuarterReport = setShowQuarterReport;
     (window as any).__setShowBoardMeeting = setShowBoardMeeting;
-  }, [gameState]);
+  }, [gameState, currentScreen]);
 
-  // If no game initialized, show setup
-  if (!gameState) {
-    return <NewGameSetupModal onStartGame={(state) => setGameState(state)} />;
+  const handleQuickSave = () => {
+    if (!gameState) return;
+    saveGameToLocalStorage(gameState, false);
+    showToast('💾 Game Saved to Local Storage (บันทึกเซฟเรียบร้อย)');
+  };
+
+  const handleLoadSave = (isAutoSave: boolean) => {
+    const loaded = loadGameFromLocalStorage(isAutoSave);
+    if (loaded) {
+      setGameState(loaded);
+      setCurrentScreen('GAME');
+      setShowSaveLoadModal(false);
+      showToast(
+        `📂 โหลดเซฟสำเร็จ: ${loaded.airlines.find((a) => a.isHuman)?.name || 'Airline'} (Turn ${loaded.turnNumber})`
+      );
+    } else {
+      showToast('⚠️ ไม่พบข้อมูลเซฟในระบบ');
+    }
+  };
+
+  const handleExportSave = () => {
+    if (!gameState) return;
+    exportSaveFile(gameState);
+    showToast('📥 Save File Exported (ดาวน์โหลดไฟล์เซฟสำเร็จ)');
+  };
+
+  const handleImportSave = async (file: File) => {
+    try {
+      const imported = await importSaveFile(file);
+      setGameState(imported);
+      setCurrentScreen('GAME');
+      setShowSaveLoadModal(false);
+      showToast(
+        `📂 Loaded Save: ${imported.airlines.find((a) => a.isHuman)?.name || 'Airline'} (Turn ${imported.turnNumber})`
+      );
+    } catch (err: any) {
+      alert(err.message || 'Failed to import save file');
+    }
+  };
+
+  // 1. TITLE SCREEN
+  if (currentScreen === 'TITLE') {
+    return (
+      <div className={`w-full h-full relative ${userSettings.crtFilter ? 'crt-scanlines' : ''}`}>
+        <TitleScreen
+          onNewGame={() => setCurrentScreen('SETUP')}
+          onResumeGame={(loaded) => {
+            setGameState(loaded);
+            setCurrentScreen('GAME');
+            showToast(
+              `📂 Resumed Career: ${loaded.airlines.find((a) => a.isHuman)?.name || 'Airline'} (Turn ${loaded.turnNumber})`
+            );
+          }}
+          onOpenSaveLoad={() => setShowSaveLoadModal(true)}
+          onOpenSettings={() => setShowSettingsModal(true)}
+        />
+        {showSaveLoadModal && (
+          <SaveLoadModal
+            isOpen={showSaveLoadModal}
+            onClose={() => setShowSaveLoadModal(false)}
+            gameState={gameState}
+            onQuickSave={handleQuickSave}
+            onLoadSave={handleLoadSave}
+            onExportSave={handleExportSave}
+            onImportSave={handleImportSave}
+          />
+        )}
+        <SettingsModal
+          isOpen={showSettingsModal}
+          onClose={() => setShowSettingsModal(false)}
+          onSettingsChanged={(newSettings) => setUserSettings(newSettings)}
+        />
+      </div>
+    );
+  }
+
+  // 2. NEW GAME SETUP SCREEN
+  if (currentScreen === 'SETUP' || !gameState) {
+    return (
+      <div className={`w-full h-full relative ${userSettings.crtFilter ? 'crt-scanlines' : ''}`}>
+        <NewGameSetupModal
+          onStartGame={(state) => {
+            setGameState(state);
+            setCurrentScreen('GAME');
+            showToast(`✈️ Airline Founded: ${state.airlines.find((a) => a.isHuman)?.name || 'Airline'}`);
+          }}
+          onBackToTitle={() => setCurrentScreen('TITLE')}
+        />
+        {showSaveLoadModal && (
+          <SaveLoadModal
+            isOpen={showSaveLoadModal}
+            onClose={() => setShowSaveLoadModal(false)}
+            gameState={gameState}
+            onQuickSave={handleQuickSave}
+            onLoadSave={handleLoadSave}
+            onExportSave={handleExportSave}
+            onImportSave={handleImportSave}
+          />
+        )}
+        <SettingsModal
+          isOpen={showSettingsModal}
+          onClose={() => setShowSettingsModal(false)}
+          onSettingsChanged={(newSettings) => setUserSettings(newSettings)}
+        />
+      </div>
+    );
   }
 
   const playerAirline = gameState.airlines.find((a) => a.isHuman)!;
@@ -447,44 +558,12 @@ export function App() {
     }
   };
 
-  const handleQuickSave = () => {
-    if (!gameState) return;
-    saveGameToLocalStorage(gameState, false);
-    showToast('💾 Game Saved to Local Storage (บันทึกเซฟเรียบร้อย)');
-  };
-
-  const handleLoadSave = (isAutoSave: boolean) => {
-    const loaded = loadGameFromLocalStorage(isAutoSave);
-    if (loaded) {
-      setGameState(loaded);
-      showToast(
-        `📂 โหลดเซฟสำเร็จ: ${loaded.airlines.find((a) => a.isHuman)?.name || 'Airline'} (Turn ${loaded.turnNumber})`
-      );
-    } else {
-      showToast('⚠️ ไม่พบข้อมูลเซฟในระบบ');
-    }
-  };
-
-  const handleExportSave = () => {
-    if (!gameState) return;
-    exportSaveFile(gameState);
-    showToast('📥 Save File Exported (ดาวน์โหลดไฟล์เซฟสำเร็จ)');
-  };
-
-  const handleImportSave = async (file: File) => {
-    try {
-      const imported = await importSaveFile(file);
-      setGameState(imported);
-      showToast(
-        `📂 Loaded Save: ${imported.airlines.find((a) => a.isHuman)?.name || 'Airline'} (Turn ${imported.turnNumber})`
-      );
-    } catch (err: any) {
-      alert(err.message || 'Failed to import save file');
-    }
-  };
-
   return (
-    <div className="w-full h-[100dvh] flex flex-col bg-slate-950 overflow-hidden text-slate-100 font-sans relative">
+    <div
+      className={`w-full h-[100dvh] flex flex-col bg-slate-950 overflow-hidden text-slate-100 font-sans relative ${
+        userSettings.crtFilter ? 'crt-scanlines' : ''
+      }`}
+    >
       {/* 1. Executive Top Bar */}
       <ExecutiveHeader
         gameState={gameState}
@@ -493,6 +572,16 @@ export function App() {
         onExportSave={handleExportSave}
         onImportSave={handleImportSave}
         onOpenSaveLoadModal={() => setShowSaveLoadModal(true)}
+        onRestartGame={() => {
+          setGameState(null);
+          setCurrentScreen('SETUP');
+          showToast('🔄 เริ่มสร้างสายการบินรอบใหม่...');
+        }}
+        onReturnToTitle={() => {
+          setCurrentScreen('TITLE');
+          showToast('🏠 กลับสู่หน้าปกหลักของเกม');
+        }}
+        onOpenSettings={() => setShowSettingsModal(true)}
       />
 
       {/* Floating System Toast Notification */}
@@ -687,13 +776,14 @@ export function App() {
           }}
           onRestartGame={() => {
             setGameState(null);
+            setCurrentScreen('SETUP');
             setShowVictoryDefeatModal(false);
           }}
         />
       )}
 
       {/* Save & Load Management Modal */}
-      {showSaveLoadModal && gameState && (
+      {showSaveLoadModal && (
         <SaveLoadModal
           isOpen={showSaveLoadModal}
           onClose={() => setShowSaveLoadModal(false)}
@@ -704,6 +794,13 @@ export function App() {
           onImportSave={handleImportSave}
         />
       )}
+
+      {/* Game Settings Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        onSettingsChanged={(newSettings) => setUserSettings(newSettings)}
+      />
 
       {/* City Detail & Inspector Modal */}
       {inspectingCity && (

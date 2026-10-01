@@ -29,7 +29,7 @@ import {
 interface SaveLoadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  gameState: GameState;
+  gameState?: GameState | null;
   onQuickSave: () => void;
   onLoadSave: (isAutoSave: boolean) => void;
   onExportSave: () => void;
@@ -55,8 +55,13 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
   const [justSaved, setJustSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const playerAirline = gameState.airlines.find((a) => a.isHuman) || gameState.airlines[0];
-  const playerRoutes = gameState.routes.filter((r) => r.airlineId === playerAirline.id);
+  const playerAirline = gameState
+    ? gameState.airlines.find((a) => a.isHuman) || gameState.airlines[0]
+    : null;
+  const playerRoutes =
+    gameState && playerAirline
+      ? gameState.routes.filter((r) => r.airlineId === playerAirline.id)
+      : [];
 
   const refreshMetadata = () => {
     setManualMeta(getSaveMetadata(false));
@@ -74,6 +79,13 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
   if (!isOpen) return null;
 
   const handleManualQuickSave = () => {
+    if (!gameState) {
+      setStatusMessage({
+        text: 'ไม่มีเกมที่กำลังเล่นอยู่ กรุณาเริ่มเกมใหม่หรือโหลดเกมก่อนทำการบันทึก',
+        type: 'error',
+      });
+      return;
+    }
     const success = saveGameToLocalStorage(gameState, false);
     if (success) {
       refreshMetadata();
@@ -149,22 +161,35 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
         {/* Modal Body */}
         <div className="p-5 md:p-6 overflow-y-auto space-y-4 text-sm text-slate-200">
           {/* Active Session Status Card */}
-          <div className="p-4 bg-slate-950/80 border border-slate-700/80 rounded-2xl flex flex-wrap items-center justify-between gap-3 font-mono text-xs shadow-inner">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-slate-400">สถานะเกมปัจจุบัน:</span>
-              <strong className="text-white text-sm">{playerAirline.name}</strong>
+          {gameState && playerAirline ? (
+            <div className="p-4 bg-slate-950/80 border border-slate-700/80 rounded-2xl flex flex-wrap items-center justify-between gap-3 font-mono text-xs shadow-inner">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-slate-400">สถานะเกมปัจจุบัน:</span>
+                <strong className="text-white text-sm">{playerAirline.name}</strong>
+              </div>
+              <div className="flex items-center gap-3 text-slate-300 flex-wrap">
+                <span>
+                  {gameState.currentYear} Q{gameState.currentQuarter}
+                </span>
+                <span>•</span>
+                <span className="text-sky-300 font-bold">Turn {gameState.turnNumber}</span>
+                <span>•</span>
+                <span className="text-emerald-400 font-bold">
+                  ${playerAirline.cashK.toLocaleString()}K
+                </span>
+                <span>•</span>
+                <span>{playerRoutes.length} Routes</span>
+              </div>
             </div>
-            <div className="flex items-center gap-3 text-slate-300 flex-wrap">
-              <span>{gameState.currentYear} Q{gameState.currentQuarter}</span>
-              <span>•</span>
-              <span className="text-sky-300 font-bold">Turn {gameState.turnNumber}</span>
-              <span>•</span>
-              <span className="text-emerald-400 font-bold">${playerAirline.cashK.toLocaleString()}K</span>
-              <span>•</span>
-              <span>{playerRoutes.length} Routes</span>
+          ) : (
+            <div className="p-3.5 bg-slate-950/70 border border-slate-800 rounded-2xl flex items-center gap-2.5 font-mono text-xs text-slate-400">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+              <span>
+                ยังไม่มีเกมที่กำลังเล่นอยู่ (สามารถเลือกโหลดเซฟด่วน, เซฟอัตโนมัติ หรือนำเข้าไฟล์ .json เพื่อเข้าสู่เกมได้ทันที)
+              </span>
             </div>
-          </div>
+          )}
 
           {/* Status / Feedback Banner */}
           {statusMessage && (
@@ -213,11 +238,15 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
               <button
                 type="button"
                 onClick={handleManualQuickSave}
+                disabled={!gameState}
                 className={`px-4 py-2.5 rounded-xl font-black text-xs md:text-sm transition cursor-pointer flex items-center gap-2 shadow-lg ${
-                  justSaved
+                  !gameState
+                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700 opacity-60'
+                    : justSaved
                     ? 'bg-emerald-500 text-slate-950 ring-2 ring-emerald-300 scale-98'
                     : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white'
                 }`}
+                title={!gameState ? 'ไม่มีเกมที่กำลังเล่นอยู่' : 'บันทึกเซฟด่วน'}
               >
                 <Save className="w-4 h-4" />
                 <span>{justSaved ? '✓ บันทึกสำเร็จแล้ว!' : '💾 บันทึกเซฟทันที (Quick Save)'}</span>
@@ -330,13 +359,20 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
               <button
                 type="button"
                 onClick={() => {
+                  if (!gameState) return;
                   onExportSave();
                   setStatusMessage({
                     text: 'ส่งออกไฟล์เซฟ (.json) ไปยังเครื่อง PC สำเร็จแล้ว',
                     type: 'info',
                   });
                 }}
-                className="p-3 bg-slate-950/80 hover:bg-slate-950 border border-slate-700 hover:border-sky-500 rounded-xl text-left transition cursor-pointer group space-y-1"
+                disabled={!gameState}
+                className={`p-3 bg-slate-950/80 border rounded-xl text-left transition space-y-1 ${
+                  !gameState
+                    ? 'border-slate-800 text-slate-500 cursor-not-allowed opacity-50'
+                    : 'hover:bg-slate-950 border-slate-700 hover:border-sky-500 cursor-pointer group'
+                }`}
+                title={!gameState ? 'ไม่มีเกมที่กำลังเล่นอยู่' : 'ส่งออกไฟล์เซฟ'}
               >
                 <div className="flex items-center gap-2 font-bold text-sky-300 text-xs md:text-sm">
                   <Download className="w-4 h-4 group-hover:translate-y-0.5 transition" />
