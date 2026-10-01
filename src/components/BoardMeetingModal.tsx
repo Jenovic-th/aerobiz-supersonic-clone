@@ -340,24 +340,24 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150 cursor-pointer"
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-150 cursor-pointer"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-slate-900 border-2 border-indigo-500/90 rounded-3xl shadow-[0_0_80px_rgba(99,102,241,0.4)] w-full max-w-5xl overflow-hidden flex flex-col text-slate-100 max-h-[95vh] cursor-default"
+        className="bg-slate-900 border-2 border-indigo-500/90 rounded-3xl shadow-[0_0_80px_rgba(99,102,241,0.4)] w-[96vw] max-w-[1650px] overflow-hidden flex flex-col text-slate-100 max-h-[95vh] cursor-default"
       >
         {/* Header */}
-        <div className="shrink-0 bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 px-6 py-4 border-b border-indigo-800/80 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-indigo-900/80 border border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.5)]">
-              <Users className="w-6 h-6 text-indigo-300" />
+        <div className="shrink-0 bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 px-6 sm:px-8 py-4.5 border-b border-indigo-800/80 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="p-3 rounded-2xl bg-indigo-900/80 border border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+              <Users className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-300" />
             </div>
             <div>
-              <h2 className="text-lg sm:text-xl font-black font-mono tracking-wide text-white flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-black font-mono tracking-wide text-white flex items-center gap-2">
                 BOARD OF DIRECTORS DELIBERATION (การประชุมบอร์ดบริหารระดับสูง)
               </h2>
-              <div className="text-xs text-indigo-300 font-mono flex items-center gap-2">
-                <span>{playerAirline.name}</span>
+              <div className="text-xs sm:text-sm text-indigo-300 font-mono flex items-center gap-2 mt-0.5">
+                <span className="font-bold text-white">{playerAirline.name}</span>
                 <span>•</span>
                 <span>Executive Strategic Advisory Council & Competitor Radar</span>
               </div>
@@ -365,19 +365,19 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="px-3.5 py-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-500/70 text-rose-200 hover:text-white text-xs font-mono font-bold flex items-center gap-1.5 transition cursor-pointer shadow-md shrink-0 active:scale-95"
+            className="px-4 py-2.5 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-500/70 text-rose-200 hover:text-white text-xs sm:text-sm font-mono font-bold flex items-center gap-2 transition cursor-pointer shadow-md shrink-0 active:scale-95"
             title="ยกเลิกหรือปิดการประชุมทันที (Esc)"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>ยกเลิก / ปิดการประชุม (Cancel / Exit)</span>
           </button>
         </div>
 
         {/* Boardroom Presentation Table */}
-        <div className="p-5 sm:p-6 space-y-5 overflow-y-auto">
+        <div className="p-6 sm:p-8 space-y-6 overflow-y-auto">
           {/* Executive Secretary Strategic Overview */}
-          <div className="bg-gradient-to-r from-slate-950 via-indigo-950/40 to-slate-950 border border-indigo-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-inner">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-950 border-2 border-indigo-400 overflow-hidden flex items-center justify-center shrink-0 shadow-lg">
+          <div className="bg-gradient-to-r from-slate-950 via-indigo-950/40 to-slate-950 border border-indigo-500/40 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5 shadow-inner">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-950 border-2 border-indigo-400 overflow-hidden flex items-center justify-center shrink-0 shadow-lg">
               <img
                 src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80"
                 alt="Executive Secretary"
@@ -385,61 +385,61 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
               />
             </div>
             <div className="min-w-0 flex-1 font-mono">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-indigo-400 font-black uppercase tracking-wider">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-xs sm:text-sm text-indigo-400 font-black uppercase tracking-wider">
                   EXECUTIVE SECRETARY BRIEFING (รายงานสรุปประธานฝ่ายเลขาธิการ)
                 </span>
-                <span className="text-[11px] text-slate-400">
-                  Treasury: <strong className="text-emerald-400">${playerAirline.cashK.toLocaleString()}K</strong> | Routes: <strong className="text-amber-300">{playerRoutes.length}</strong>
+                <span className="text-xs text-slate-300">
+                  Treasury: <strong className="text-emerald-400 font-bold">${playerAirline.cashK.toLocaleString()}K</strong> | Routes: <strong className="text-amber-300 font-bold">{playerRoutes.length}</strong>
                 </span>
               </div>
-              <div className="text-xs sm:text-sm font-semibold text-slate-200 mt-1 leading-relaxed">
+              <div className="text-sm font-semibold text-slate-200 mt-1.5 leading-relaxed">
                 "ท่านประธานครับ คณะกรรมการได้ประมวลผลข้อมูลรอบด้านด้วยระบบอัลกอริทึมเศรษฐศาสตร์การบินและเรดาร์ข่าวกรองคู่แข่ง ขอให้ท่านเลือกพิจารณาวาระการประชุมทั้ง 5 ด้านเพื่อกำหนดทิศทางยุทธศาสตร์ของสายการบินครับ"
               </div>
             </div>
           </div>
 
           {/* 5 Strategic Agenda Buttons */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
             {/* Agenda 1: New Routes */}
             <button
               onClick={() => setSelectedTopic('NEW_ROUTES')}
-              className={`p-3 rounded-2xl border font-mono text-left transition flex flex-col justify-between gap-1.5 cursor-pointer relative overflow-hidden ${
+              className={`p-4 rounded-2xl border font-mono text-left transition flex flex-col justify-between gap-2 cursor-pointer relative overflow-hidden ${
                 selectedTopic === 'NEW_ROUTES'
-                  ? 'bg-sky-950/90 border-sky-400 text-white shadow-[0_0_25px_rgba(56,189,248,0.3)]'
+                  ? 'bg-sky-950/90 border-sky-400 text-white shadow-[0_0_25px_rgba(56,189,248,0.3)] ring-1 ring-sky-400'
                   : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
               }`}
             >
               <div className="flex items-center justify-between">
                 <Compass className="w-5 h-5 text-sky-400" />
-                <span className="text-[9px] font-black uppercase text-sky-400 bg-sky-950 px-1.5 py-0.5 rounded border border-sky-800">
+                <span className="text-[10px] font-black uppercase text-sky-400 bg-sky-950 px-2 py-0.5 rounded border border-sky-800">
                   AGENDA 1
                 </span>
               </div>
               <div>
-                <div className="text-xs sm:text-sm font-black text-white">NEW ROUTES</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">ขยายเส้นทางบินใหม่ ({topRouteOpportunities.length})</div>
+                <div className="text-sm sm:text-base font-black text-white">NEW ROUTES</div>
+                <div className="text-xs text-slate-400 mt-0.5">ขยายเส้นทางบินใหม่ ({topRouteOpportunities.length})</div>
               </div>
             </button>
 
             {/* Agenda 2: Adjust Routes */}
             <button
               onClick={() => setSelectedTopic('ADJUST_ROUTES')}
-              className={`p-3 rounded-2xl border font-mono text-left transition flex flex-col justify-between gap-1.5 cursor-pointer relative overflow-hidden ${
+              className={`p-4 rounded-2xl border font-mono text-left transition flex flex-col justify-between gap-2 cursor-pointer relative overflow-hidden ${
                 selectedTopic === 'ADJUST_ROUTES'
-                  ? 'bg-emerald-950/90 border-emerald-400 text-white shadow-[0_0_25px_rgba(52,211,153,0.3)]'
+                  ? 'bg-emerald-950/90 border-emerald-400 text-white shadow-[0_0_25px_rgba(52,211,153,0.3)] ring-1 ring-emerald-400'
                   : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
               }`}
             >
               <div className="flex items-center justify-between">
                 <Sliders className="w-5 h-5 text-emerald-400" />
-                <span className="text-[9px] font-black uppercase text-emerald-400 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-800">
+                <span className="text-[10px] font-black uppercase text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
                   AGENDA 2
                 </span>
               </div>
               <div>
-                <div className="text-xs sm:text-sm font-black text-white">ROUTE YIELD</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">
+                <div className="text-sm sm:text-base font-black text-white">ROUTE YIELD</div>
+                <div className="text-xs text-slate-400 mt-0.5">
                   {deficitRoutes.length > 0 ? (
                     <span className="text-rose-400 font-bold">⚠️ แก้ขาดทุน ({deficitRoutes.length})</span>
                   ) : (

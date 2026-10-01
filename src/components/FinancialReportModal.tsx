@@ -23,19 +23,21 @@ export const FinancialReportModal: React.FC<FinancialReportModalProps> = ({
   const totalCareerPassengers = history.reduce((sum, h) => sum + h.humanPassengers, 0);
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 border-2 border-slate-600 rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 md:p-6">
+      <div className="bg-slate-900 border-2 border-slate-600 rounded-3xl shadow-2xl w-[94vw] max-w-6xl xl:max-w-7xl overflow-hidden flex flex-col max-h-[94vh]">
         {/* Header */}
-        <div className="bg-gradient-to-r from-pink-950 via-slate-900 to-slate-900 px-7 py-4 border-b border-slate-700 flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-3">
-            <BarChart3 className="w-6 h-6 text-pink-400" />
-            <h2 className="text-lg md:text-xl font-black text-slate-100">
+        <div className="bg-gradient-to-r from-pink-950 via-slate-900 to-slate-900 px-6 sm:px-8 py-4.5 border-b border-slate-700 flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 rounded-2xl bg-pink-500/20 border border-pink-400/50 text-pink-400">
+              <BarChart3 className="w-6 h-6 sm:w-7 sm:h-7" />
+            </div>
+            <h2 className="text-xl md:text-2xl font-black text-slate-100">
               Corporate Ledger & Global Market Dominance
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
+            className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
             title="Close (Esc)"
             data-testid="modal-close-header-btn"
           >

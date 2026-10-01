@@ -1387,25 +1387,25 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
       {/* PROCUREMENT CONTRACT REVIEW & CONFIRMATION MODAL */}
       {showConfirmModal && selectedModel && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-150">
-          <div className="bg-slate-900 border-2 border-sky-500/80 rounded-2xl shadow-[0_0_60px_rgba(14,165,233,0.35)] w-full max-w-2xl overflow-hidden text-slate-100 flex flex-col animate-in zoom-in-95 duration-150 max-h-[92vh]">
+          <div className="bg-slate-900 border-2 border-sky-500/80 rounded-3xl shadow-[0_0_80px_rgba(14,165,233,0.35)] w-[92vw] max-w-4xl overflow-hidden text-slate-100 flex flex-col animate-in zoom-in-95 duration-150 max-h-[94vh]">
             {/* Contract Header */}
-            <div className="shrink-0 bg-gradient-to-r from-sky-950 via-slate-900 to-indigo-950 px-5 py-3.5 border-b border-sky-800/80 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-sky-900/80 border border-sky-400 shadow">
-                  <Receipt className="w-5 h-5 text-sky-300" />
+            <div className="shrink-0 bg-gradient-to-r from-sky-950 via-slate-900 to-indigo-950 px-6 py-4 border-b border-sky-800/80 flex items-center justify-between">
+              <div className="flex items-center gap-3.5">
+                <div className="p-2.5 rounded-2xl bg-sky-900/80 border border-sky-400 shadow">
+                  <Receipt className="w-6 h-6 text-sky-300" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-black text-white tracking-wide font-mono flex items-center gap-2">
+                  <h3 className="text-lg sm:text-xl font-black text-white tracking-wide font-mono flex items-center gap-2">
                     AIRCRAFT PROCUREMENT CONTRACT REVIEW
                   </h3>
-                  <div className="text-xs text-sky-300/80 font-mono">
+                  <div className="text-xs sm:text-sm text-sky-300/80 font-mono">
                     ใบตรวจสอบและยืนยันสัญญาจัดซื้ออากาศยานพาณิชย์ • Review before final commitment
                   </div>
                 </div>
               </div>
               <button
                 onClick={() => setShowConfirmModal(false)}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/70 border border-slate-700 hover:border-rose-500 text-slate-400 hover:text-white transition cursor-pointer"
+                className="p-2 rounded-xl bg-slate-800 hover:bg-rose-900/70 border border-slate-700 hover:border-rose-500 text-slate-400 hover:text-white transition cursor-pointer"
                 title="Cancel and close review"
               >
                 <X className="w-5 h-5" />
@@ -1413,29 +1413,29 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
             </div>
 
             {/* Contract Body */}
-            <div className="p-5 space-y-4 overflow-y-auto">
+            <div className="p-6 space-y-5 overflow-y-auto">
               {/* Aircraft Summary with Realistic Photo */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center gap-4">
-                <div className="w-24 h-16 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 shrink-0 shadow relative">
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 flex items-center gap-5">
+                <div className="w-36 h-24 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 shrink-0 shadow relative">
                   <img
                     src={getAircraftPhotoInfo(selectedModel).photoUrl}
                     alt={selectedModel.model}
                     className="w-full h-full object-cover object-center filter brightness-105"
                   />
                   {selectedModel.isSupersonic && (
-                    <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black font-mono text-[8px]">
+                    <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 font-black font-mono text-[9px]">
                       SST
                     </span>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-mono text-xs text-sky-400 font-bold uppercase tracking-wider">
+                  <div className="font-mono text-xs sm:text-sm text-sky-400 font-bold uppercase tracking-wider">
                     {selectedModel.manufacturer} AEROSPACE
                   </div>
-                  <h4 className="text-base sm:text-lg font-black text-white font-mono truncate">
+                  <h4 className="text-lg sm:text-2xl font-black text-white font-mono truncate">
                     {selectedModel.model}
                   </h4>
-                  <div className="text-xs text-slate-400 font-mono flex items-center gap-3 mt-1 flex-wrap">
+                  <div className="text-xs sm:text-sm text-slate-300 font-mono flex items-center gap-3 mt-1.5 flex-wrap">
                     <span>{selectedModel.capacity} Passengers</span>
                     <span>•</span>
                     <span className="text-emerald-400 font-bold">{selectedModel.rangeKm.toLocaleString()} km Range</span>
@@ -1446,32 +1446,32 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               </div>
 
               {/* In-Modal Quantity Adjustment */}
-              <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <span className="text-xs font-mono font-bold text-slate-300 block">
+                  <span className="text-xs sm:text-sm font-mono font-bold text-slate-200 block">
                     NUMBER OF AIRFRAMES TO PROCURE (จำนวนลำที่สั่งซื้อ):
                   </span>
-                  <span className="text-[11px] text-slate-400 font-mono">
+                  <span className="text-xs text-slate-400 font-mono">
                     Adjust quantity before finalizing the contract
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <button
                     type="button"
                     disabled={safeQuantity <= 1}
                     onClick={() => setOrderQuantity((prev) => Math.max(1, prev - 1))}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 hover:text-white font-mono font-black border border-slate-600 transition cursor-pointer"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 hover:text-white font-mono font-black border border-slate-600 transition cursor-pointer shadow"
                     title="Decrease quantity by 1"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
 
-                  <div className="px-3 py-1 bg-slate-900 border border-slate-700 rounded-lg text-center min-w-[64px]">
-                    <span className="font-mono font-black text-white text-lg leading-none">
+                  <div className="px-4 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-center min-w-[72px]">
+                    <span className="font-mono font-black text-white text-xl leading-none">
                       {safeQuantity}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400 block -mt-0.5">
+                    <span className="text-[11px] font-mono text-slate-400 block -mt-0.5">
                       {safeQuantity === 1 ? 'airframe' : 'airframes'}
                     </span>
                   </div>
@@ -1479,19 +1479,19 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setOrderQuantity((prev) => prev + 1)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-mono font-black border border-slate-600 transition cursor-pointer"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-mono font-black border border-slate-600 transition cursor-pointer shadow"
                     title="Increase quantity by 1"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
 
-                  <div className="flex items-center gap-1 ml-1 border-l border-slate-700/80 pl-2">
+                  <div className="flex items-center gap-1.5 ml-2 border-l border-slate-700/80 pl-3">
                     {[1, 2, 3, 5].map((qty) => (
                       <button
                         key={qty}
                         type="button"
                         onClick={() => setOrderQuantity(qty)}
-                        className={`px-2 py-1 rounded-md text-xs font-mono font-bold transition cursor-pointer ${
+                        className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition cursor-pointer ${
                           safeQuantity === qty
                             ? 'bg-sky-500 text-slate-950 font-black'
                             : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
@@ -1504,7 +1504,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setOrderQuantity(maxAffordableQuantity)}
-                        className={`px-2 py-1 rounded-md text-xs font-mono font-bold transition cursor-pointer border ${
+                        className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition cursor-pointer border ${
                           safeQuantity === maxAffordableQuantity
                             ? 'bg-amber-500 text-slate-950 border-amber-300 font-black'
                             : 'bg-amber-950/40 text-amber-300 border-amber-500/50 hover:bg-amber-900/60'
@@ -1518,7 +1518,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               </div>
 
               {/* Financial Breakdown Table / Invoice */}
-              <div className="bg-slate-950 rounded-xl border border-slate-800 p-4 space-y-2.5 font-mono text-sm">
+              <div className="bg-slate-950 rounded-2xl border border-slate-800 p-5 space-y-3 font-mono text-sm sm:text-base">
                 <div className="flex justify-between items-center text-slate-300">
                   <span>Unit Base Price:</span>
                   <span className="font-bold text-white">
@@ -1529,7 +1529,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 {selectedPriceInfo.hasDiscount && (
                   <div className="flex justify-between items-center text-amber-400">
                     <span className="flex items-center gap-1.5">
-                      <Flame className="w-3.5 h-3.5" />
+                      <Flame className="w-4 h-4" />
                       <span>Promotional Rebate ({selectedPriceInfo.discountPct}% OFF):</span>
                     </span>
                     <span className="font-bold">
@@ -1552,14 +1552,14 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                   </span>
                 </div>
 
-                <div className="pt-2.5 border-t border-slate-800 flex justify-between items-center text-base">
+                <div className="pt-3 border-t border-slate-800 flex justify-between items-center text-base sm:text-lg">
                   <span className="font-bold text-white">Total Acquisition Cost (ยอดรวมชำระ):</span>
-                  <span className="font-black text-xl text-emerald-400">
+                  <span className="font-black text-2xl text-emerald-400">
                     ${totalCostK.toLocaleString()}K
                   </span>
                 </div>
 
-                <div className="pt-2 border-t border-dashed border-slate-800/80 space-y-1 text-xs">
+                <div className="pt-2.5 border-t border-dashed border-slate-800/80 space-y-1.5 text-xs sm:text-sm">
                   <div className="flex justify-between items-center text-slate-400">
                     <span>Current Company Cash (ยอดเงินปัจจุบัน):</span>
                     <span className="font-bold text-slate-200">${playerAirline.cashK.toLocaleString()}K</span>
@@ -1573,7 +1573,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                       </span>
                     ) : (
                       <span className="font-bold text-rose-400 flex items-center gap-1">
-                        <AlertCircle className="w-3.5 h-3.5" />
+                        <AlertCircle className="w-4 h-4" />
                         Insufficient Cash (Short by ${(totalCostK - playerAirline.cashK).toLocaleString()}K)
                       </span>
                     )}
@@ -1582,16 +1582,16 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               </div>
 
               {/* Lead Time & Delivery Terms Advisory */}
-              <div className="p-3 bg-sky-950/50 border border-sky-600/60 rounded-xl flex items-start gap-3 text-xs font-mono text-sky-200">
+              <div className="p-4 bg-sky-950/50 border border-sky-600/60 rounded-2xl flex items-start gap-3.5 text-xs sm:text-sm font-mono text-sky-200">
                 <Clock className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <span className="font-bold text-sky-300 block">
+                  <span className="font-bold text-sky-300 block text-sm">
                     Manufacturing Lead Time & Delivery Terms (กำหนดการส่งมอบอากาศยาน):
                   </span>
                   <p className="text-slate-300">
                     Airliners are ordered directly from the factory. Scheduled handover is set for <span className="font-bold text-white">Year {nextDeliveryYear} Quarter {nextDeliveryQuarter}</span> (Next Quarter).
                   </p>
-                  <p className="text-slate-400 text-[11px]">
+                  <p className="text-slate-400 text-xs">
                     ※ Realistic aviation production factor: 95% on-time delivery rate, 5% supply-chain/certification postponement risk.
                   </p>
                 </div>
@@ -1599,7 +1599,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
 
               {/* Working Capital Warning */}
               {canAfford && remainingCash < 15000 && (
-                <div className="p-3 bg-amber-950/60 border border-amber-500/70 rounded-xl flex items-center gap-3 text-xs font-mono text-amber-200">
+                <div className="p-4 bg-amber-950/60 border border-amber-500/70 rounded-2xl flex items-center gap-3.5 text-xs sm:text-sm font-mono text-amber-200">
                   <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
                   <div>
                     <span className="font-bold block">Low Working Capital Advisory:</span>
@@ -1610,7 +1610,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
             </div>
 
             {/* Contract Footer: Explicit Cancel & Confirm Buttons */}
-            <div className="shrink-0 bg-slate-950 px-5 py-3.5 border-t border-slate-800 flex items-center justify-between gap-4">
+            <div className="shrink-0 bg-slate-950 px-6 py-4 border-t border-slate-800 flex items-center justify-between gap-4">
               <button
                 type="button"
                 onClick={() => setShowConfirmModal(false)}

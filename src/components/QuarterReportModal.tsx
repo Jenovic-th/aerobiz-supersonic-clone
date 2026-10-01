@@ -173,35 +173,35 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in duration-150">
-      <div className="bg-slate-900 border-2 border-slate-600 rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 md:p-6 animate-in fade-in duration-150">
+      <div className="bg-slate-900 border-2 border-slate-600 rounded-3xl shadow-2xl w-[96vw] max-w-[1650px] overflow-hidden flex flex-col max-h-[95vh]">
         {/* Title Bar */}
-        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 px-6 py-4 border-b border-slate-700 flex justify-between items-center shrink-0">
+        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 px-6 sm:px-8 py-4.5 border-b border-slate-700 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-full bg-blue-600 border-2 border-sky-300 flex items-center justify-center font-black text-white text-sm shadow">
+            <div className="w-11 h-11 rounded-full bg-blue-600 border-2 border-sky-300 flex items-center justify-center font-black text-white text-base shadow">
               CEO
             </div>
             <div>
-              <h2 className="text-base md:text-xl font-black text-slate-100 flex items-center gap-2">
+              <h2 className="text-lg md:text-2xl font-black text-slate-100 flex items-center gap-2.5">
                 <span>Quarterly Board Meeting & Financial Review</span>
                 {gameState.gameMode === 'SANDBOX_INFINITE' ? (
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400">
+                  <span className="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400">
                     ♾️ SANDBOX
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-400">
+                  <span className="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-400">
                     🏆 CAMPAIGN
                   </span>
                 )}
               </h2>
-              <div className="text-xs md:text-sm text-sky-300 font-bold">
+              <div className="text-xs sm:text-sm text-sky-300 font-bold mt-0.5">
                 {gameState.currentYear} {quarterNames[gameState.currentQuarter - 1]} Briefing • Turn {gameState.turnNumber}
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
+            className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
             title="Close (Esc)"
             data-testid="modal-close-header-btn"
           >
@@ -210,7 +210,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
         </div>
 
         {/* Tab Navigation Bar */}
-        <div className="shrink-0 flex items-center justify-between border-b border-slate-700 bg-slate-950 px-6 overflow-x-auto">
+        <div className="shrink-0 flex items-center justify-between border-b border-slate-700 bg-slate-950 px-6 sm:px-8 overflow-x-auto">
           <div className="flex">
             <button
               onClick={() => setActiveTab('OVERVIEW')}

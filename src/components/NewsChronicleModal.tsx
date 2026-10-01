@@ -95,29 +95,29 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
       className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-150 select-none"
       data-testid="news-chronicle-modal"
     >
-      <div className="bg-slate-900 border-2 border-sky-500/80 rounded-3xl shadow-[0_0_80px_rgba(14,165,233,0.3)] w-full max-w-5xl max-h-[92vh] flex flex-col text-slate-100 overflow-hidden animate-in zoom-in-95 duration-150">
+      <div className="bg-slate-900 border-2 border-sky-500/80 rounded-3xl shadow-[0_0_80px_rgba(14,165,233,0.3)] w-[96vw] max-w-[1680px] h-[93vh] max-h-[95vh] flex flex-col text-slate-100 overflow-hidden animate-in zoom-in-95 duration-150">
         {/* 1. MODAL HEADER */}
-        <div className="bg-gradient-to-r from-sky-950 via-slate-900 to-indigo-950 px-5 sm:px-7 py-4 border-b border-sky-800/80 flex items-center justify-between shrink-0 shadow-lg">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-sky-600 to-blue-700 border border-sky-300 text-white shadow-lg">
-              <Newspaper className="w-6 h-6" />
+        <div className="bg-gradient-to-r from-sky-950 via-slate-900 to-indigo-950 px-6 sm:px-8 py-4.5 border-b border-sky-800/80 flex items-center justify-between shrink-0 shadow-lg">
+          <div className="flex items-center gap-3.5">
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-sky-600 to-blue-700 border border-sky-300 text-white shadow-lg">
+              <Newspaper className="w-7 h-7" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-black text-white tracking-wide">
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-xl sm:text-2xl font-black text-white tracking-wide">
                   Global Aviation Chronicle & Intelligence
                 </h2>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400 font-mono font-bold uppercase hidden sm:inline">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400 font-mono font-bold uppercase hidden sm:inline">
                   ศูนย์รวมข่าวสาร & คลังเหตุการณ์โลก
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-sky-300 font-mono mt-0.5">
-                <Calendar className="w-3.5 h-3.5 text-sky-400" />
+              <div className="flex items-center gap-2.5 text-xs sm:text-sm text-sky-300 font-mono mt-1">
+                <Calendar className="w-4 h-4 text-sky-400" />
                 <span>
                   {gameState.currentYear} • {currentQuarterText}
                 </span>
                 <span className="text-slate-500">•</span>
-                <span className="text-amber-300">
+                <span className="text-amber-300 font-bold">
                   {gameState.gameMode === 'SANDBOX_INFINITE'
                     ? `Turn ${gameState.turnNumber} ♾️`
                     : `Turn ${gameState.turnNumber}/80 🏆`}
@@ -134,7 +134,7 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
               playSound.click();
               onClose();
             }}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700 transition cursor-pointer shrink-0"
+            className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700 transition cursor-pointer shrink-0"
             title="Close (Esc)"
             data-testid="modal-close-header-btn"
           >
@@ -143,15 +143,15 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
         </div>
 
         {/* 2. TOP TABS: Breaking News vs. Historical Archives */}
-        <div className="bg-slate-950 px-5 sm:px-7 border-b border-slate-800 flex items-center justify-between shrink-0 gap-3">
-          <div className="flex items-center gap-1">
+        <div className="bg-slate-950 px-6 sm:px-8 border-b border-slate-800 flex items-center justify-between shrink-0 gap-4">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 playSound.click();
                 setActiveTab('BREAKING');
               }}
               data-testid="news-tab-breaking"
-              className={`px-4 sm:px-5 py-3 font-mono text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 cursor-pointer ${
+              className={`px-5 sm:px-6 py-3.5 font-mono text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2.5 cursor-pointer ${
                 activeTab === 'BREAKING'
                   ? 'border-sky-400 text-sky-300 bg-sky-950/40'
                   : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
@@ -160,7 +160,7 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
               <Radio className="w-4 h-4 text-sky-400 animate-pulse" />
               <span>Breaking News (ข่าวสารประจำไตรมาส)</span>
               {totalNewsCount > 0 && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400 font-bold">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400 font-bold">
                   {totalNewsCount}
                 </span>
               )}
@@ -172,7 +172,7 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                 setActiveTab('ARCHIVES');
               }}
               data-testid="news-tab-archives"
-              className={`px-4 sm:px-5 py-3 font-mono text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 cursor-pointer ${
+              className={`px-5 sm:px-6 py-3.5 font-mono text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2.5 cursor-pointer ${
                 activeTab === 'ARCHIVES'
                   ? 'border-amber-400 text-amber-300 bg-amber-950/40'
                   : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
@@ -181,7 +181,7 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
               <History className="w-4 h-4 text-amber-400" />
               <span>Historical Archives (คลังข่าวย้อนหลัง)</span>
               {history.length > 0 && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400 font-bold">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400 font-bold">
                   {history.length} Quarters
                 </span>
               )}
@@ -190,12 +190,12 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
 
           {/* Tab 1 Category Filter Chips (Only shown in BREAKING tab) */}
           {activeTab === 'BREAKING' && (
-            <div className="hidden md:flex items-center gap-1.5 py-2 overflow-x-auto text-[11px] font-mono">
+            <div className="hidden md:flex items-center gap-2 py-2 overflow-x-auto text-xs font-mono">
               <button
                 onClick={() => setCategoryFilter('ALL')}
-                className={`px-2.5 py-1 rounded-lg border font-bold transition cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl border font-bold transition cursor-pointer ${
                   categoryFilter === 'ALL'
-                    ? 'bg-sky-600 text-white border-sky-400'
+                    ? 'bg-sky-600 text-white border-sky-400 shadow'
                     : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-200'
                 }`}
               >
@@ -203,9 +203,9 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
               </button>
               <button
                 onClick={() => setCategoryFilter('WORLD')}
-                className={`px-2.5 py-1 rounded-lg border font-bold transition cursor-pointer flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-xl border font-bold transition cursor-pointer flex items-center gap-1.5 ${
                   categoryFilter === 'WORLD'
-                    ? 'bg-purple-600 text-white border-purple-400'
+                    ? 'bg-purple-600 text-white border-purple-400 shadow'
                     : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-purple-400 hover:text-purple-300'
                 }`}
               >
@@ -214,9 +214,9 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
               </button>
               <button
                 onClick={() => setCategoryFilter('AVIATION')}
-                className={`px-2.5 py-1 rounded-lg border font-bold transition cursor-pointer flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-xl border font-bold transition cursor-pointer flex items-center gap-1.5 ${
                   categoryFilter === 'AVIATION'
-                    ? 'bg-amber-600 text-white border-amber-400'
+                    ? 'bg-amber-600 text-white border-amber-400 shadow'
                     : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-amber-400 hover:text-amber-300'
                 }`}
               >
@@ -225,9 +225,9 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
               </button>
               <button
                 onClick={() => setCategoryFilter('RIVALS')}
-                className={`px-2.5 py-1 rounded-lg border font-bold transition cursor-pointer flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-xl border font-bold transition cursor-pointer flex items-center gap-1.5 ${
                   categoryFilter === 'RIVALS'
-                    ? 'bg-blue-600 text-white border-blue-400'
+                    ? 'bg-blue-600 text-white border-blue-400 shadow'
                     : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-blue-400 hover:text-blue-300'
                 }`}
               >
@@ -237,9 +237,9 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
               {operationsNewsCount > 0 && (
                 <button
                   onClick={() => setCategoryFilter('OPERATIONS')}
-                  className={`px-2.5 py-1 rounded-lg border font-bold transition cursor-pointer flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-xl border font-bold transition cursor-pointer flex items-center gap-1.5 ${
                     categoryFilter === 'OPERATIONS'
-                      ? 'bg-rose-600 text-white border-rose-400'
+                      ? 'bg-rose-600 text-white border-rose-400 shadow'
                       : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-rose-400 hover:text-rose-300'
                   }`}
                 >
@@ -252,7 +252,7 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
         </div>
 
         {/* 3. MODAL CONTENT BODY */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-7 space-y-6">
           {/* ======================================================== */}
           {/* TAB 1: BREAKING NEWS (CURRENT QUARTER)                     */}
           {/* ======================================================== */}
@@ -303,22 +303,22 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
 
               {/* SECTION: GLOBAL GEOPOLITICS & WORLD EVENTS */}
               {(categoryFilter === 'ALL' || categoryFilter === 'WORLD') && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                    <div className="flex items-center gap-2">
-                      <Globe2 className="w-4 h-4 text-purple-400" />
-                      <h3 className="font-mono text-xs font-black uppercase tracking-wider text-slate-300">
+                <div className="space-y-3.5">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div className="flex items-center gap-2.5">
+                      <Globe2 className="w-5 h-5 text-purple-400" />
+                      <h3 className="font-mono text-sm font-black uppercase tracking-wider text-slate-200">
                         Global Geopolitics, Fuel & World Events
                       </h3>
                     </div>
-                    <span className="text-[11px] text-purple-400 font-mono font-bold">
+                    <span className="text-xs text-purple-400 font-mono font-bold">
                       {activeEvents.length} Active • {upcomingEvents.length} Upcoming
                     </span>
                   </div>
 
                   {/* ACTIVE WORLD EVENTS */}
                   {activeEvents.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                       {activeEvents.map((event, idx) => {
                         const isCrisis =
                           event.type === 'WAR' ||
@@ -333,7 +333,7 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                         return (
                           <div
                             key={idx}
-                            className={`p-4 rounded-2xl border-2 shadow transition ${
+                            className={`p-4 sm:p-5 rounded-2xl border-2 shadow transition ${
                               isCrisis
                                 ? 'bg-gradient-to-br from-rose-950/70 via-slate-900 to-slate-900 border-rose-500/80 shadow-rose-950/50'
                                 : isCelebration
@@ -341,20 +341,20 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                                 : 'bg-gradient-to-br from-emerald-950/70 via-slate-900 to-slate-900 border-emerald-500/80 shadow-emerald-950/50'
                             }`}
                           >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xl">
+                            <div className="flex items-start justify-between gap-2.5">
+                              <div className="flex items-center gap-2.5">
+                                <span className="text-2xl">
                                   {isCrisis ? '⚠️' : isCelebration ? '🏅' : '📈'}
                                 </span>
                                 <div>
-                                  <h4 className="font-black text-sm text-white">{event.title}</h4>
-                                  <span className="text-[10px] font-mono text-slate-400 uppercase">
+                                  <h4 className="font-black text-base sm:text-lg text-white">{event.title}</h4>
+                                  <span className="text-xs font-mono text-slate-400 uppercase">
                                     Type: {event.type.replace('_', ' ')}
                                   </span>
                                 </div>
                               </div>
                               <span
-                                className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold uppercase border ${
+                                className={`text-[11px] px-2.5 py-0.5 rounded-full font-mono font-bold uppercase border shrink-0 ${
                                   isCrisis
                                     ? 'bg-rose-500/20 text-rose-300 border-rose-500'
                                     : isCelebration
@@ -366,11 +366,11 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                               </span>
                             </div>
 
-                            <p className="text-xs text-slate-300 mt-2.5 leading-relaxed">
+                            <p className="text-xs sm:text-sm text-slate-300 mt-3 leading-relaxed">
                               {event.description}
                             </p>
 
-                            <div className="mt-3 pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between text-[11px] font-mono gap-2">
+                            <div className="mt-3.5 pt-2.5 border-t border-slate-800 flex flex-wrap items-center justify-between text-xs font-mono gap-2">
                               <span className="text-slate-400">
                                 Scope: <strong className="text-white">{(event.affectedRegionIds && event.affectedRegionIds.length > 0) ? event.affectedRegionIds.join(', ') : 'Worldwide'}</strong>
                               </span>
@@ -383,23 +383,23 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                       })}
                     </div>
                   ) : (
-                    <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs text-slate-400 italic flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-sm text-slate-400 italic flex items-center gap-2.5">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                       <span>น่านฟ้าโลกสงบราบรื่น ไม่มีวิกฤตการณ์ทางภูมิรัฐศาสตร์หรือสงครามรุนแรงในไตรมาสนี้</span>
                     </div>
                   )}
 
                   {/* FUEL MARKET & UPCOMING RADAR ROW */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                     {/* Fuel Market Bar */}
-                    <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400">
-                          <Flame className="w-4 h-4" />
+                    <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400">
+                          <Flame className="w-5 h-5" />
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-white font-mono">Global Fuel Index</div>
-                          <div className="text-[11px] text-slate-400">
+                          <div className="text-sm font-bold text-white font-mono">Global Fuel Index</div>
+                          <div className="text-xs text-slate-400">
                             {gameState.fuelPriceIndex > 1.2
                               ? 'ราคาน้ำมันตลาดโลกพุ่งสูงขึ้น ส่งผลต่อต้นทุนต่อเที่ยวบิน'
                               : 'ราคาน้ำมันตลาดโลกอยู่ในเกณฑ์ปกติ'}
@@ -408,34 +408,34 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                       </div>
                       <div className="text-right font-mono">
                         <div
-                          className={`text-base font-black ${
+                          className={`text-lg font-black ${
                             gameState.fuelPriceIndex > 1.2 ? 'text-rose-400 animate-pulse' : 'text-emerald-400'
                           }`}
                         >
                           {gameState.fuelPriceIndex.toFixed(2)}x
                         </div>
-                        <div className="text-[10px] text-slate-500">Benchmark</div>
+                        <div className="text-xs text-slate-500">Benchmark</div>
                       </div>
                     </div>
 
                     {/* Upcoming Radar Forecast */}
                     {upcomingEvents.length > 0 && (
-                      <div className="p-3.5 rounded-2xl bg-purple-950/40 border border-purple-500/40 flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="p-2 rounded-xl bg-purple-500/20 border border-purple-400 text-purple-300">
-                            <Sparkles className="w-4 h-4" />
+                      <div className="p-4 rounded-2xl bg-purple-950/40 border border-purple-500/40 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 rounded-xl bg-purple-500/20 border border-purple-400 text-purple-300">
+                            <Sparkles className="w-5 h-5" />
                           </div>
                           <div>
-                            <div className="text-xs font-bold text-purple-200 font-mono">
+                            <div className="text-sm font-bold text-purple-200 font-mono">
                               1-Year Intelligence Radar
                             </div>
-                            <div className="text-[11px] text-slate-300 truncate max-w-[200px]">
+                            <div className="text-xs text-slate-300 truncate max-w-[280px]">
                               {upcomingEvents[0].event.title}
                             </div>
                           </div>
                         </div>
                         <div className="text-right font-mono">
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-purple-900 text-purple-200 font-bold border border-purple-700">
+                          <span className="text-xs px-2.5 py-1 rounded bg-purple-900 text-purple-200 font-bold border border-purple-700">
                             Arrives in {upcomingEvents[0].quartersUntil * 3} mo
                           </span>
                         </div>
@@ -447,39 +447,39 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
 
               {/* SECTION: COMMERCIAL AIRCRAFT INDUSTRY DEVELOPMENTS */}
               {(categoryFilter === 'ALL' || categoryFilter === 'AVIATION') && (
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                    <div className="flex items-center gap-2">
-                      <Plane className="w-4 h-4 text-sky-400" />
-                      <h3 className="font-mono text-xs font-black uppercase tracking-wider text-slate-300">
+                <div className="space-y-3.5 pt-2">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div className="flex items-center gap-2.5">
+                      <Plane className="w-5 h-5 text-sky-400" />
+                      <h3 className="font-mono text-sm font-black uppercase tracking-wider text-slate-200">
                         Aircraft Manufacturers & Fleet Modernization
                       </h3>
                     </div>
-                    <span className="text-[11px] text-sky-400 font-mono font-bold">
+                    <span className="text-xs text-sky-400 font-mono font-bold">
                       {newPlanes.length + retiringPlanes.length + deliveries.length} Updates
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {/* Newly Introduced Models */}
                     {newPlanes.length > 0 &&
                       newPlanes.map((plane, idx) => (
                         <div
                           key={`new-${idx}`}
-                          className="p-3.5 bg-gradient-to-r from-emerald-950/70 via-slate-900 to-slate-900 border border-emerald-500/70 rounded-2xl flex items-center justify-between gap-3 shadow"
+                          className="p-4 bg-gradient-to-r from-emerald-950/70 via-slate-900 to-slate-900 border border-emerald-500/70 rounded-2xl flex items-center justify-between gap-3 shadow"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-xl bg-emerald-500/20 border border-emerald-400 text-emerald-300">
+                            <div className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-400 text-emerald-300">
                               <Sparkles className="w-5 h-5 text-emerald-400" />
                             </div>
                             <div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500">
                                   NEW MODEL
                                 </span>
-                                <h4 className="font-black text-sm text-white">{plane.model}</h4>
+                                <h4 className="font-black text-sm sm:text-base text-white">{plane.model}</h4>
                               </div>
-                              <p className="text-[11px] text-slate-300">
+                              <p className="text-xs text-slate-300 mt-0.5">
                                 {plane.manufacturer} • {plane.capacity} seats • {plane.rangeKm.toLocaleString()} km range
                               </p>
                             </div>
@@ -491,7 +491,7 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                                 onClose();
                                 onOpenAircraftShop();
                               }}
-                              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold font-mono transition cursor-pointer"
+                              className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow shrink-0"
                             >
                               Inspect
                             </button>
@@ -504,20 +504,20 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                       retiringPlanes.map((plane, idx) => (
                         <div
                           key={`retire-${idx}`}
-                          className="p-3.5 bg-gradient-to-r from-amber-950/70 via-slate-900 to-slate-900 border border-amber-500/70 rounded-2xl flex items-center justify-between gap-3 shadow"
+                          className="p-4 bg-gradient-to-r from-amber-950/70 via-slate-900 to-slate-900 border border-amber-500/70 rounded-2xl flex items-center justify-between gap-3 shadow"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-xl bg-amber-500/20 border border-amber-400 text-amber-300">
+                            <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-400 text-amber-300">
                               <AlertTriangle className="w-5 h-5 text-amber-400" />
                             </div>
                             <div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono font-bold border border-amber-500">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono font-bold border border-amber-500">
                                   END OF PRODUCTION NOTICE
                                 </span>
-                                <h4 className="font-black text-sm text-white">{plane.model}</h4>
+                                <h4 className="font-black text-sm sm:text-base text-white">{plane.model}</h4>
                               </div>
-                              <p className="text-[11px] text-slate-300">
+                              <p className="text-xs text-slate-300 mt-0.5">
                                 Production assembly lines closing soon. Spare parts and new orders ceasing.
                               </p>
                             </div>
@@ -530,7 +530,7 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                       deliveries.map((deliv, idx) => (
                         <div
                           key={`deliv-${idx}`}
-                          className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 shadow ${
+                          className={`p-4 rounded-2xl border flex items-center justify-between gap-3 shadow ${
                             deliv.status === 'DELIVERED'
                               ? 'bg-slate-950/80 border-emerald-500/60'
                               : 'bg-rose-950/40 border-rose-500/60'
@@ -538,7 +538,7 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                         >
                           <div className="flex items-center gap-3">
                             <div
-                              className={`p-2 rounded-xl border ${
+                              className={`p-2.5 rounded-xl border ${
                                 deliv.status === 'DELIVERED'
                                   ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
                                   : 'bg-rose-500/20 border-rose-400 text-rose-300'
@@ -547,9 +547,9 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                               <Plane className="w-5 h-5" />
                             </div>
                             <div>
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-2">
                                 <span
-                                  className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold border ${
+                                  className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold border ${
                                     deliv.status === 'DELIVERED'
                                       ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500'
                                       : 'bg-rose-500/20 text-rose-300 border-rose-500'
@@ -557,11 +557,11 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                                 >
                                   {deliv.status === 'DELIVERED' ? 'DELIVERY RECEIVED' : 'FACTORY DELAY'}
                                 </span>
-                                <h4 className="font-bold text-xs text-white">
+                                <h4 className="font-bold text-sm text-white">
                                   {deliv.quantity}x {deliv.modelName}
                                 </h4>
                               </div>
-                              <p className="text-[11px] text-slate-300">
+                              <p className="text-xs text-slate-300 mt-0.5">
                                 {deliv.airlineName} • {deliv.status === 'DELIVERED' ? 'Ready in Hangars' : 'Delayed by supplier'}
                               </p>
                             </div>
@@ -571,7 +571,7 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                   </div>
 
                   {newPlanes.length === 0 && retiringPlanes.length === 0 && deliveries.length === 0 && !discountDeal && (
-                    <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs text-slate-400 italic">
+                    <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-sm text-slate-400 italic">
                       ไม่มีการเปิดตัวเครื่องบินรุ่นใหม่หรือหยุดสายการผลิตในไตรมาสนี้ ตลาดอากาศยานอยู่ในภาวะทรงตัว
                     </div>
                   )}
@@ -580,42 +580,42 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
 
               {/* SECTION: RIVAL AIRLINE OPERATIONS & DIPLOMATIC TREATIES */}
               {(categoryFilter === 'ALL' || categoryFilter === 'RIVALS') && (
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-blue-400" />
-                      <h3 className="font-mono text-xs font-black uppercase tracking-wider text-slate-300">
+                <div className="space-y-3.5 pt-2">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div className="flex items-center gap-2.5">
+                      <Building2 className="w-5 h-5 text-blue-400" />
+                      <h3 className="font-mono text-sm font-black uppercase tracking-wider text-slate-200">
                         Rival Airline Operations, Treaties & Airport Expansions
                       </h3>
                     </div>
-                    <span className="text-[11px] text-blue-400 font-mono font-bold">
+                    <span className="text-xs text-blue-400 font-mono font-bold">
                       Competitive Intel
                     </span>
                   </div>
 
                   {/* Diplomatic Envoy Mission Outcomes */}
                   {diplomaticReports.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="text-[11px] font-mono font-bold text-slate-400">
+                    <div className="space-y-2.5">
+                      <div className="text-xs font-mono font-bold text-slate-400">
                         Diplomatic Slot Treaties & Envoys:
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
                         {diplomaticReports.map((report, idx) => (
                           <div
                             key={`diplo-${idx}`}
-                            className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-xs font-mono shadow ${
+                            className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-xs font-mono shadow ${
                               report.success
                                 ? 'bg-slate-950/80 border-emerald-500/60'
                                 : 'bg-slate-950/80 border-rose-500/60'
                             }`}
                           >
                             <div className="flex items-center gap-2.5">
-                              <span className="text-base">{report.success ? '📜' : '❌'}</span>
+                              <span className="text-lg">{report.success ? '📜' : '❌'}</span>
                               <div>
-                                <div className="font-bold text-white">
+                                <div className="font-bold text-white text-xs sm:text-sm">
                                   {report.targetCityName} Landing Rights Treaty
                                 </div>
-                                <div className="text-[11px] text-slate-400">
+                                <div className="text-xs text-slate-400 mt-0.5">
                                   {report.success
                                     ? `Granted +${report.slotsGranted || 0} slots for commercial expansion`
                                     : 'Aviation ministry rejected delegation request'}
@@ -623,7 +623,7 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                               </div>
                             </div>
                             <span
-                              className={`text-[10px] px-2 py-0.5 rounded font-bold border ${
+                              className={`text-[10px] px-2 py-0.5 rounded font-bold border shrink-0 ${
                                 report.success
                                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500'
                                   : 'bg-rose-500/20 text-rose-300 border-rose-500'
@@ -639,26 +639,26 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
 
                   {/* Airport Runway & Terminal Expansions */}
                   {expansions.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="text-[11px] font-mono font-bold text-slate-400">
+                    <div className="space-y-2.5">
+                      <div className="text-xs font-mono font-bold text-slate-400">
                         Airport Capacity Expansions:
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
                         {expansions.map((exp, idx) => (
                           <div
                             key={`exp-${idx}`}
-                            className="p-3 bg-slate-950/80 border border-sky-500/50 rounded-xl flex items-center justify-between gap-3 text-xs font-mono"
+                            className="p-3.5 bg-slate-950/80 border border-sky-500/50 rounded-2xl flex items-center justify-between gap-3 text-xs font-mono"
                           >
-                            <div className="flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-sky-400" />
+                            <div className="flex items-center gap-2.5">
+                              <Building2 className="w-5 h-5 text-sky-400" />
                               <div>
-                                <span className="font-bold text-white">{exp.cityName}</span>
-                                <span className="text-slate-400 ml-1">
+                                <span className="font-bold text-white text-xs sm:text-sm">{exp.cityName}</span>
+                                <span className="text-slate-400 ml-1.5">
                                   runway & terminal project completed
                                 </span>
                               </div>
                             </div>
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-700 font-bold">
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-700 font-bold shrink-0">
                               +{exp.addedSlots} Slots Added
                             </span>
                           </div>
@@ -669,28 +669,28 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
 
                   {/* AI Competitor Route Openings & Closures */}
                   {(newAIRoutes.length > 0 || closedRoutes.length > 0) && (
-                    <div className="space-y-2">
-                      <div className="text-[11px] font-mono font-bold text-slate-400">
+                    <div className="space-y-2.5">
+                      <div className="text-xs font-mono font-bold text-slate-400">
                         Global Route Network Adjustments:
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
                         {newAIRoutes.map((nr, idx) => {
                           const orig = cityMap.get(nr.originCityId)?.name || nr.originCityId;
                           const dest = cityMap.get(nr.destCityId)?.name || nr.destCityId;
                           return (
                             <div
                               key={`new-r-${idx}`}
-                              className="p-3 bg-slate-950/80 border border-blue-500/40 rounded-xl flex items-center justify-between gap-2 text-xs font-mono"
+                              className="p-3.5 bg-slate-950/80 border border-blue-500/40 rounded-2xl flex items-center justify-between gap-2.5 text-xs font-mono"
                             >
-                              <div className="flex items-center gap-2 truncate">
-                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: nr.airlineColor }} />
-                                <span className="font-bold text-white truncate">{nr.airlineName}</span>
+                              <div className="flex items-center gap-2.5 truncate">
+                                <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: nr.airlineColor }} />
+                                <span className="font-bold text-white truncate text-xs sm:text-sm">{nr.airlineName}</span>
                                 <span className="text-slate-400">opened:</span>
                                 <span className="text-emerald-400 font-bold truncate">
                                   {orig} ⇄ {dest}
                                 </span>
                               </div>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-950 text-blue-300 font-bold shrink-0">
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-blue-950 text-blue-300 font-bold shrink-0">
                                 NEW ROUTE
                               </span>
                             </div>
@@ -703,17 +703,17 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
                           return (
                             <div
                               key={`closed-r-${idx}`}
-                              className="p-3 bg-slate-950/80 border border-rose-500/40 rounded-xl flex items-center justify-between gap-2 text-xs font-mono"
+                              className="p-3.5 bg-slate-950/80 border border-rose-500/40 rounded-2xl flex items-center justify-between gap-2.5 text-xs font-mono"
                             >
-                              <div className="flex items-center gap-2 truncate">
-                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cr.airlineColor }} />
-                                <span className="font-bold text-white truncate">{cr.airlineName}</span>
+                              <div className="flex items-center gap-2.5 truncate">
+                                <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: cr.airlineColor }} />
+                                <span className="font-bold text-white truncate text-xs sm:text-sm">{cr.airlineName}</span>
                                 <span className="text-slate-400">closed:</span>
                                 <span className="text-rose-400 font-bold truncate">
                                   {orig} ⇄ {dest}
                                 </span>
                               </div>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-950 text-rose-300 font-bold shrink-0">
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-rose-950 text-rose-300 font-bold shrink-0">
                                 ROUTE CLOSED
                               </span>
                             </div>
@@ -725,21 +725,21 @@ export const NewsChronicleModal: React.FC<NewsChronicleModalProps> = ({
 
                   {/* Competitor Actions Log */}
                   {competitorActions.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="text-[11px] font-mono font-bold text-slate-400">
+                    <div className="space-y-2.5">
+                      <div className="text-xs font-mono font-bold text-slate-400">
                         Competitor Strategic Decisions:
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
                         {competitorActions.map((ca, idx) => (
                           <div
                             key={`ca-${idx}`}
-                            className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs font-mono space-y-1"
+                            className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs font-mono space-y-1.5"
                           >
-                            <div className="flex items-center gap-2 font-bold text-white">
-                              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ca.airlineColor }} />
+                            <div className="flex items-center gap-2 font-bold text-white text-xs sm:text-sm">
+                              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: ca.airlineColor }} />
                               <span>{ca.airlineName} Executive Actions</span>
                             </div>
-                            <ul className="list-disc list-inside space-y-0.5 text-slate-300 text-[11px] pl-2">
+                            <ul className="list-disc list-inside space-y-1 text-slate-300 text-xs pl-2">
                               {ca.actions.slice(0, 3).map((act, actIdx) => (
                                 <li key={actIdx}>{act}</li>
                               ))}

@@ -515,6 +515,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                           <button
                             disabled={availableFieldNegotiators.length === 0 || !canAfford}
                             onClick={() => promptSubsidiaryBuyout(v)}
+                            data-testid="acquire-subsidiary-btn"
                             className="w-full py-1.5 sm:py-2 bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 hover:from-indigo-500 hover:to-blue-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-xl font-black text-xs sm:text-sm shadow-md border border-indigo-400 transition active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
                           >
                             <Clock className="w-4 h-4" />
@@ -577,6 +578,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                   playerAirline.cashK < slotCostK
                 }
                 onClick={promptSlotNegotiation}
+                data-testid="negotiate-slots-btn"
                 className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-xl font-black text-xs sm:text-sm shadow-xl transition-all active:scale-95 border border-emerald-400 cursor-pointer flex items-center gap-2"
               >
                 <KeyRound className="w-4 h-4 text-emerald-200" />
@@ -650,171 +652,189 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
         {/* 4. CONFIRMATION POPUP OVERLAY (Prevents Accidental Buys & Lets Player Select Envoy!) */}
         {pendingMission && (
           <div className="absolute inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-100">
-            <div className="bg-slate-900 border-2 border-sky-400 rounded-2xl p-5 max-w-lg w-full shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                  <HelpCircle className="w-5 h-5 text-sky-400" />
-                  <h3 className="font-black text-base text-white">
-                    Confirm Diplomatic Delegation Dispatch
-                  </h3>
+            <div className="bg-slate-900 border-2 border-sky-400 rounded-3xl p-6 sm:p-7 w-[92vw] max-w-4xl shadow-2xl space-y-5 animate-in zoom-in-95 duration-100">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-sky-500/20 border border-sky-400 text-sky-400">
+                    <HelpCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg sm:text-xl text-white tracking-wide">
+                      Confirm Diplomatic Delegation Dispatch
+                    </h3>
+                    <p className="text-xs text-sky-300/80 font-mono">
+                      มอบหมายทูตเจรจาประจำสายการบินเพื่อปฏิบัติภารกิจใน {city.name}
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setPendingMission(null)}
-                  className="text-slate-400 hover:text-white p-1 rounded-lg"
+                  className="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800 hover:bg-slate-700 transition cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Mission Summary Card */}
-              <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-3 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Target Objective:</span>
-                  <span className="font-black text-white text-sm">
-                    {pendingMission.type === 'SLOT_NEGOTIATION'
-                      ? `+${pendingMission.requestedSlots} Airport Slots in ${city.name}`
-                      : `${pendingMission.ventureName}`}
-                  </span>
-                </div>
-
-                {pendingMission.type === 'SLOT_NEGOTIATION' && limits.maxRequestableSlots > 0 && (
-                  <div className="bg-slate-900/90 rounded-xl p-3 border border-slate-700/80 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 font-bold uppercase font-mono text-[10px]">
-                        Adjust Requested Slots:
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          disabled={(pendingMission.requestedSlots || 10) <= limits.minSlots}
-                          onClick={() =>
-                            handleUpdatePendingSlots(
-                              (pendingMission.requestedSlots || 10) -
-                                ((pendingMission.requestedSlots || 10) > 10 ? 5 : 1)
-                            )
-                          }
-                          className="w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-white border border-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer transition"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-
-                        <span className="font-mono text-sm font-black text-emerald-400 min-w-[36px] text-center">
-                          +{pendingMission.requestedSlots}
-                        </span>
-
-                        <button
-                          type="button"
-                          disabled={(pendingMission.requestedSlots || 10) >= limits.maxRequestableSlots}
-                          onClick={() =>
-                            handleUpdatePendingSlots(
-                              (pendingMission.requestedSlots || 10) +
-                                ((pendingMission.requestedSlots || 10) >= 10 ? 5 : 1)
-                            )
-                          }
-                          className="w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-white border border-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer transition"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Presets */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {limits.presetOptions.map((preset) => {
-                        const isSelected = pendingMission.requestedSlots === preset;
-                        const isMax = preset === limits.maxRequestableSlots;
-                        return (
-                          <button
-                            key={preset}
-                            type="button"
-                            onClick={() => handleUpdatePendingSlots(preset)}
-                            className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold transition cursor-pointer border ${
-                              isSelected
-                                ? 'bg-emerald-600 text-white border-emerald-400 shadow'
-                                : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
-                            }`}
-                          >
-                            {isMax ? `Max (${preset})` : `+${preset}`}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {limits.isAntiMonopolyActive && limits.antiMonopolyReason && (
-                      <div className="p-2 rounded-lg bg-purple-950/40 border border-purple-800/60 text-purple-200 text-[11px] flex items-start gap-1.5 leading-snug">
-                        <Scale className="w-3.5 h-3.5 text-purple-300 shrink-0 mt-0.5" />
-                        <span>{limits.antiMonopolyReason}</span>
-                      </div>
-                    )}
+              {/* Two-Column Dossier Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Left Column: Mission Summary & Financial Terms */}
+                <div className="p-4 sm:p-5 bg-slate-950 rounded-2xl border border-slate-800 space-y-4 text-xs sm:text-sm">
+                  <div>
+                    <span className="text-slate-400 text-xs font-mono uppercase font-bold block mb-1">
+                      Target Objective:
+                    </span>
+                    <span className="font-black text-white text-base sm:text-lg block">
+                      {pendingMission.type === 'SLOT_NEGOTIATION'
+                        ? `+${pendingMission.requestedSlots} Airport Slots in ${city.name}`
+                        : `${pendingMission.ventureName}`}
+                    </span>
                   </div>
-                )}
 
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Negotiation Duration:</span>
-                  <span className="font-bold text-amber-300 font-mono">
-                    {pendingMission.quartersRemaining} Quarter{pendingMission.quartersRemaining > 1 ? 's' : ''} ({pendingMission.quartersRemaining * 3} Months)
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Delegation Cost:</span>
-                  <span className="font-black text-emerald-400 font-mono text-sm">
-                    ${pendingMission.costK.toLocaleString()}K
-                  </span>
-                </div>
-                <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-[11px]">
-                  <span className="text-slate-500">Remaining Treasury After:</span>
-                  <span className="font-mono text-slate-300">
-                    ${(playerAirline.cashK - pendingMission.costK).toLocaleString()}K
-                  </span>
-                </div>
-              </div>
+                  {pendingMission.type === 'SLOT_NEGOTIATION' && limits.maxRequestableSlots > 0 && (
+                    <div className="bg-slate-900/90 rounded-2xl p-3.5 border border-slate-700/80 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-300 font-bold uppercase font-mono text-xs">
+                          Adjust Requested Slots:
+                        </span>
+                        <div className="flex items-center gap-2.5">
+                          <button
+                            type="button"
+                            disabled={(pendingMission.requestedSlots || 10) <= limits.minSlots}
+                            onClick={() =>
+                              handleUpdatePendingSlots(
+                                (pendingMission.requestedSlots || 10) -
+                                  ((pendingMission.requestedSlots || 10) > 10 ? 5 : 1)
+                              )
+                            }
+                            className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-white border border-slate-600 flex items-center justify-center font-bold text-base cursor-pointer transition shadow"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
 
-              {/* Assign Envoy Selection */}
-              <div>
-                <label className="text-xs font-bold text-slate-300 block mb-2 font-mono uppercase">
-                  Select Available Envoy To Dispatch:
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {availableFieldNegotiators.map((neg) => {
-                    const isSelected = selectedEnvoyId === neg.id;
+                          <span className="font-mono text-lg font-black text-emerald-400 min-w-[46px] text-center">
+                            +{pendingMission.requestedSlots}
+                          </span>
 
-                    return (
-                      <button
-                        key={neg.id}
-                        type="button"
-                        onClick={() => setSelectedEnvoyId(neg.id)}
-                        className={`p-2 rounded-xl border flex items-center gap-2.5 transition cursor-pointer text-left ${
-                          isSelected
-                            ? 'bg-blue-600/30 border-sky-400 shadow-md ring-2 ring-sky-400/50'
-                            : 'bg-slate-800/80 border-slate-700 hover:bg-slate-800'
-                        }`}
-                      >
-                        <NegotiatorAvatar avatarId={neg.avatarId} size="sm" className="w-9 h-10 shrink-0" />
-                        <div className="min-w-0">
-                          <div className="font-bold text-xs text-white truncate">{neg.name}</div>
-                          <div className="text-[10px] text-emerald-400 font-mono">Ready to Go</div>
+                          <button
+                            type="button"
+                            disabled={(pendingMission.requestedSlots || 10) >= limits.maxRequestableSlots}
+                            onClick={() =>
+                              handleUpdatePendingSlots(
+                                (pendingMission.requestedSlots || 10) +
+                                  ((pendingMission.requestedSlots || 10) >= 10 ? 5 : 1)
+                              )
+                            }
+                            className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-white border border-slate-600 flex items-center justify-center font-bold text-base cursor-pointer transition shadow"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
                         </div>
-                      </button>
-                    );
-                  })}
+                      </div>
+
+                      {/* Presets */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {limits.presetOptions.map((preset) => {
+                          const isSelected = pendingMission.requestedSlots === preset;
+                          const isMax = preset === limits.maxRequestableSlots;
+                          return (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => handleUpdatePendingSlots(preset)}
+                              className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition cursor-pointer border ${
+                                isSelected
+                                  ? 'bg-emerald-600 text-white border-emerald-400 shadow-md'
+                                  : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                              }`}
+                            >
+                              {isMax ? `Max (${preset})` : `+${preset}`}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {limits.isAntiMonopolyActive && limits.antiMonopolyReason && (
+                        <div className="p-2.5 rounded-xl bg-purple-950/50 border border-purple-800/80 text-purple-200 text-xs flex items-start gap-2 leading-relaxed">
+                          <Scale className="w-4 h-4 text-purple-300 shrink-0 mt-0.5" />
+                          <span>{limits.antiMonopolyReason}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="space-y-2 pt-1 border-t border-slate-800/80 font-mono">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Negotiation Duration:</span>
+                      <span className="font-bold text-amber-300 text-sm">
+                        {pendingMission.quartersRemaining} Quarter{pendingMission.quartersRemaining > 1 ? 's' : ''} ({pendingMission.quartersRemaining * 3} Months)
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Delegation Cost:</span>
+                      <span className="font-black text-emerald-400 text-base sm:text-lg">
+                        ${pendingMission.costK.toLocaleString()}K
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+                      <span className="text-slate-400">Remaining Treasury After:</span>
+                      <span className="font-bold text-slate-200">
+                        ${(playerAirline.cashK - pendingMission.costK).toLocaleString()}K
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Assign Envoy Selection */}
+                <div className="space-y-3">
+                  <label className="text-xs sm:text-sm font-bold text-slate-300 block font-mono uppercase tracking-wider">
+                    Select Available Envoy To Dispatch:
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {availableFieldNegotiators.map((neg) => {
+                      const isSelected = selectedEnvoyId === neg.id;
+
+                      return (
+                        <button
+                          key={neg.id}
+                          type="button"
+                          onClick={() => setSelectedEnvoyId(neg.id)}
+                          className={`p-3 rounded-2xl border flex items-center gap-3 transition cursor-pointer text-left ${
+                            isSelected
+                              ? 'bg-blue-600/30 border-sky-400 shadow-lg ring-2 ring-sky-400/50'
+                              : 'bg-slate-800/80 border-slate-700 hover:bg-slate-800'
+                          }`}
+                        >
+                          <NegotiatorAvatar avatarId={neg.avatarId} size="md" className="w-13 h-15 shrink-0 rounded-xl" />
+                          <div className="min-w-0">
+                            <div className="font-black text-sm text-white truncate">{neg.name}</div>
+                            <div className="text-xs text-sky-400 font-mono truncate">{neg.title}</div>
+                            <div className="text-[11px] text-emerald-400 font-mono font-bold flex items-center gap-1 mt-0.5">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Ready to Go</span>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              {/* Actions Footer */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
                 <button
                   onClick={() => setPendingMission(null)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs transition cursor-pointer"
+                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer"
                 >
-                  Cancel
+                  Cancel (ยกเลิก)
                 </button>
                 <button
                   disabled={!selectedEnvoyId || playerAirline.cashK < pendingMission.costK}
                   onClick={handleConfirmDispatch}
-                  className="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 text-white rounded-xl font-black text-xs shadow-lg transition active:scale-95 border border-emerald-400 cursor-pointer flex items-center gap-1.5"
+                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 text-white rounded-xl font-black text-xs sm:text-sm shadow-lg transition active:scale-95 border border-emerald-400 cursor-pointer flex items-center gap-2"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Confirm & Dispatch</span>
+                  <span>Confirm & Dispatch (ยืนยันส่งทูต)</span>
                 </button>
               </div>
             </div>
@@ -824,34 +844,34 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
         {/* 5. HQ OPERATIONS POPUP (David Sterling - Slot Return & Venture Liquidation) */}
         {showHQOperations && (
           <div className="absolute inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-100">
-            <div className="bg-slate-900 border-2 border-amber-500 rounded-2xl p-5 max-w-lg w-full shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-3">
-                  <NegotiatorAvatar avatarId={hqDirector.avatarId} size="sm" className="w-9 h-10" />
+            <div className="bg-slate-900 border-2 border-amber-500 rounded-3xl p-6 sm:p-7 w-[92vw] max-w-3xl shadow-2xl space-y-5 animate-in zoom-in-95 duration-100">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div className="flex items-center gap-3.5">
+                  <NegotiatorAvatar avatarId={hqDirector.avatarId} size="md" className="w-13 h-15 rounded-xl shrink-0" />
                   <div>
-                    <h3 className="font-black text-sm text-white">HQ Operations: {hqDirector.name}</h3>
-                    <div className="text-[10px] text-amber-400 font-mono">Permanent Home Office Desk</div>
+                    <h3 className="font-black text-base sm:text-lg text-white">HQ Operations: {hqDirector.name}</h3>
+                    <div className="text-xs text-amber-400 font-mono">Permanent Home Office Desk • ฝ่ายบริหารสำนักงานใหญ่</div>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowHQOperations(false)}
-                  className="text-slate-400 hover:text-white p-1 rounded-lg"
+                  className="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800 hover:bg-slate-700 transition cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed bg-slate-950 p-4 rounded-2xl border border-slate-800">
                 &quot;I can instantly process regulatory surrenders or subsidiary liquidations in{' '}
-                <strong>{city.name}</strong> directly from head office without dispatch delays.&quot;
+                <strong className="text-white">{city.name}</strong> directly from head office without dispatch delays.&quot;
               </p>
 
               <div className="space-y-3 pt-1">
                 {/* Surrender Slots */}
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+                <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between gap-4">
                   <div>
-                    <div className="text-xs font-bold text-white">Surrender Unused Slots</div>
-                    <div className="text-[11px] text-slate-400">Currently owned: {slotsOwned} slots</div>
+                    <div className="text-sm font-bold text-white">Surrender Unused Slots</div>
+                    <div className="text-xs text-slate-400 mt-0.5">Currently owned: {slotsOwned} slots in {city.name}</div>
                   </div>
                   <button
                     disabled={slotsOwned < 5 || !onInstantReturnSlots}
@@ -859,18 +879,18 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                       if (onInstantReturnSlots) onInstantReturnSlots(city.id, 5);
                       setShowHQOperations(false);
                     }}
-                    className="px-3 py-1.5 bg-rose-900/60 hover:bg-rose-800 disabled:opacity-30 text-rose-200 rounded-lg font-bold text-xs border border-rose-700 transition cursor-pointer"
+                    className="px-4 py-2.5 bg-rose-900/60 hover:bg-rose-800 disabled:opacity-30 text-rose-200 rounded-xl font-bold text-xs sm:text-sm border border-rose-700 transition cursor-pointer"
                   >
                     Return 5 Slots
                   </button>
                 </div>
 
                 {/* Divest Business Ventures */}
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+                <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between gap-4">
                   <div>
-                    <div className="text-xs font-bold text-white">Liquidate Local Venture</div>
-                    <div className="text-[11px] text-slate-400">
-                      Owned: {playerBusinessesInCity.length} in {city.name}
+                    <div className="text-sm font-bold text-white">Liquidate Local Venture</div>
+                    <div className="text-xs text-slate-400 mt-0.5">
+                      Owned: {playerBusinessesInCity.length} subsidiaries in {city.name}
                     </div>
                   </div>
                   {playerBusinessesInCity.length > 0 && onInstantSellBusiness ? (
@@ -880,22 +900,22 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                         onInstantSellBusiness(b.id, Math.round(b.purchaseCostK * 0.75));
                         setShowHQOperations(false);
                       }}
-                      className="px-3 py-1.5 bg-amber-900/60 hover:bg-amber-800 text-amber-200 rounded-lg font-bold text-xs border border-amber-700 transition cursor-pointer"
+                      className="px-4 py-2.5 bg-amber-900/60 hover:bg-amber-800 text-amber-200 rounded-xl font-bold text-xs sm:text-sm border border-amber-700 transition cursor-pointer"
                     >
-                      Sell 1 Venture (75%)
+                      Sell 1 Venture (75% Refund)
                     </button>
                   ) : (
-                    <span className="text-[11px] text-slate-500 italic">None Owned</span>
+                    <span className="text-xs text-slate-500 italic">None Owned</span>
                   )}
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2 border-t border-slate-800">
+              <div className="flex justify-end pt-3 border-t border-slate-800">
                 <button
                   onClick={() => setShowHQOperations(false)}
-                  className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs transition cursor-pointer"
+                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer"
                 >
-                  Close
+                  Close (ปิด)
                 </button>
               </div>
             </div>

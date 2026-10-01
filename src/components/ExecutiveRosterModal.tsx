@@ -22,19 +22,19 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
   const dispatchedCount = fieldDelegates.filter((n) => n.status === 'DISPATCHED').length;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-150">
-      <div className="bg-slate-900 border-2 border-sky-500/70 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col text-slate-100">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-150">
+      <div className="bg-slate-900 border-2 border-sky-500/70 rounded-3xl shadow-2xl w-[94vw] max-w-6xl xl:max-w-7xl max-h-[94vh] overflow-hidden flex flex-col text-slate-100">
         {/* Title Header */}
-        <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 px-6 py-4 border-b border-sky-800/80 flex items-center justify-between shrink-0 shadow-lg">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-sky-900/80 border border-sky-400">
-              <Users className="w-6 h-6 text-sky-300" />
+        <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 px-6 sm:px-8 py-4.5 border-b border-sky-800/80 flex items-center justify-between shrink-0 shadow-lg">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 rounded-2xl bg-sky-900/80 border border-sky-400">
+              <Users className="w-6 h-6 sm:w-7 sm:h-7 text-sky-300" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-white tracking-wide">
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-wide">
                 Executive Delegation Roster (4+1 Staff)
               </h2>
-              <div className="text-xs text-sky-300 font-mono">
+              <div className="text-xs sm:text-sm text-sky-300 font-mono mt-0.5">
                 {availableCount} Available • {dispatchedCount} Dispatched on Mission • 1 HQ Director
               </div>
             </div>
@@ -42,7 +42,7 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
+            className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
             title="Close (Esc)"
             data-testid="modal-close-header-btn"
           >
