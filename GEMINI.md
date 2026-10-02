@@ -130,8 +130,21 @@ All development, UI design, and gameplay mechanics MUST strictly adhere to the f
 
 ### Rule 6: Anti-Regression Protocol: "ห้ามแก้หน้าลืมหลัง" (Strict Anti-Regression Verification)
 1. **Check Before Modifying**:
-   - Before implementing any new request or bug fix, verify that the planned change does not violate Rules 1 through 5.
+   - Before implementing any new request or bug fix, verify that the planned change does not violate Rules 1 through 7.
 2. **Preserve Completed Work**:
-   - Never remove or degrade previously established features (e.g., responsive scaling, flight path animations, slot allocation integrity, soundscape enhancements) when working on an unrelated task.
+   - Never remove or degrade previously established features (e.g., responsive scaling, flight path animations, slot allocation integrity, soundscape enhancements, route distance indicators) when working on an unrelated task.
 3. **Multi-Resolution Verification**:
    - Any visual change must be validated against multiple viewport sizes ($1024 \times 768$, $1280 \times 720$, and widescreen) via automated verification runners (`scripts/verify_*.cjs`) before declaring completion.
+
+### Rule 7: Route Distance & Aircraft Range Transparency (ต้องแสดงระยะทางบินและพิสัยบินของเครื่องบินชัดเจนเสมอ)
+1. **Prominent Route Distance Badge**:
+   - In any route listing (especially `My Routes` / `Active Commercial Routes Network`), every route card MUST prominently display its exact Great Circle distance in kilometers (e.g. `[ 🧭 4,320 km ]`) immediately behind the origin and destination city pair header.
+   - The route distance must also be stated in the route's secondary telemetry line (`Distance: 4,320 km`).
+2. **Aircraft Range vs. Corridor Distance Comparison**:
+   - Next to each assigned aircraft model, the aircraft's certified range MUST be explicitly stated (e.g. `Boeing 707-320B (พิสัยบิน 9,250 km)`).
+   - In route modification and dispatch modals (`Modify Route`), every aircraft card (both currently assigned planes and available idle planes in the hangar) MUST display:
+     1. The aircraft's certified range (`model.rangeKm`).
+     2. The route's direct corridor distance (`editingDistance`).
+     3. The explicit range margin/buffer (e.g. `ส่วนต่างพิสัย: +1,454 km` / `ส่วนเกินพิสัย: +1,454 km`).
+   - It is strictly forbidden to hide or omit distance and range data, as executives depend on distance metrics to select, swap, and optimize fleet deployment.
+
