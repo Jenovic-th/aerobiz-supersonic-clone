@@ -330,6 +330,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
           {/* My Routes */}
           <button
             onClick={onOpenFleetModal}
+            data-testid="toolbar-my-routes-btn"
             className="flex items-center gap-1.5 md:gap-2 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-sky-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <Plane className="w-4 h-4 text-sky-400" />

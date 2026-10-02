@@ -366,6 +366,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
               {playerRoutes.map((route) => {
               const origin = cityMap.get(route.originCityId);
               const dest = cityMap.get(route.destCityId);
+              const distKm = (origin && dest) ? calculateDistance(origin.lat, origin.lon, dest.lat, dest.lon) : 0;
               const assignedPlanesList = playerAirline.fleet.filter((f) =>
                 route.assignedAircraftIds.includes(f.instanceId)
               );
@@ -407,9 +408,13 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     )}
 
                     <div className="space-y-1.5 flex-1 min-w-0">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className="font-black text-base md:text-lg text-white font-mono">
-                          {origin?.name} ({origin?.id}) ➔ {dest?.name} ({dest?.id})
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <span className="font-black text-base md:text-lg text-white font-mono flex items-center gap-2 flex-wrap">
+                          <span>{origin?.name} ({origin?.id}) ➔ {dest?.name} ({dest?.id})</span>
+                          <span className="text-xs px-2.5 py-0.5 rounded-full font-bold font-mono bg-sky-950/90 text-sky-300 border border-sky-500/80 shadow-sm flex items-center gap-1 shrink-0">
+                            <Compass className="w-3.5 h-3.5 text-sky-400" />
+                            <span>{distKm.toLocaleString()} km</span>
+                          </span>
                         </span>
                         <span
                           className={`text-xs px-2.5 py-0.5 rounded-full font-bold font-mono ${
@@ -426,12 +431,16 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       </div>
 
                       <div className="text-xs text-slate-300 flex items-center gap-2.5 flex-wrap font-mono">
+                        <span className="text-sky-300">
+                          Distance: <strong>{distKm.toLocaleString()} km</strong>
+                        </span>
+                        <span>•</span>
                         <span>
                           Aircraft:{' '}
                           <strong className="text-white">
                             {assignedModelsList.length > 1
-                              ? `${assignedModelsList.length} Planes (${assignedModelsList.map(m => m.model).join(', ')}) • ${totalFleetSeats} Seats`
-                              : primaryModel?.model || 'Unassigned'}
+                              ? `${assignedModelsList.length} Planes (${assignedModelsList.map(m => `${m.model} [พิสัยบิน ${m.rangeKm.toLocaleString()} km]`).join(', ')}) • ${totalFleetSeats} Seats`
+                              : primaryModel ? `${primaryModel.model} (พิสัยบิน ${primaryModel.rangeKm.toLocaleString()} km)` : 'Unassigned'}
                           </strong>
                         </span>
                         {isDualMode && (
@@ -550,12 +559,14 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       OPERATIONAL DISPATCH
                     </span>
                   </div>
-                  <div className="text-xs text-sky-300/90 font-mono flex items-center gap-2 mt-0.5 flex-wrap truncate">
-                    <span>
+                  <div className="text-xs text-sky-300/90 font-mono flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span className="font-bold text-white text-sm">
                       {editingOrigin.name} ({editingOrigin.id}) ➔ {editingDest.name} ({editingDest.id})
                     </span>
-                    <span>•</span>
-                    <span>Distance: <strong>{editingDistance.toLocaleString()} km</strong></span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-sky-950 text-sky-300 border border-sky-400 font-bold flex items-center gap-1 shadow-sm">
+                      <Compass className="w-3.5 h-3.5 text-sky-400" />
+                      <span>{editingDistance.toLocaleString()} km</span>
+                    </span>
                     <span>•</span>
                     <span>Base Fare: <strong>${editingBaseFare}</strong></span>
                     <span>•</span>
@@ -598,8 +609,9 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                         </span>
                       </div>
                     </div>
-                    <span className="text-[11px] font-mono text-slate-400">
-                      ระยะทาง: <strong className="text-white">{editingDistance.toLocaleString()} km</strong>
+                    <span className="text-xs font-mono text-sky-300 bg-sky-950/80 px-2.5 py-1 rounded-lg border border-sky-500/70 font-bold flex items-center gap-1.5 shadow-sm">
+                      <Compass className="w-3.5 h-3.5 text-sky-400" />
+                      <span>ระยะทางบิน: <strong className="text-white">{editingDistance.toLocaleString()} km</strong></span>
                     </span>
                   </div>
 
@@ -617,7 +629,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 gap-2">
                       {assignedInstances.map((plane, idx) => {
                         const model = aircraftMap.get(plane.modelId);
                         if (!model) return null;
@@ -632,7 +644,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                             className="p-2.5 rounded-xl border border-sky-500/80 bg-sky-950/40 shadow flex items-center gap-2.5 justify-between"
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <div className="w-12 h-10 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 shrink-0">
+                              <div className="w-14 h-11 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 shrink-0">
                                 <img
                                   src={photo.photoUrl}
                                   alt={model.model}
@@ -640,17 +652,24 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                                 />
                               </div>
                               <div className="min-w-0">
-                                <div className="font-mono font-bold text-xs text-white truncate flex items-center gap-1">
-                                  <span className="truncate">{model.model}</span>
-                                  <span className="text-[9px] px-1 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-400 shrink-0">
+                                <div className="font-mono font-bold text-xs text-white truncate flex items-center gap-1.5">
+                                  <span>{model.model}</span>
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-400 shrink-0">
                                     #{idx + 1}
                                   </span>
                                 </div>
-                                <div className="text-[10px] font-mono text-slate-300 truncate">
-                                  {model.capacity} ที่นั่ง • {model.rangeKm.toLocaleString()} km
+                                <div className="text-[10px] font-mono text-slate-300 flex items-center gap-2 flex-wrap">
+                                  <span>{model.capacity} ที่นั่ง</span>
+                                  <span>•</span>
+                                  <span>พิสัยบิน: <strong className="text-sky-300">{model.rangeKm.toLocaleString()} km</strong></span>
+                                  <span>•</span>
+                                  <span>สภาพ: <strong className="text-emerald-400">{cond}%</strong></span>
                                 </div>
-                                <div className="text-[10px] font-mono text-emerald-400">
-                                  สภาพ: {cond}%
+                                <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5 flex-wrap">
+                                  <span>ระยะทางบิน: <strong className="text-white">{editingDistance.toLocaleString()} km</strong></span>
+                                  <span className="text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-500/40">
+                                    ส่วนต่างพิสัย: +{(model.rangeKm - editingDistance).toLocaleString()} km
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -660,7 +679,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveAircraftFromRoute(plane.instanceId)}
-                                  className="px-2 py-1 bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-600 rounded-lg text-[10px] font-mono font-bold transition cursor-pointer flex items-center gap-1 active:scale-95"
+                                  className="px-2.5 py-1.5 bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-600 rounded-lg text-[10px] font-mono font-bold transition cursor-pointer flex items-center gap-1 active:scale-95 shadow"
                                   title="ปลดเครื่องบินลำนี้ออกจากเส้นทาง กลับเข้าสู่โรงเก็บ"
                                 >
                                   <X className="w-3 h-3" />
@@ -691,7 +710,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     </div>
 
                     {availableIdlePlanes.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-36 overflow-y-auto pr-1">
+                      <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
                         {availableIdlePlanes.map((plane) => {
                           const model = aircraftMap.get(plane.modelId);
                           if (!model) return null;
@@ -705,7 +724,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                               className="p-2.5 rounded-xl border border-slate-700 bg-slate-900/80 hover:border-slate-600 flex items-center justify-between gap-2.5 transition"
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="w-12 h-10 rounded-lg overflow-hidden border border-slate-700 bg-slate-950 shrink-0">
+                                <div className="w-14 h-11 rounded-lg overflow-hidden border border-slate-700 bg-slate-950 shrink-0">
                                   <img
                                     src={photo.photoUrl}
                                     alt={model.model}
@@ -716,11 +735,18 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                                   <div className="font-mono font-bold text-xs text-white truncate">
                                     {model.model}
                                   </div>
-                                  <div className="text-[10px] font-mono text-slate-300 truncate">
-                                    +{model.capacity} ที่นั่ง • {model.rangeKm.toLocaleString()} km
+                                  <div className="text-[10px] font-mono text-slate-300 flex items-center gap-2 flex-wrap">
+                                    <span>+{model.capacity} ที่นั่ง</span>
+                                    <span>•</span>
+                                    <span>พิสัยบิน: <strong className="text-sky-300">{model.rangeKm.toLocaleString()} km</strong></span>
+                                    <span>•</span>
+                                    <span>สภาพ: <strong className="text-emerald-400">{cond}%</strong></span>
                                   </div>
-                                  <div className="text-[10px] font-mono text-emerald-400">
-                                    สภาพ: {cond}%
+                                  <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5 flex-wrap">
+                                    <span>ระยะทางบิน: <strong className="text-white">{editingDistance.toLocaleString()} km</strong></span>
+                                    <span className="text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-500/40">
+                                      ส่วนเกินพิสัย: +{(model.rangeKm - editingDistance).toLocaleString()} km
+                                    </span>
                                   </div>
                                 </div>
                               </div>
