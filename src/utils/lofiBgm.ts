@@ -1,5 +1,10 @@
 import { loadSettings } from './settings';
 import { getAudioContext } from './audio';
+import {
+  EXECUTIVE_LOUNGE_FULL_SCORE,
+  BarScore,
+  DrumStyle,
+} from './executiveLoungeFullSong';
 
 // Helper: Note Name to Frequency in Hz
 const noteFreq = (name: string | null): number => {
@@ -17,42 +22,6 @@ const noteFreq = (name: string | null): number => {
   return 440 * Math.pow(2, (midi - 69) / 12);
 };
 
-// Track 4: Executive Lounge Pattern (64 Sixteenth Steps @ 100 BPM)
-// Authentic SNES City Pop / Koei 90s Airline Management Vibe
-const PATTERN_LEAD: (string | null)[] = [
-  // Bar 1: Fmaj7
-  null, null, 'A4', 'C5', 'E5', null, 'G5', 'F5', 'E5', 'C5', null, 'A4', 'C5', null, 'D5', null,
-  // Bar 2: Em7b5 -> A7
-  'E5', null, 'G5', 'Bb5', null, 'A5', 'G5', 'E5', 'C#5', null, 'E5', null, 'F5', null, 'G5', null,
-  // Bar 3: Dm7 -> Gm7
-  'A5', null, 'F5', 'D5', null, 'F5', 'G5', null, 'Bb5', 'A5', 'G5', 'D5', 'F5', null, 'G5', null,
-  // Bar 4: C7 -> Fmaj7 resolution
-  'C5', null, 'E5', 'G5', 'Bb5', 'A5', 'G5', 'E5', 'F5', null, null, null, null, null, null, null,
-];
-
-const PATTERN_BASS: (string | null)[] = [
-  // Bar 1: Fmaj7
-  'F2', null, 'F2', 'C3', null, 'F2', 'A2', null, 'F2', null, 'C3', null, 'E2', null, 'D2', null,
-  // Bar 2: Em7b5 -> A7
-  'E2', null, 'E2', 'B2', null, 'E2', 'G2', null, 'A2', null, 'E3', null, 'G2', null, 'A2', null,
-  // Bar 3: Dm7 -> Gm7
-  'D2', null, 'D2', 'A2', null, 'D2', 'F2', null, 'G2', null, 'D3', null, 'F2', null, 'G2', null,
-  // Bar 4: C7 -> Fmaj7
-  'C2', null, 'C2', 'G2', null, 'C2', 'E2', null, 'F2', null, 'C3', null, 'A2', null, 'C3', null,
-];
-
-// Harmonic accompaniment chord stabs (soft, filtered SNES electric piano / synth pad)
-const PATTERN_CHORDS: Record<number, string[]> = {
-  0: ['A3', 'C4', 'E4'],   // Fmaj7
-  8: ['A3', 'C4', 'E4'],
-  16: ['G3', 'Bb3', 'D4'], // Em7b5
-  24: ['G3', 'A3', 'C#4'], // A7
-  32: ['F3', 'A3', 'C4'],  // Dm7
-  40: ['F3', 'G3', 'Bb3'], // Gm7
-  48: ['E3', 'G3', 'Bb3'], // C7
-  56: ['F3', 'A3', 'C4'],  // Fmaj7
-};
-
 class RetroCityPopBgmEngine {
   private isRunning: boolean = false;
   private compressor: DynamicsCompressorNode | null = null;
@@ -67,6 +36,8 @@ class RetroCityPopBgmEngine {
   private currentStep: number = 0;
   private nextStepTime: number = 0;
   private readonly BPM: number = 100; // User-selected exact 100 BPM
+  private readonly TOTAL_BARS: number = EXECUTIVE_LOUNGE_FULL_SCORE.length; // 48 bars
+  private readonly TOTAL_STEPS: number = EXECUTIVE_LOUNGE_FULL_SCORE.length * 16; // 768 steps = 115.2s
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -98,14 +69,14 @@ class RetroCityPopBgmEngine {
       const whiteR = Math.random() * 2 - 1;
       lastOutL = (lastOutL * 0.98) + (whiteL * 0.02);
       lastOutR = (lastOutR * 0.98) + (whiteR * 0.02);
-      left[i] = lastOutL * 0.08;
-      right[i] = lastOutR * 0.08;
+      left[i] = lastOutL * 0.07;
+      right[i] = lastOutR * 0.07;
     }
     return buffer;
   }
 
   // Percussion: 8-Bit Soft Kick
-  private play8BitKick(ctx: AudioContext, time: number) {
+  private play8BitKick(ctx: AudioContext, time: number, vol: number = 0.55) {
     if (!this.masterGain) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -113,7 +84,7 @@ class RetroCityPopBgmEngine {
     osc.frequency.setValueAtTime(130, time);
     osc.frequency.exponentialRampToValueAtTime(30, time + 0.09);
 
-    gain.gain.setValueAtTime(0.55, time);
+    gain.gain.setValueAtTime(vol, time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
 
     osc.connect(gain);
@@ -123,7 +94,7 @@ class RetroCityPopBgmEngine {
   }
 
   // Percussion: 8-Bit Snare (Filtered noise + gentle body tone)
-  private play8BitSnare(ctx: AudioContext, time: number) {
+  private play8BitSnare(ctx: AudioContext, time: number, tone: number = 240, vol: number = 0.3) {
     if (!this.masterGain) return;
     const bufferSize = Math.floor(ctx.sampleRate * 0.08);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -139,7 +110,7 @@ class RetroCityPopBgmEngine {
     filter.frequency.setValueAtTime(750, time);
 
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.3, time);
+    gain.gain.setValueAtTime(vol, time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
 
     noise.connect(filter);
@@ -152,9 +123,9 @@ class RetroCityPopBgmEngine {
     const osc = ctx.createOscillator();
     const oscGain = ctx.createGain();
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(240, time);
+    osc.frequency.setValueAtTime(tone, time);
     osc.frequency.exponentialRampToValueAtTime(70, time + 0.06);
-    oscGain.gain.setValueAtTime(0.2, time);
+    oscGain.gain.setValueAtTime(vol * 0.7, time);
     oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.07);
     osc.connect(oscGain);
     oscGain.connect(this.masterGain);
@@ -163,7 +134,7 @@ class RetroCityPopBgmEngine {
   }
 
   // Percussion: 8-Bit Hi-Hat
-  private play8BitHiHat(ctx: AudioContext, time: number, open: boolean = false) {
+  private play8BitHiHat(ctx: AudioContext, time: number, open: boolean = false, vol: number = 0.18) {
     if (!this.masterGain) return;
     const dur = open ? 0.13 : 0.038;
     const bufferSize = Math.floor(ctx.sampleRate * dur);
@@ -181,7 +152,7 @@ class RetroCityPopBgmEngine {
     filter.Q.setValueAtTime(2.2, time);
 
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(open ? 0.2 : 0.15, time);
+    gain.gain.setValueAtTime(open ? vol * 1.2 : vol, time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
 
     noise.connect(filter);
@@ -271,50 +242,101 @@ class RetroCityPopBgmEngine {
     });
   }
 
+  // Dynamic Drums by Style
+  private dispatchDrums(ctx: AudioContext, style: DrumStyle, stepInBar: number, time: number) {
+    switch (style) {
+      case 'intro':
+        // Soft kick on 0, 8; light hi-hat on 4, 12
+        if (stepInBar === 0 || stepInBar === 8) this.play8BitKick(ctx, time, 0.4);
+        if (stepInBar % 4 === 0) this.play8BitHiHat(ctx, time, false, 0.12);
+        break;
+
+      case 'normal':
+        // Kick on 0, 10
+        if (stepInBar === 0 || stepInBar === 10) this.play8BitKick(ctx, time, 0.55);
+        // Snare on 4, 12
+        if (stepInBar === 4 || stepInBar === 12) this.play8BitSnare(ctx, time, 240, 0.28);
+        // Hi-hat on 8th notes
+        if (stepInBar % 2 === 0) this.play8BitHiHat(ctx, time, stepInBar === 6, 0.16);
+        break;
+
+      case 'groove':
+        // Syncopated kick on 0, 6, 10
+        if (stepInBar === 0 || stepInBar === 6 || stepInBar === 10) this.play8BitKick(ctx, time, 0.58);
+        // Snare on 4, 12 + ghost on 14
+        if (stepInBar === 4 || stepInBar === 12) this.play8BitSnare(ctx, time, 240, 0.32);
+        if (stepInBar === 14) this.play8BitSnare(ctx, time, 310, 0.14);
+        // Hi-hat on 8th notes
+        if (stepInBar % 2 === 0) this.play8BitHiHat(ctx, time, stepInBar === 6 || stepInBar === 14, 0.18);
+        break;
+
+      case 'fill':
+        // Drum fill leading into next section
+        if (stepInBar === 0 || stepInBar === 6) this.play8BitKick(ctx, time, 0.55);
+        if (stepInBar === 4) this.play8BitSnare(ctx, time, 240, 0.28);
+        if (stepInBar >= 10 && stepInBar <= 15) {
+          const fillPitch = 220 + (stepInBar - 10) * 25;
+          this.play8BitSnare(ctx, time, fillPitch, 0.35);
+        } else if (stepInBar % 2 === 0) {
+          this.play8BitHiHat(ctx, time, false, 0.15);
+        }
+        break;
+
+      case 'soft':
+        if (stepInBar === 0) this.play8BitKick(ctx, time, 0.45);
+        if (stepInBar === 4 || stepInBar === 12) this.play8BitSnare(ctx, time, 200, 0.18);
+        if (stepInBar % 4 === 0) this.play8BitHiHat(ctx, time, false, 0.12);
+        break;
+
+      case 'outro':
+        if (stepInBar === 0) this.play8BitKick(ctx, time, 0.4);
+        if (stepInBar === 4) this.play8BitSnare(ctx, time, 180, 0.15);
+        if (stepInBar === 0) this.play8BitHiHat(ctx, time, true, 0.2);
+        break;
+    }
+  }
+
   // Step Scheduler: Lookahead loop (Chris Wilson Web Audio timing)
   private scheduleLoop() {
     if (!this.isRunning) return;
     const ctx = getAudioContext();
     if (!ctx) return;
 
-    const secondsPerStep = (60 / this.BPM) / 4; // 16th note step = 0.15s
+    const secondsPerStep = (60 / this.BPM) / 4; // 16th note step = 0.15s @ 100 BPM
     const lookahead = 0.12;
 
     while (this.nextStepTime < ctx.currentTime + lookahead) {
-      const step = this.currentStep % 64;
+      const stepIndex = this.currentStep % this.TOTAL_STEPS; // 0 to 767
+      const barIndex = Math.floor(stepIndex / 16);           // 0 to 47
+      const stepInBar = stepIndex % 16;                      // 0 to 15
 
-      // 1. Drums
-      // Kick on syncopated funk beats
-      if (step === 0 || step === 10 || step === 16 || step === 26 ||
-          step === 32 || step === 42 || step === 48 || step === 58) {
-        this.play8BitKick(ctx, this.nextStepTime);
-      }
-      // Snare on beats 2 and 4
-      if (step % 8 === 4) {
-        this.play8BitSnare(ctx, this.nextStepTime);
-      }
-      // Hi-hat on 8th notes
-      if (step % 2 === 0) {
-        this.play8BitHiHat(ctx, this.nextStepTime, step % 8 === 6);
-      }
+      const bar: BarScore = EXECUTIVE_LOUNGE_FULL_SCORE[barIndex];
 
-      // 2. Bass (Triangle)
-      const bassNote = PATTERN_BASS[step];
-      if (bassNote) {
-        const freq = noteFreq(bassNote);
-        this.playBassNote(ctx, freq, this.nextStepTime, secondsPerStep * 0.95);
-      }
+      if (bar) {
+        // 1. Dynamic Drums according to section context
+        this.dispatchDrums(ctx, bar.drumStyle, stepInBar, this.nextStepTime);
 
-      // 3. Melodic Lead
-      const leadNote = PATTERN_LEAD[step];
-      if (leadNote) {
-        const freq = noteFreq(leadNote);
-        this.playLeadNote(ctx, freq, this.nextStepTime, secondsPerStep * 1.45);
-      }
+        // 2. Bass (Triangle)
+        const bassNote = bar.bass[stepInBar];
+        if (bassNote) {
+          const freq = noteFreq(bassNote);
+          this.playBassNote(ctx, freq, this.nextStepTime, secondsPerStep * 0.95);
+        }
 
-      // 4. Harmonic Chords (Stabs on beat 1 and 3 of bars)
-      if (PATTERN_CHORDS[step]) {
-        this.playChordStab(ctx, PATTERN_CHORDS[step], this.nextStepTime, secondsPerStep * 2.5);
+        // 3. Melodic Lead (Square)
+        const leadNote = bar.lead[stepInBar];
+        if (leadNote) {
+          const freq = noteFreq(leadNote);
+          this.playLeadNote(ctx, freq, this.nextStepTime, secondsPerStep * 1.45);
+        }
+
+        // 4. Harmonic Chords (Stabs)
+        if (bar.chords) {
+          const chordDef = bar.chords.find(c => c.step === stepInBar);
+          if (chordDef) {
+            this.playChordStab(ctx, chordDef.notes, this.nextStepTime, secondsPerStep * 2.5);
+          }
+        }
       }
 
       this.nextStepTime += secondsPerStep;
@@ -356,7 +378,7 @@ class RetroCityPopBgmEngine {
         }
       }
 
-      // 2. Built-in Procedural SNES City Pop Chiptune Engine (Executive Lounge 100 BPM)
+      // 2. Built-in Procedural SNES City Pop Chiptune Engine (Executive Lounge Full 48-Bar Suite @ 100 BPM)
       const ctx = getAudioContext();
       if (!ctx) return;
       if (ctx.state === 'suspended') {
@@ -404,7 +426,9 @@ class RetroCityPopBgmEngine {
 
       this.scheduleLoop();
 
-      console.log('[BGM] Built-in SNES City Pop Chiptune started successfully (Executive Lounge @ 100 BPM)');
+      console.log(
+        `[BGM] Built-in SNES City Pop Suite started: Executive Lounge (Full 48 Bars, 1m55s @ 100 BPM)`
+      );
     } catch (err) {
       console.warn('[BGM] Failed to start BGM:', err);
     }
@@ -481,6 +505,16 @@ class RetroCityPopBgmEngine {
 
   public getIsCustomTrack(): boolean {
     return this.usingCustomTrack;
+  }
+
+  public getCurrentSection(): string {
+    if (!this.isRunning) return 'Standby';
+    const barIndex = Math.floor((this.currentStep % this.TOTAL_STEPS) / 16);
+    return EXECUTIVE_LOUNGE_FULL_SCORE[barIndex]?.sectionName || 'Main Theme';
+  }
+
+  public getTotalDurationSec(): number {
+    return this.TOTAL_STEPS * 0.15; // 115.2s
   }
 }
 
