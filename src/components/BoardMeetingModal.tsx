@@ -5,6 +5,7 @@ import { AIRCRAFTS } from '../data/aircrafts';
 import { calculateDistance, calculateBaseFare, calculateRouteDemand } from '../simulation/engine';
 import { getCityVisual } from '../data/cityVisuals';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useI18n } from '../utils/i18n';
 import {
   Users,
   Compass,
@@ -59,6 +60,8 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
   onOpenBusinessModal,
   onOpenSlotModal,
 }) => {
+  const { t, lang } = useI18n();
+  const isTh = lang === 'th';
   const [selectedTopic, setSelectedTopic] = useState<MeetingTopic>('NEW_ROUTES');
   const [showFormulaExplanation, setShowFormulaExplanation] = useState<boolean>(true);
 
@@ -354,22 +357,22 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-black font-mono tracking-wide text-white flex items-center gap-2">
-                BOARD OF DIRECTORS DELIBERATION (การประชุมบอร์ดบริหารระดับสูง)
+                {t.board.headerTitle}
               </h2>
               <div className="text-xs sm:text-sm text-indigo-300 font-mono flex items-center gap-2 mt-0.5">
                 <span className="font-bold text-white">{playerAirline.name}</span>
                 <span>•</span>
-                <span>Executive Strategic Advisory Council & Competitor Radar</span>
+                <span>{t.board.headerSubtitle}</span>
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
             className="px-4 py-2.5 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-500/70 text-rose-200 hover:text-white text-xs sm:text-sm font-mono font-bold flex items-center gap-2 transition cursor-pointer shadow-md shrink-0 active:scale-95"
-            title="ยกเลิกหรือปิดการประชุมทันที (Esc)"
+            title={isTh ? 'ยกเลิกหรือปิดการประชุมทันที (Esc)' : 'Cancel or Exit Meeting (Esc)'}
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>ยกเลิก / ปิดการประชุม (Cancel / Exit)</span>
+            <span>{t.board.cancelExitBtn}</span>
           </button>
         </div>
 
@@ -387,14 +390,14 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
             <div className="min-w-0 flex-1 font-mono">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <span className="text-xs sm:text-sm text-indigo-400 font-black uppercase tracking-wider">
-                  EXECUTIVE SECRETARY BRIEFING (รายงานสรุปประธานฝ่ายเลขาธิการ)
+                  {t.board.secretaryBriefing}
                 </span>
                 <span className="text-xs text-slate-300">
-                  Treasury: <strong className="text-emerald-400 font-bold">${playerAirline.cashK.toLocaleString()}K</strong> | Routes: <strong className="text-amber-300 font-bold">{playerRoutes.length}</strong>
+                  {t.board.treasury} <strong className="text-emerald-400 font-bold">${playerAirline.cashK.toLocaleString()}K</strong> | {t.board.routes} <strong className="text-amber-300 font-bold">{playerRoutes.length}</strong>
                 </span>
               </div>
               <div className="text-sm font-semibold text-slate-200 mt-1.5 leading-relaxed">
-                "ท่านประธานครับ คณะกรรมการได้ประมวลผลข้อมูลรอบด้านด้วยระบบอัลกอริทึมเศรษฐศาสตร์การบินและเรดาร์ข่าวกรองคู่แข่ง ขอให้ท่านเลือกพิจารณาวาระการประชุมทั้ง 5 ด้านเพื่อกำหนดทิศทางยุทธศาสตร์ของสายการบินครับ"
+                {t.board.secretarySpeech}
               </div>
             </div>
           </div>
@@ -413,12 +416,12 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
               <div className="flex items-center justify-between">
                 <Compass className="w-5 h-5 text-sky-400" />
                 <span className="text-[10px] font-black uppercase text-sky-400 bg-sky-950 px-2 py-0.5 rounded border border-sky-800">
-                  AGENDA 1
+                  {isTh ? 'วาระที่ 1' : 'AGENDA 1'}
                 </span>
               </div>
               <div>
-                <div className="text-sm sm:text-base font-black text-white">NEW ROUTES</div>
-                <div className="text-xs text-slate-400 mt-0.5">ขยายเส้นทางบินใหม่ ({topRouteOpportunities.length})</div>
+                <div className="text-sm sm:text-base font-black text-white">{t.board.agenda1Title}</div>
+                <div className="text-xs text-slate-400 mt-0.5">{t.board.agenda1Sub.replace('{count}', String(topRouteOpportunities.length))}</div>
               </div>
             </button>
 
@@ -434,16 +437,16 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
               <div className="flex items-center justify-between">
                 <Sliders className="w-5 h-5 text-emerald-400" />
                 <span className="text-[10px] font-black uppercase text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
-                  AGENDA 2
+                  {isTh ? 'วาระที่ 2' : 'AGENDA 2'}
                 </span>
               </div>
               <div>
-                <div className="text-sm sm:text-base font-black text-white">ROUTE YIELD</div>
+                <div className="text-sm sm:text-base font-black text-white">{t.board.agenda2Title}</div>
                 <div className="text-xs text-slate-400 mt-0.5">
                   {deficitRoutes.length > 0 ? (
-                    <span className="text-rose-400 font-bold">⚠️ แก้ขาดทุน ({deficitRoutes.length})</span>
+                    <span className="text-rose-400 font-bold">{t.board.agenda2SubDeficit.replace('{count}', String(deficitRoutes.length))}</span>
                   ) : (
-                    <span>ปรับปรุงค่าตั๋ว/ฝูงบิน</span>
+                    <span>{t.board.agenda2SubNormal}</span>
                   )}
                 </div>
               </div>
@@ -461,12 +464,12 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
               <div className="flex items-center justify-between">
                 <Plane className="w-5 h-5 text-amber-400" />
                 <span className="text-[9px] font-black uppercase text-amber-400 bg-amber-950 px-1.5 py-0.5 rounded border border-amber-800">
-                  AGENDA 3
+                  {isTh ? 'วาระที่ 3' : 'AGENDA 3'}
                 </span>
               </div>
               <div>
-                <div className="text-xs sm:text-sm font-black text-white">FLEET & ORDERS</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">วิศวกรรม/สั่งซื้อเครื่องบิน</div>
+                <div className="text-xs sm:text-sm font-black text-white">{t.board.agenda3Title}</div>
+                <div className="text-[10px] text-slate-400 mt-0.5">{t.board.agenda3Sub}</div>
               </div>
             </button>
 
@@ -482,16 +485,16 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
               <div className="flex items-center justify-between">
                 <Building2 className="w-5 h-5 text-purple-400" />
                 <span className="text-[9px] font-black uppercase text-purple-400 bg-purple-950 px-1.5 py-0.5 rounded border border-purple-800">
-                  AGENDA 4
+                  {isTh ? 'วาระที่ 4' : 'AGENDA 4'}
                 </span>
               </div>
               <div>
-                <div className="text-xs sm:text-sm font-black text-white">VENTURES</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">โรงแรม/ธุรกิจเสริม</div>
+                <div className="text-xs sm:text-sm font-black text-white">{t.board.agenda4Title}</div>
+                <div className="text-[10px] text-slate-400 mt-0.5">{t.board.agenda4Sub}</div>
               </div>
             </button>
 
-            {/* Agenda 5: Competitor Intel Radar (NEW!) */}
+            {/* Agenda 5: Competitor Intel Radar */}
             <button
               onClick={() => setSelectedTopic('COMPETITOR_INTEL')}
               className={`p-3 rounded-2xl border font-mono text-left transition flex flex-col justify-between gap-1.5 cursor-pointer relative overflow-hidden col-span-2 sm:col-span-1 ${
@@ -503,13 +506,13 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
               <div className="flex items-center justify-between">
                 <Eye className="w-5 h-5 text-rose-400 animate-pulse" />
                 <span className="text-[9px] font-black uppercase text-rose-400 bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">
-                  RADAR INTEL
+                  {isTh ? 'เรดาร์ข่าวกรอง' : 'RADAR INTEL'}
                 </span>
               </div>
               <div>
-                <div className="text-xs sm:text-sm font-black text-white">COMPETITOR INTEL</div>
+                <div className="text-xs sm:text-sm font-black text-white">{t.board.agenda5Title}</div>
                 <div className="text-[10px] text-rose-300 font-bold mt-0.5">
-                  สอดแนมคู่แข่ง AI ({rivalDispatchedMissions.length} Envoys)
+                  {isTh ? `สอดแนมคู่แข่ง AI (${rivalDispatchedMissions.length} ทูต)` : `Rival AI Recon (${rivalDispatchedMissions.length} Envoys)`}
                 </div>
               </div>
             </button>
@@ -522,7 +525,7 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
               className="text-[11px] font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 cursor-pointer transition"
             >
               <Calculator className="w-3.5 h-3.5" />
-              <span>{showFormulaExplanation ? 'ซ่อนคำอธิบายระเบียบวิธีคิด (Hide Formulas)' : 'แสดงสูตรการคำนวณและวิธีคิดของ AI (Show Formulas)'}</span>
+              <span>{showFormulaExplanation ? t.board.hideFormulas : t.board.showFormulas}</span>
             </button>
           </div>
 
@@ -539,10 +542,10 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                   </div>
                   <div>
                     <h3 className="text-sm font-black text-sky-200 uppercase">
-                      DIRECTOR OF NETWORK PLANNING & FLEET ROUTING (ผู้อำนวยการฝ่ายวางแผนเส้นทางบิน)
+                      {t.board.directorNetworkTitle}
                     </h3>
                     <p className="text-xs text-slate-300 mt-0.5">
-                      "เราตรวจสอบพอร์ตโฟลิโอ Landing Slots ที่สายการบินถือครองอยู่แต่ยังไม่ได้เปิดบิน พร้อมวิเคราะห์ดีมานด์มวลรวมทางเศรษฐกิจและผลตอบแทนสุทธิครับ"
+                      {t.board.directorNetworkSpeech}
                     </p>
                   </div>
                 </div>
@@ -553,20 +556,20 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                 <div className="bg-slate-950 border border-sky-900/50 rounded-2xl p-4 space-y-2 text-xs">
                   <div className="text-sky-400 font-black flex items-center gap-1.5 uppercase text-[11px]">
                     <Calculator className="w-4 h-4" />
-                    <span>ALGORITHMIC REASONING & DEMAND GRAVITY MODEL (ระเบียบวิธีคิดและการคำนวณของ AI):</span>
+                    <span>{isTh ? 'ระเบียบวิธีคิดและการคำนวณของ AI (Gravity Demand Model):' : 'ALGORITHMIC REASONING & DEMAND GRAVITY MODEL:'}</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-slate-300 text-[11px] pt-1">
                     <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                      <strong className="text-sky-300 block">1. Gravity Demand Model:</strong>
+                      <strong className="text-sky-300 block">{isTh ? '1. แบบจำลองแรงดึงดูดทางเศรษฐกิจ:' : '1. Gravity Demand Model:'}</strong>
                       Demand = √(Pop₁ × Pop₂) × [(Bus₁ + Bus₂ + Tour₁ + Tour₂) / 4] × EraMultiplier
                     </div>
                     <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                      <strong className="text-sky-300 block">2. Standard Base Fare:</strong>
-                      Base Fare ($) = Distance (km) × 0.11 + $65 (สอดคล้องกับต้นทุนเชื้อเพลิงต่อระยะทาง)
+                      <strong className="text-sky-300 block">{isTh ? '2. ราคาตั๋วมาตรฐานตามระยะบิน:' : '2. Standard Base Fare:'}</strong>
+                      {isTh ? 'ค่าโดยสารมาตรฐาน ($) = ระยะทาง (กม.) × 0.11 + $65 (แปรผันตามต้นทุนเชื้อเพลิง)' : 'Base Fare ($) = Distance (km) × 0.11 + $65 (Aligned with per-km fuel costs)'}
                     </div>
                     <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                      <strong className="text-sky-300 block">3. Operating Profit Margin:</strong>
-                      Net Margin = Revenue (Pax × Fare) - OpEx (Seats × 52% Standard Trip Cost)
+                      <strong className="text-sky-300 block">{isTh ? '3. อัตรากำไรจากการดำเนินงาน:' : '3. Operating Profit Margin:'}</strong>
+                      {isTh ? 'กำไรสุทธิ = รายรับรวม (ผู้โดยสาร × ค่าตั๋ว) - ต้นทุนดำเนินการ (ที่นั่ง × 52% ต้นทุนเที่ยวบิน)' : 'Net Margin = Revenue (Pax × Fare) - OpEx (Seats × 52% Standard Trip Cost)'}
                     </div>
                   </div>
                 </div>
@@ -575,7 +578,7 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
               {/* Opportunities List */}
               {topRouteOpportunities.length === 0 ? (
                 <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center text-slate-400 text-xs">
-                  ขณะนี้สนามบินทุกแห่งที่คุณถือครอง Landing Slot เปิดเที่ยวบินครบถ้วนแล้ว! แนะนำให้ส่งนักการทูตไปเจรจาขอสล็อตในมหานครใหม่เพื่อขยายโครงข่าย
+                  {isTh ? 'ขณะนี้สนามบินทุกแห่งที่คุณถือครอง Landing Slot เปิดเที่ยวบินครบถ้วนแล้ว! แนะนำให้ส่งนักการทูตไปเจรจาขอสล็อตในมหานครใหม่เพื่อขยายโครงข่าย' : 'All cities with landing slots are currently served! Dispatch envoys to negotiate slots in new global cities to expand your network.'}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -594,17 +597,17 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                           </span>
                           {opp.isMonopoly ? (
                             <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded font-black">
-                              ★ MONOPOLY CORRIDOR (ไร้คู่แข่ง)
+                              {t.board.monopolyBadge}
                             </span>
                           ) : (
                             <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-700 px-2 py-0.5 rounded font-black">
-                              ⚔️ CONTESTED ({opp.rivalCount} Rivals)
+                              {t.board.contestedBadge.replace('{count}', String(opp.rivalCount))}
                             </span>
                           )}
                           {opp.upcomingEvent && (
                             <span className="text-[10px] bg-indigo-950 text-indigo-300 border border-indigo-500/80 px-2 py-0.5 rounded font-black flex items-center gap-1 shadow animate-pulse">
                               <Calendar className="w-3 h-3 text-indigo-400" />
-                              <span>🔮 มหกรรมโลก: {opp.upcomingEvent.event.title} (อีก {opp.upcomingEvent.quartersUntil * 3} เดือน / ดีมานด์ +{opp.upcomingEvent.estimatedDemandSurgePct}%)</span>
+                              <span>{t.board.worldSpectacle.replace('{title}', opp.upcomingEvent.event.title).replace('{months}', String(opp.upcomingEvent.quartersUntil * 3)).replace('{surge}', String(opp.upcomingEvent.estimatedDemandSurgePct))}</span>
                             </span>
                           )}
                         </div>
@@ -617,7 +620,7 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                             }}
                             className="px-4 py-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 shrink-0"
                           >
-                            <span>Open Route (เปิดบินทันที)</span>
+                            <span>{t.board.openRouteImmediate}</span>
                             <ArrowRight className="w-4 h-4" />
                           </button>
                         ) : (
@@ -629,7 +632,7 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                             }}
                             className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 shrink-0"
                           >
-                            <span>Dispatch Envoy (ขอสล็อต)</span>
+                            <span>{t.board.dispatchEnvoy}</span>
                             <ArrowRight className="w-4 h-4" />
                           </button>
                         )}
@@ -638,23 +641,23 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                       {/* Financial Projection Metrics */}
                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
                         <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                          <span className="text-slate-500 block text-[10px]">SLOTS OWNED</span>
-                          <strong className="text-white">{opp.slotsOwned} Slots Idle</strong>
+                          <span className="text-slate-500 block text-[10px]">{t.board.slotsOwned}</span>
+                          <strong className="text-white">{opp.slotsOwned} {isTh ? 'สล็อต (ว่าง)' : 'Slots Idle'}</strong>
                         </div>
                         <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                          <span className="text-slate-500 block text-[10px]">BASE TICKET FARE</span>
-                          <strong className="text-amber-300">${opp.baseFare} / seat</strong>
+                          <span className="text-slate-500 block text-[10px]">{t.board.baseTicketFare}</span>
+                          <strong className="text-amber-300">${opp.baseFare} {isTh ? '/ ที่นั่ง' : '/ seat'}</strong>
                         </div>
                         <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                          <span className="text-slate-500 block text-[10px]">PROJECTED PAX</span>
-                          <strong className="text-sky-300">{opp.projectedPax.toLocaleString()} pax/Q</strong>
+                          <span className="text-slate-500 block text-[10px]">{t.board.projectedPax}</span>
+                          <strong className="text-sky-300">{opp.projectedPax.toLocaleString()} {isTh ? 'คน/ไตรมาส' : 'pax/Q'}</strong>
                         </div>
                         <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                          <span className="text-slate-500 block text-[10px]">EST. OPEX</span>
+                          <span className="text-slate-500 block text-[10px]">{t.board.estOpEx}</span>
                           <strong className="text-slate-300">${opp.estimatedOpExK.toLocaleString()}K</strong>
                         </div>
                         <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                          <span className="text-slate-500 block text-[10px]">PROJECTED PROFIT</span>
+                          <span className="text-slate-500 block text-[10px]">{t.board.projectedProfit}</span>
                           <strong className="text-emerald-400 font-black">
                             +${opp.projectedNetProfitK.toLocaleString()}K ({opp.operatingMarginPct}%)
                           </strong>
@@ -663,10 +666,20 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
 
                       {/* AI Strategic Rationale */}
                       <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-800/80 text-xs text-slate-300 leading-relaxed">
-                        <strong className="text-sky-300 block mb-1">💡 AI Strategic Rationale (เหตุผลและวิธีคิดที่ผู้ช่วยวิเคราะห์แทนเรา):</strong>
-                        1. <strong>ใช้ประโยชน์สล็อตว่าง:</strong> เราถือสิทธิ์การบินใน {opp.dest.name} อยู่ {opp.slotsOwned} สล็อตโดยไม่มีเที่ยวบิน หากปล่อยทิ้งไว้จะเสี่ยงต่อกฎ Use-it-or-Lose-it ของสนามบินสากล<br />
-                        2. <strong>ผลตอบแทนทางเศรษฐกิจ:</strong> เมือง {opp.dest.name} มีประชากร {opp.dest.population} ล้านคน และดัชนีธุรกิจ {opp.dest.businessIndex}/100 รองรับดีมานด์ {opp.rawDemand.toLocaleString()} คน/ไตรมาส คาดว่าจะทำกำไรสุทธิสูงถึง +${opp.projectedNetProfitK.toLocaleString()}K ต่อไตรมาส<br />
-                        3. <strong>ความพร้อมฝูงบิน:</strong> {opp.idlePlane ? `มีเครื่องบินว่างที่ระยะบินถึง (${opp.distance.toLocaleString()} km) พร้อมจัดสรรบินได้ทันที!` : 'แนะนำให้สั่งซื้อหรือโยกย้ายเครื่องบินพิสัยบินอย่างน้อย ' + opp.distance.toLocaleString() + ' km'}
+                        <strong className="text-sky-300 block mb-1">{t.board.aiRationale}</strong>
+                        {isTh ? (
+                          <>
+                            1. <strong>ใช้ประโยชน์สล็อตว่าง:</strong> เราถือสิทธิ์การบินใน {opp.dest.name} อยู่ {opp.slotsOwned} สล็อตโดยไม่มีเที่ยวบิน หากปล่อยทิ้งไว้จะเสี่ยงต่อกฎ Use-it-or-Lose-it ของสนามบินสากล<br />
+                            2. <strong>ผลตอบแทนทางเศรษฐกิจ:</strong> เมือง {opp.dest.name} มีประชากร {opp.dest.population} ล้านคน และดัชนีธุรกิจ {opp.dest.businessIndex}/100 รองรับดีมานด์ {opp.rawDemand.toLocaleString()} คน/ไตรมาส คาดว่าจะทำกำไรสุทธิสูงถึง +${opp.projectedNetProfitK.toLocaleString()}K ต่อไตรมาส<br />
+                            3. <strong>ความพร้อมฝูงบิน:</strong> {opp.idlePlane ? `มีเครื่องบินว่างที่ระยะบินถึง (${opp.distance.toLocaleString()} km) พร้อมจัดสรรบินได้ทันที!` : 'แนะนำให้สั่งซื้อหรือโยกย้ายเครื่องบินพิสัยบินอย่างน้อย ' + opp.distance.toLocaleString() + ' km'}
+                          </>
+                        ) : (
+                          <>
+                            1. <strong>Idle Slot Utilization:</strong> Holding {opp.slotsOwned} idle slots in {opp.dest.name} risks forfeiture under international Use-it-or-Lose-it airport regulations.<br />
+                            2. <strong>Economic Yield:</strong> {opp.dest.name} has a population of {opp.dest.population}M and business index {opp.dest.businessIndex}/100, generating {opp.rawDemand.toLocaleString()} quarterly pax demand and projected net profit of +${opp.projectedNetProfitK.toLocaleString()}K.<br />
+                            3. <strong>Fleet Allocation:</strong> {opp.idlePlane ? `Available aircraft with matching certified range (${opp.distance.toLocaleString()} km) is ready for immediate dispatch!` : 'Recommend ordering or reassigning an aircraft with certified range of at least ' + opp.distance.toLocaleString() + ' km.'}
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -688,10 +701,10 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                   </div>
                   <div>
                     <h3 className="text-sm font-black text-emerald-200 uppercase">
-                      CHIEF COMMERCIAL OFFICER & YIELD REVENUE DIRECTOR (ผู้อำนวยการฝ่ายพาณิชย์และการบริหารรายได้)
+                      {t.board.directorCommercialTitle}
                     </h3>
                     <p className="text-xs text-slate-300 mt-0.5">
-                      "ตรวจสุขภาพเที่ยวบินปัจจุบัน: กู้ชีพเส้นทางขาดทุนด้วยการปรับราคา/เปลี่ยนเครื่องบิน และเก็บเกี่ยวกำไรส่วนเกินจากเส้นทางที่คนแน่น 100%"
+                      {t.board.directorCommercialSpeech}
                     </p>
                   </div>
                 </div>
@@ -702,16 +715,16 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                 <div className="bg-slate-950 border border-emerald-900/50 rounded-2xl p-4 space-y-2 text-xs">
                   <div className="text-emerald-400 font-black flex items-center gap-1.5 uppercase text-[11px]">
                     <Calculator className="w-4 h-4" />
-                    <span>YIELD MANAGEMENT THEORY & ELASTICITY RULES (หลักการบริหารผลตอบแทนค่าโดยสาร):</span>
+                    <span>{isTh ? 'หลักการบริหารผลตอบแทนค่าโดยสาร:' : 'YIELD MANAGEMENT THEORY & ELASTICITY RULES:'}</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-slate-300 text-[11px] pt-1">
                     <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                      <strong className="text-emerald-300 block">1. Deficit Fix (Load Factor &lt; 65%):</strong>
-                      ความยืดหยุ่นของอุปสงค์ต่อราคา (ε ≈ -1.35) เมื่อลดค่าตั๋วลง 10% จะกระตุ้นจำนวนผู้โดยสารพุ่งขึ้น +13.5% ช่วยเติมเต็มที่นั่งว่างและเปลี่ยนเส้นทางขาดทุนเป็นกำไร
+                      <strong className="text-emerald-300 block">{isTh ? '1. แก้ปัญหาเที่ยวบินขาดทุน (อัตราบรรทุก < 65%):' : '1. Deficit Fix (Load Factor < 65%):'}</strong>
+                      {isTh ? 'ความยืดหยุ่นของอุปสงค์ต่อราคา (ε ≈ -1.35) เมื่อลดค่าตั๋วลง 10% จะกระตุ้นจำนวนผู้โดยสารพุ่งขึ้น +13.5% ช่วยเติมเต็มที่นั่งว่างและเปลี่ยนเส้นทางขาดทุนเป็นกำไร' : 'Price elasticity of demand (ε ≈ -1.35) means a 10% fare reduction can boost passenger volume by +13.5%, filling empty seats and turning deficits into profit.'}
                     </div>
                     <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                      <strong className="text-emerald-300 block">2. Saturation Upsell (Load Factor ≥ 95%):</strong>
-                      เที่ยวบินเต็มล้น 100% แสดงว่าดีมานด์ล้นเกินความจุ การปรับขึ้นค่าตั๋ว +10% ถึง +15% จะมีผู้โดยสารยอมจ่ายโดยแทบไม่มีผู้โดยสารลดลง กำไรสุทธิจะเพิ่มขึ้น 100% เต็มเม็ดเต็มหน่วย
+                      <strong className="text-emerald-300 block">{isTh ? '2. เพิ่มกำไรจากเที่ยวบินเต็ม (อัตราบรรทุก ≥ 95%):' : '2. Saturation Upsell (Load Factor ≥ 95%):'}</strong>
+                      {isTh ? 'เที่ยวบินเต็มล้น 100% แสดงว่าดีมานด์ล้นเกินความจุ การปรับขึ้นค่าตั๋ว +10% ถึง +15% จะมีผู้โดยสารยอมจ่ายโดยแทบไม่มีผู้โดยสารลดลง กำไรสุทธิจะเพิ่มขึ้นเต็มเม็ดเต็มหน่วย' : 'Flights running at 100% capacity indicate excess demand. Increasing fares by +10% to +15% captures pure surplus profit with negligible passenger drop-off.'}
                     </div>
                   </div>
                 </div>
@@ -723,12 +736,12 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                 <div className="space-y-3">
                   <div className="text-xs font-bold text-rose-300 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-rose-400" />
-                    <span>DEFICIT CORRIDORS (เส้นทางที่ขาดทุนสุทธิ):</span>
+                    <span>{t.board.deficitCorridors}</span>
                   </div>
 
                   {deficitRoutes.length === 0 ? (
                     <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl text-center text-xs text-emerald-400">
-                      ✓ ยอดเยี่ยมมาก! ทุกเส้นทางบินกำลังทำกำไรสุทธิเป็นบวก ไม่มีเส้นทางขาดทุน
+                      {t.board.noDeficitRoutes}
                     </div>
                   ) : (
                     deficitRoutes.map(({ route, orig, dst, stats, isLowLF, isOversized, estTurnaroundSavingK }) => (
@@ -743,16 +756,18 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                         </div>
 
                         <div className="text-[11px] text-slate-300 bg-slate-900 p-2 rounded-lg space-y-1">
-                          <div>อัตราที่นั่ง (LF): <strong className="text-amber-300">{stats.loadFactorPct}%</strong> (ผู้โดยสาร {stats.passengers.toLocaleString()} / ความจุ {stats.capacity.toLocaleString()})</div>
+                          <div>{isTh ? 'อัตราบรรทุกผู้โดยสาร:' : 'Load Factor:'} <strong className="text-amber-300">{stats.loadFactorPct}%</strong> ({isTh ? 'ผู้โดยสาร' : 'Pax'} {stats.passengers.toLocaleString()} / {isTh ? 'ความจุ' : 'Capacity'} {stats.capacity.toLocaleString()})</div>
                           <div className="text-rose-300 font-semibold">
                             💡 {isLowLF
-                              ? 'วินิจฉัย: ค่าตั๋วสูงเกินไป แนะนำลดค่าตั๋ว -10% เพื่อดึงดูดผู้โดยสาร'
+                              ? (isTh ? 'วินิจฉัย: ค่าตั๋วสูงเกินไป แนะนำลดค่าตั๋ว -10% เพื่อดึงดูดผู้โดยสาร' : 'Diagnosis: Fares too high. Recommend cutting ticket price -10% to boost load factor.')
                               : isOversized
-                              ? 'วินิจฉัย: ใช้เครื่องบินลำใหญ่เกินไป แนะนำเปลี่ยนเป็นลำเล็กลงเพื่อลดต้นทุนเชื้อเพลิง'
-                              : 'วินิจฉัย: ต้นทุนต่อเที่ยวบินสูงกว่ารายรับ แนะนำปรับความถี่หรือตั๋ว'}
+                              ? (isTh ? 'วินิจฉัย: ใช้เครื่องบินลำใหญ่เกินไป แนะนำเปลี่ยนเป็นลำเล็กลงเพื่อลดต้นทุนเชื้อเพลิง' : 'Diagnosis: Aircraft capacity exceeds demand. Recommend downsizing to reduce fuel burn.')
+                              : (isTh ? 'วินิจฉัย: ต้นทุนต่อเที่ยวบินสูงกว่ารายรับ แนะนำปรับความถี่หรือตั๋ว' : 'Diagnosis: Operating costs exceed revenue. Recommend adjusting frequency or fares.')}
                           </div>
                           <div className="text-emerald-400 text-[10px]">
-                            คาดการณ์ผลประโยชน์: ลดการขาดทุนได้ประมาณ +${estTurnaroundSavingK.toLocaleString()}K ต่อไตรมาส
+                            {isTh
+                              ? `คาดการณ์ผลประโยชน์: ลดการขาดทุนได้ประมาณ +$${estTurnaroundSavingK.toLocaleString()}K ต่อไตรมาส`
+                              : `Projected Benefit: Reduce losses by approx +$${estTurnaroundSavingK.toLocaleString()}K per quarter`}
                           </div>
                         </div>
 
@@ -763,7 +778,7 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                           }}
                           className="w-full py-1.5 bg-rose-900/80 hover:bg-rose-800 text-rose-100 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer"
                         >
-                          <span>Modify Route (ปรับลดราคา/เปลี่ยนเครื่อง)</span>
+                          <span>{t.board.modifyRouteDeficit}</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -775,12 +790,12 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                 <div className="space-y-3">
                   <div className="text-xs font-bold text-emerald-300 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-emerald-400" />
-                    <span>SATURATED CORRIDORS (เที่ยวบินเต็ม 95-100% - โอกาสเพิ่มกำไร):</span>
+                    <span>{t.board.saturatedCorridors}</span>
                   </div>
 
                   {overbookedRoutes.length === 0 ? (
                     <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl text-center text-xs text-slate-400">
-                      ยังไม่มีเส้นทางที่อัตราที่นั่งเต็มล้น 95-100%
+                      {t.board.noSaturatedRoutes}
                     </div>
                   ) : (
                     overbookedRoutes.map(({ route, orig, dst, stats, estExtraProfitK }) => (
@@ -790,17 +805,19 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                             {orig.name} ➔ {dst.name}
                           </span>
                           <span className="text-emerald-400 font-black text-xs">
-                            LF: {stats.loadFactorPct}% (เต็มพิกัด)
+                            LF: {stats.loadFactorPct}% {isTh ? '(เต็มพิกัด)' : '(Capacity Max)'}
                           </span>
                         </div>
 
                         <div className="text-[11px] text-slate-300 bg-slate-900 p-2 rounded-lg space-y-1">
-                          <div>กำไรปัจจุบัน: <strong className="text-emerald-400">+${stats.profitK.toLocaleString()}K</strong></div>
+                          <div>{isTh ? 'กำไรปัจจุบัน:' : 'Current Profit:'} <strong className="text-emerald-400">+${stats.profitK.toLocaleString()}K</strong></div>
                           <div className="text-emerald-300 font-semibold">
-                            💡 วินิจฉัย: ที่นั่งไม่พอขาย แนะนำปรับขึ้นราคาตั๋ว +10% ถึง +15% หรือเปลี่ยนใส่เครื่องบินลำใหญ่ขึ้น
+                            💡 {isTh ? 'วินิจฉัย: ที่นั่งไม่พอขาย แนะนำปรับขึ้นราคาตั๋ว +10% ถึง +15% หรือเปลี่ยนใส่เครื่องบินลำใหญ่ขึ้น' : 'Diagnosis: Saturated demand. Recommend raising ticket fare +10% to +15% or upgrading to larger aircraft.'}
                           </div>
                           <div className="text-sky-300 text-[10px]">
-                            คาดการณ์ผลประโยชน์: ฟันกำไรส่วนเกินเพิ่มอีก +${estExtraProfitK.toLocaleString()}K ต่อไตรมาสโดยไม่ต้องลงทุนเพิ่ม!
+                            {isTh
+                              ? `คาดการณ์ผลประโยชน์: ฟันกำไรส่วนเกินเพิ่มอีก +$${estExtraProfitK.toLocaleString()}K ต่อไตรมาสโดยไม่ต้องลงทุนเพิ่ม!`
+                              : `Projected Benefit: Capture +$${estExtraProfitK.toLocaleString()}K in pure quarterly profit with zero added capex!`}
                           </div>
                         </div>
 
@@ -811,7 +828,7 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                           }}
                           className="w-full py-1.5 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-100 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer"
                         >
-                          <span>Scale Up / Raise Fare (ปรับขึ้นราคา/เพิ่มเที่ยว)</span>
+                          <span>{t.board.scaleUpFare}</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -835,10 +852,10 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                   </div>
                   <div>
                     <h3 className="text-sm font-black text-amber-200 uppercase">
-                      VP OF FLEET ENGINEERING & ASSET ALLOCATION (ผู้อำนวยการฝ่ายวิศวกรรมฝูงบินและการจัดซื้อ)
+                      {t.board.directorFleetTitle}
                     </h3>
                     <p className="text-xs text-slate-300 mt-0.5">
-                      "ตรวจสอบสุขภาพทางกลไกของเครื่องบินทุกเครื่อง วิเคราะห์เครื่องบินที่จอดนิ่ง (Idle) และโอกาสส่วนลดพิเศษจากโรงงานผู้ผลิตครับ"
+                      {t.board.directorFleetSpeech}
                     </p>
                   </div>
                 </div>
@@ -849,20 +866,20 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                 <div className="bg-slate-950 border border-amber-900/50 rounded-2xl p-4 space-y-2 text-xs">
                   <div className="text-amber-400 font-black flex items-center gap-1.5 uppercase text-[11px]">
                     <Calculator className="w-4 h-4" />
-                    <span>FLEET ENGINEERING THRESHOLDS & CAPITAL DEPLOYMENT (เกณฑ์การบริหารสินทรัพย์ฝูงบิน):</span>
+                    <span>{isTh ? 'เกณฑ์การบริหารสินทรัพย์ฝูงบิน:' : 'FLEET ENGINEERING THRESHOLDS & CAPITAL DEPLOYMENT:'}</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-slate-300 text-[11px] pt-1">
                     <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                      <strong className="text-amber-300 block">1. Wear &amp; Tear Safety Threshold:</strong>
-                      หากสภาพเครื่องยนต์ &lt; 80% อัตราเสี่ยงดีเลย์/เครื่องขัดข้องจะพุ่งสูง ต้องปรับงบซ่อมบำรุงเป็น Rigorous (+15%) ทันที
+                      <strong className="text-amber-300 block">{isTh ? '1. เกณฑ์ความปลอดภัยทางกลไก (< 80%):' : '1. Wear & Tear Safety Threshold:'}</strong>
+                      {isTh ? 'หากสภาพเครื่องยนต์ < 80% อัตราเสี่ยงดีเลย์หรือเครื่องขัดข้องจะพุ่งสูง ต้องปรับงบซ่อมบำรุงเป็น Rigorous (+15%) ทันที' : 'If airframe condition drops below 80%, incident and breakdown risks spike. Switch maintenance tier to Rigorous (+15%) immediately.'}
                     </div>
                     <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                      <strong className="text-amber-300 block">2. Idle Asset Penalty:</strong>
-                      เครื่องบินที่จอดว่าง (Idle) มีต้นทุนการบำรุงรักษาและเสื่อมราคาไตรมาสละ $150K-$350K โดยไม่สร้างรายได้ ต้องนำไปบินให้เร็วที่สุด
+                      <strong className="text-amber-300 block">{isTh ? '2. ต้นทุนการจอดเครื่องบินทิ้งว่าง:' : '2. Idle Asset Penalty:'}</strong>
+                      {isTh ? 'เครื่องบินที่จอดทิ้งว่างมีต้นทุนการบำรุงรักษาและเสื่อมราคาไตรมาสละ $150K-$350K โดยไม่สร้างรายได้ ต้องนำไปบินให้เร็วที่สุด' : 'Idle aircraft incur hangar parking and depreciation fees of $150K-$350K per quarter without revenue. Deploy them to active routes promptly.'}
                     </div>
                     <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                      <strong className="text-amber-300 block">3. Intercontinental Reach:</strong>
-                      การจะพิชิตชัยชนะ Koei 7 ทวีป จำเป็นต้องมีเครื่องบินพิสัยไกล (≥ 8,800 km) เพื่อเชื่อมโยงฐานข้ามทวีปโดยไม่ต้องแวะพัก
+                      <strong className="text-amber-300 block">{isTh ? '3. พิสัยการบินข้ามทวีป:' : '3. Intercontinental Reach:'}</strong>
+                      {isTh ? 'การจะพิชิตชัยชนะเชื่อมโยง 7 ทวีป จำเป็นต้องมีเครื่องบินพิสัยไกล (≥ 8,800 km) เพื่อเชื่อมโยงฐานข้ามทวีปโดยไม่ต้องแวะพัก' : 'Dominating all 7 continents requires long-range aircraft (≥ 8,800 km) to establish nonstop transoceanic trunk corridors.'}
                     </div>
                   </div>
                 </div>
@@ -874,13 +891,13 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                   <div>
                     <div className="text-xs font-black text-amber-300 flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-amber-400" />
-                      <span>⭐ ACTIVE FACTORY REBATE: {activeDiscount.modelName} (ลดราคาพิเศษ {activeDiscount.discountPct}% OFF)</span>
+                      <span>{t.board.activeRebateTitle.replace('{model}', activeDiscount.modelName).replace('{pct}', String(activeDiscount.discountPct))}</span>
                     </div>
                     <div className="text-xs text-slate-200 mt-1">
                       {activeDiscount.reason}
                     </div>
                     <div className="text-[11px] text-amber-200/80 mt-0.5">
-                      โอกาสประหยัดเงินทุนได้หลายล้านดอลลาร์ เหมาะอย่างยิ่งสำหรับการขยายเส้นทางข้ามทวีป
+                      {isTh ? 'โอกาสประหยัดเงินทุนได้หลายล้านดอลลาร์ เหมาะอย่างยิ่งสำหรับการขยายเส้นทางข้ามทวีป' : 'Save millions in capital expenditure. Perfect timing for intercontinental route expansion.'}
                     </div>
                   </div>
                   <button
@@ -890,12 +907,12 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                     }}
                     className="px-4 py-2 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-slate-950 font-black rounded-xl text-xs cursor-pointer shadow active:scale-95"
                   >
-                    Order Discounted Aircraft
+                    {t.board.orderDiscountedPlane}
                   </button>
                 </div>
               ) : (
                 <div className="bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs text-slate-400">
-                  ขณะนี้ไม่มีแคมเปญส่วนลดพิเศษจากโรงงานผู้ผลิต (ราคามาตรฐานตามตลาด)
+                  {t.board.noRebate}
                 </div>
               )}
 
@@ -904,19 +921,19 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                 <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl space-y-2">
                   <div className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                     <Activity className="w-4 h-4 text-sky-400" />
-                    <span>MECHANICAL HEALTH (สถานะการซ่อมบำรุง):</span>
+                    <span>{t.board.mechanicalHealth}</span>
                   </div>
                   {deterioratingPlanes.length === 0 ? (
                     <div className="text-xs text-emerald-400 flex items-center gap-1.5">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      <span>เครื่องบินทุกลำในฝูงบินมีสภาพสมบูรณ์เกิน 80% ปลอดภัยและพร้อมปฏิบัติการ</span>
+                      <span>{t.board.healthAllGood}</span>
                     </div>
                   ) : (
                     <div className="text-xs text-rose-300 space-y-1">
-                      <div>⚠️ พบเครื่องบิน {deterioratingPlanes.length} ลำ มีสภาพความสมบูรณ์ต่ำกว่า 80%</div>
+                      <div>{t.board.healthWarning.replace('{count}', String(deterioratingPlanes.length))}</div>
                       <div className="text-[11px] opacity-80 text-rose-400">
-                        {criticalPlanes.length > 0 && `(ในนี้มี ${criticalPlanes.length} ลำต่ำกว่า 70% เสี่ยงต่อการเกิดอุบัติเหตุ!)`}
-                        แนะนำตั้งค่างบซ่อมบำรุงเป็น Rigorous หรือเตรียมปลดระวาง
+                        {criticalPlanes.length > 0 && (isTh ? `(ในนี้มี ${criticalPlanes.length} ลำต่ำกว่า 70% เสี่ยงต่อการเกิดอุบัติเหตุ!) ` : `(${criticalPlanes.length} below 70% critical danger threshold!) `)}
+                        {isTh ? 'แนะนำตั้งค่างบซ่อมบำรุงเป็น Rigorous หรือเตรียมปลดระวาง' : 'Recommend setting maintenance tier to Rigorous or preparing for fleet retirement.'}
                       </div>
                     </div>
                   )}
@@ -925,17 +942,17 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                 <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl space-y-2">
                   <div className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                     <Clock className="w-4 h-4 text-amber-400" />
-                    <span>FLEET UTILIZATION (การใช้ประโยชน์เครื่องบิน):</span>
+                    <span>{t.board.fleetUtilization}</span>
                   </div>
                   {idlePlanes.length === 0 ? (
                     <div className="text-xs text-emerald-400">
-                      ✓ ฝูงบินทุกลำได้รับการจัดสรรเส้นทางบินครบ 100% ไม่มีเครื่องบินจอดว่างเสียค่าบำรุงรักษาฟรี
+                      {t.board.utilAllActive}
                     </div>
                   ) : (
                     <div className="text-xs text-amber-300 space-y-1">
-                      <div>มีเครื่องบินจอดว่าง {idlePlanes.length} ลำ (ไม่ได้บิน)</div>
+                      <div>{t.board.utilIdleCount.replace('{count}', String(idlePlanes.length))}</div>
                       <div className="text-[11px] text-slate-400">
-                        เครื่องบินที่จอดนิ่งคิดเป็นมูลค่าเงินทุนหลายสิบล้าน แนะนำให้นำไปเปิดเส้นทางใหม่ใน Agenda 1 ทันที
+                        {isTh ? 'เครื่องบินที่จอดนิ่งคิดเป็นมูลค่าเงินทุนหลายสิบล้าน แนะนำให้นำไปเปิดเส้นทางใหม่ในวาระที่ 1 ทันที' : 'Grounded aircraft represent millions in tied-up capital. Recommend allocating them to new routes in Agenda 1 immediately.'}
                       </div>
                     </div>
                   )}
@@ -957,10 +974,10 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                   </div>
                   <div>
                     <h3 className="text-sm font-black text-purple-200 uppercase">
-                      CHIEF INVESTMENT OFFICER & SYNERGY ALLOCATOR (ผู้อำนวยการฝ่ายการลงทุนและธุรกิจเสริม)
+                      {t.board.directorVenturesTitle}
                     </h3>
                     <p className="text-xs text-slate-300 mt-0.5">
-                      "วิเคราะห์ทำเลทองสำหรับการเปิดโรงแรมและบริษัททัวร์ เพื่อสร้างเงินปันผลรายไตรมาสและปลดล็อกแคมเปญโฆษณาระดับทวีปครับ"
+                      {t.board.directorVenturesSpeech}
                     </p>
                   </div>
                 </div>
@@ -971,20 +988,20 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                 <div className="bg-slate-950 border border-purple-900/50 rounded-2xl p-4 space-y-2 text-xs">
                   <div className="text-purple-400 font-black flex items-center gap-1.5 uppercase text-[11px]">
                     <Calculator className="w-4 h-4" />
-                    <span>SUBSIDIARY RETURN ON INVESTMENT & FLIGHT SYNERGY (สูตรผลตอบแทนและการผนึกกำลัง):</span>
+                    <span>{isTh ? 'สูตรผลตอบแทนการลงทุนและการผนึกกำลัง (ROI & Synergy):' : 'SUBSIDIARY RETURN ON INVESTMENT & FLIGHT SYNERGY:'}</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-slate-300 text-[11px] pt-1">
                     <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                      <strong className="text-purple-300 block">1. Airline Flight Synergy (+35%):</strong>
-                      หากเรามีเที่ยวบินไปเมืองนั้น ผู้โดยสารจะเข้าพักโรงแรมและใช้บริการรถบัสของเรา ส่งผลให้เงินปันผลพุ่งสูงขึ้น +35% ทันที!
+                      <strong className="text-purple-300 block">{isTh ? '1. โบนัสประสานพลังเที่ยวบิน (+35%):' : '1. Airline Flight Synergy (+35%):'}</strong>
+                      {isTh ? 'หากเรามีเที่ยวบินไปเมืองนั้น ผู้โดยสารจะเข้าพักโรงแรมและใช้บริการรถบัสของเรา ส่งผลให้เงินปันผลพุ่งสูงขึ้น +35% ทันที!' : 'Operating an active route to the city channels airline passengers into your hotels and shuttle buses, yielding an immediate +35% dividend bonus!'}
                     </div>
                     <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                      <strong className="text-purple-300 block">2. Annual ROI &amp; Payback:</strong>
-                      ROI % = (เงินปันผลรายไตรมาส × 4 / ราคาซื้อ) × 100% ช่วยให้คำนวณระยะเวลาคืนทุนได้อย่างแม่นยำ
+                      <strong className="text-purple-300 block">{isTh ? '2. ผลตอบแทนรายปีและระยะเวลาคืนทุน:' : '2. Annual ROI & Payback:'}</strong>
+                      {isTh ? 'ROI % = (เงินปันผลรายไตรมาส × 4 / ราคาซื้อ) × 100% ช่วยให้คำนวณระยะเวลาคืนทุนได้อย่างแม่นยำ' : 'ROI % = (Quarterly Dividend × 4 / Cost) × 100%, providing exact forecasting on capital recovery timelines.'}
                     </div>
                     <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                      <strong className="text-purple-300 block">3. Travel Agency Campaign Booster:</strong>
-                      การเปิดบริษัททัวร์ในภูมิภาคจะเพิ่มผลการบูสต์ของแคมเปญโฆษณาทวีปอีก +30% ทรงพลังอย่างยิ่ง
+                      <strong className="text-purple-300 block">{isTh ? '3. ตัวกระตุ้นแคมเปญโฆษณา:' : '3. Travel Agency Campaign Booster:'}</strong>
+                      {isTh ? 'การเปิดบริษัททัวร์ในภูมิภาคจะเพิ่มผลการบูสต์ของแคมเปญโฆษณาทวีปอีก +30% ทรงพลังอย่างยิ่ง' : 'Operating regional travel agencies amplifies continental advertising campaigns by an extra +30% passenger multiplier.'}
                     </div>
                   </div>
                 </div>
@@ -1004,11 +1021,11 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                         </span>
                         {hasActiveFlight ? (
                           <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded font-black">
-                            ✓ ACTIVE FLIGHT SYNERGY (+35% BONUS)
+                            {t.board.flightSynergyBonus}
                           </span>
                         ) : (
                           <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">
-                            No Active Flights Yet
+                            {t.board.noFlightYet}
                           </span>
                         )}
                       </div>
@@ -1020,33 +1037,35 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                         }}
                         className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-lg active:scale-95"
                       >
-                        <span>Invest & Acquire ($${venture.costK.toLocaleString()}K)</span>
+                        <span>{t.board.investAcquire.replace('{cost}', venture.costK.toLocaleString())}</span>
                         <ArrowRight className="w-4 h-4" />
                       </button>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                       <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                        <span className="text-slate-500 block text-[10px]">PURCHASE COST</span>
+                        <span className="text-slate-500 block text-[10px]">{isTh ? 'ราคาซื้อกิจการ' : 'PURCHASE COST'}</span>
                         <strong className="text-white">${venture.costK.toLocaleString()}K</strong>
                       </div>
                       <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                        <span className="text-slate-500 block text-[10px]">QUARTERLY DIVIDEND</span>
+                        <span className="text-slate-500 block text-[10px]">{isTh ? 'เงินปันผลต่อไตรมาส' : 'QUARTERLY DIVIDEND'}</span>
                         <strong className="text-emerald-400">+${effectiveDividendK.toLocaleString()}K / Q</strong>
                       </div>
                       <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                        <span className="text-slate-500 block text-[10px]">ANNUAL ROI</span>
+                        <span className="text-slate-500 block text-[10px]">{isTh ? 'ผลตอบแทนต่อปี' : 'ANNUAL ROI'}</span>
                         <strong className="text-purple-300">{annualROI}% / year</strong>
                       </div>
                       <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                        <span className="text-slate-500 block text-[10px]">PAYBACK TIME</span>
-                        <strong className="text-amber-300">{paybackQuarters} Quarters (~{(paybackQuarters / 4).toFixed(1)} yrs)</strong>
+                        <span className="text-slate-500 block text-[10px]">{isTh ? 'ระยะเวลาคืนทุน' : 'PAYBACK TIME'}</span>
+                        <strong className="text-amber-300">{paybackQuarters} {isTh ? `ไตรมาส (~${(paybackQuarters / 4).toFixed(1)} ปี)` : `Quarters (~${(paybackQuarters / 4).toFixed(1)} yrs)`}</strong>
                       </div>
                     </div>
 
                     <div className="bg-slate-900/50 p-2.5 rounded-xl border border-slate-800 text-xs text-slate-300">
-                      💡 <strong>AI Strategic Recommendation:</strong> เมือง {city.name} มีดัชนีการท่องเที่ยว {city.tourismIndex}/100 
-                      {hasActiveFlight ? ' และสายการบินของเรามีเที่ยวบินตรงรองรับ ส่งผลให้ได้รับผลคูณกำไรสูงสุด +35% ทันที!' : ' แนะนำให้เปิดเส้นทางบินเชื่อมต่อเพื่อรับโบนัสประสานพลังเต็มอัตรา'}
+                      💡 <strong>{isTh ? 'ข้อเสนอแนะเชิงยุทธศาสตร์ AI:' : 'AI Strategic Recommendation:'}</strong> {isTh ? `เมือง ${city.name} มีดัชนีการท่องเที่ยว ${city.tourismIndex}/100 ` : `${city.name} has tourism index ${city.tourismIndex}/100 `}
+                      {hasActiveFlight
+                        ? (isTh ? 'และสายการบินของเรามีเที่ยวบินตรงรองรับ ส่งผลให้ได้รับผลคูณกำไรสูงสุด +35% ทันที!' : 'with direct flights in operation, unlocking the maximum +35% synergy dividend bonus!')
+                        : (isTh ? 'แนะนำให้เปิดเส้นทางบินเชื่อมต่อเพื่อรับโบนัสประสานพลังเต็มอัตรา' : 'Recommend inaugurating flights to unlock the full flight synergy bonus.')}
                     </div>
                   </div>
                 ))}
@@ -1067,10 +1086,10 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                   </div>
                   <div>
                     <h3 className="text-sm font-black text-rose-200 uppercase">
-                      CHIEF INTELLIGENCE OFFICER & THREAT RECONNAISSANCE (ผู้อำนวยการฝ่ายข่าวกรองและการสอดแนมคู่แข่ง)
+                      {t.board.directorIntelTitle}
                     </h3>
                     <p className="text-xs text-slate-300 mt-0.5">
-                      "เรดาร์ข่าวกรองตรวจจับความเคลื่อนไหวลับของคู่แข่ง AI ทั้ง 3 สายการบิน: การส่งทูตเจรจาสล็อต, การสั่งซื้อเครื่องบินล่วงหน้า, และจุดอ่อนที่คู่แข่งกำลังขาดทุนครับ"
+                      {t.board.directorIntelSpeech}
                     </p>
                   </div>
                 </div>
@@ -1083,16 +1102,16 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                   <div className="text-xs font-black text-rose-400 flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <Target className="w-4 h-4 text-rose-500 animate-spin" />
-                      <span>RIVAL DIPLOMATIC MISSIONS DETECTED (คู่แข่งกำลังส่งทูตไปเจรจาที่ไหน?):</span>
+                      <span>{t.board.rivalEnvoys}</span>
                     </span>
                     <span className="text-[10px] text-slate-400">
-                      {rivalDispatchedMissions.length} Envoys Currently Deployed
+                      {rivalDispatchedMissions.length} {isTh ? 'ทูตที่กำลังปฏิบัติภารกิจ' : 'Envoys Currently Deployed'}
                     </span>
                   </div>
 
                   {rivalDispatchedMissions.length === 0 ? (
                     <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-slate-400 text-xs text-center">
-                      ขณะนี้ทูตของคู่แข่ง AI ทั้งหมดยังประจำการอยู่ที่สำนักงานใหญ่ ไม่มีภารกิจสอดแนมที่เปิดเผย
+                      {t.board.noRivalEnvoys}
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -1110,14 +1129,14 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                                   style={{ backgroundColor: rival.color }}
                                 />
                                 <strong className="text-white">{rival.name} ({rival.ceoName})</strong>
-                                <span className="text-slate-400">ส่งทูต {neg.name}</span>
-                                <span className="text-rose-400 font-bold">➔ มุ่งหน้าสู่ {mission.targetCityName}</span>
+                                <span className="text-slate-400">{isTh ? `ส่งทูต ${neg.name}` : `Dispatched envoy ${neg.name}`}</span>
+                                <span className="text-rose-400 font-bold">➔ {isTh ? `มุ่งหน้าสู่ ${mission.targetCityName}` : `Heading to ${mission.targetCityName}`}</span>
                               </div>
                               <div className="text-[11px] text-slate-300">
-                                ภารกิจ: <strong className="text-amber-300">{mission.type}</strong> (ขอ {mission.requestedSlots || 10} สล็อต) • เหลือเวลาเจรจาอีก {mission.quartersRemaining} ไตรมาส
+                                {isTh ? 'ภารกิจ:' : 'Mission:'} <strong className="text-amber-300">{mission.type}</strong> ({isTh ? `ขอ ${mission.requestedSlots || 10} สล็อต` : `Requesting ${mission.requestedSlots || 10} slots`}) • {isTh ? `เหลือเวลาเจรจาอีก ${mission.quartersRemaining} ไตรมาส` : `${mission.quartersRemaining} quarters remaining`}
                               </div>
                               <div className="text-[11px] text-rose-300/90">
-                                💡 <strong>ยุทธศาสตร์สกัดกั้น:</strong> คู่แข่งกำลังเล็งยึดหัวหาด {mission.targetCityName} แนะนำให้เราส่งทูตไปชิงสล็อตในเมืองนี้ตัดหน้า หรือเตรียมเปิดเส้นทางบินป้องกัน!
+                                💡 <strong>{isTh ? 'ยุทธศาสตร์สกัดกั้น:' : 'Counter-Strategy:'}</strong> {isTh ? `คู่แข่งกำลังเล็งยึดหัวหาด ${mission.targetCityName} แนะนำให้เราส่งทูตไปชิงสล็อตในเมืองนี้ตัดหน้า หรือเตรียมเปิดเส้นทางบินป้องกัน!` : `Rival aims to monopolize ${mission.targetCityName}. Dispatch a counter-delegation or inaugurate routes to secure presence!`}
                               </div>
                             </div>
 
@@ -1126,7 +1145,7 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                                 onClick={() => onOpenSlotModal(targetCity)}
                                 className="px-3 py-1.5 bg-rose-900/80 hover:bg-rose-800 text-rose-100 rounded-lg text-xs font-bold transition cursor-pointer shrink-0"
                               >
-                                Dispatch Counter Envoy
+                                {t.board.dispatchCounterEnvoy}
                               </button>
                             )}
                           </div>
@@ -1141,16 +1160,16 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                   <div className="text-xs font-black text-amber-400 flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <Plane className="w-4 h-4 text-amber-500" />
-                      <span>RIVAL FACTORY ORDERS & FLEET BUILD-UP (คำสั่งซื้อเครื่องบินล่วงหน้าของคู่แข่ง):</span>
+                      <span>{t.board.rivalOrders}</span>
                     </span>
                     <span className="text-[10px] text-slate-400">
-                      {rivalPendingOrders.length} Pending Aircraft Orders
+                      {rivalPendingOrders.length} {isTh ? 'รายการสั่งซื้อที่รอส่งมอบ' : 'Pending Aircraft Orders'}
                     </span>
                   </div>
 
                   {rivalPendingOrders.length === 0 ? (
                     <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-slate-400 text-xs text-center">
-                      คู่แข่งยังไม่มีคำสั่งซื้อเครื่องบินใหม่ค้างส่งมอบจากโรงงาน
+                      {t.board.noRivalOrders}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1167,13 +1186,13 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                             <strong className="text-white">{rival.name}</strong>
                           </div>
                           <div className="text-amber-300 font-bold">
-                            สั่งซื้อ {order.quantity}x {order.modelName}
+                            {isTh ? `สั่งซื้อ ${order.quantity}x ${order.modelName}` : `Ordered ${order.quantity}x ${order.modelName}`}
                           </div>
                           <div className="text-[11px] text-slate-400">
-                            กำหนดส่งมอบ: ปี {order.deliveryYear} Q{order.deliveryQuarter} (เงินลงทุน: ${order.totalCostK.toLocaleString()}K)
+                            {isTh ? `กำหนดส่งมอบ: ปี ${order.deliveryYear} Q${order.deliveryQuarter} (เงินลงทุน: $${order.totalCostK.toLocaleString()}K)` : `Delivery: ${order.deliveryYear} Q${order.deliveryQuarter} (Capex: $${order.totalCostK.toLocaleString()}K)`}
                           </div>
                           <div className="text-[11px] text-sky-300 pt-0.5">
-                            💡 ประเมิน: กำลังเตรียมเปิดเที่ยวบินระยะไกล หรือเพิ่มความถี่เที่ยวบินหลัก
+                            💡 {isTh ? 'ประเมิน: กำลังเตรียมเปิดเที่ยวบินระยะไกล หรือเพิ่มความถี่เที่ยวบินหลัก' : 'Assessment: Prepping long-haul expansion or trunk corridor capacity boosts.'}
                           </div>
                         </div>
                       ))}
@@ -1186,16 +1205,16 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                   <div className="text-xs font-black text-emerald-400 flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <Zap className="w-4 h-4 text-emerald-400" />
-                      <span>VULNERABLE RIVAL CORRIDORS (จุดอ่อนคู่แข่ง - เส้นทางที่คู่แข่งขาดทุนหนัก):</span>
+                      <span>{t.board.vulnerableCorridors}</span>
                     </span>
                     <span className="text-[10px] text-slate-400">
-                      Top Strategic Opportunities
+                      {isTh ? 'โอกาสทองเชิงยุทธศาสตร์' : 'Top Strategic Opportunities'}
                     </span>
                   </div>
 
                   {rivalVulnerableRoutes.length === 0 ? (
                     <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-slate-400 text-xs text-center">
-                      เส้นทางของคู่แข่งส่วนใหญ่ยังมีอัตราที่นั่งมั่นคง ยังไม่พบเส้นทางที่ขาดทุนวิกฤติ
+                      {isTh ? 'เส้นทางของคู่แข่งส่วนใหญ่ยังมีอัตราที่นั่งมั่นคง ยังไม่พบเส้นทางที่ขาดทุนวิกฤติ' : 'Most rival corridors are operating stably. No critical loss-making routes detected.'}
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -1211,16 +1230,16 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                                 style={{ backgroundColor: rival?.color || '#ef4444' }}
                               />
                               <strong className="text-white">{rival?.name}</strong>
-                              <span className="text-slate-400">กำลังขาดทุนบนเส้นทาง:</span>
+                              <span className="text-slate-400">{isTh ? 'กำลังขาดทุนบนเส้นทาง:' : 'Operating at a loss on:'}</span>
                               <strong className="text-rose-400 font-bold">{orig.name} ➔ {dst.name}</strong>
                             </div>
                             <div className="text-[11px] text-slate-300 flex items-center gap-3">
-                              <span>ขาดทุนสุทธิ: <strong className="text-rose-400">-${Math.abs(stats.profitK).toLocaleString()}K</strong></span>
+                              <span>{isTh ? 'ขาดทุนสุทธิ:' : 'Net Deficit:'} <strong className="text-rose-400">-${Math.abs(stats.profitK).toLocaleString()}K</strong></span>
                               <span>•</span>
-                              <span>อัตราที่นั่ง (LF): <strong className="text-amber-300">{stats.loadFactorPct}%</strong></span>
+                              <span>{isTh ? 'อัตราบรรทุกผู้โดยสาร:' : 'Load Factor:'} <strong className="text-amber-300">{stats.loadFactorPct}%</strong></span>
                             </div>
                             <div className="text-[11px] text-emerald-300">
-                              💡 <strong>ยุทธการจู่โจม:</strong> เที่ยวบินของคู่แข่งคนน้อยมาก หากเราเปิดเส้นทางบินชนโดยใช้เครื่องบินที่ทันสมัยกว่าและบริการระดับพรีเมียม จะสามารถแย่งผู้โดยสารและบีบให้คู่แข่งถอนตัวได้!
+                              💡 <strong>{isTh ? 'ยุทธการจู่โจม:' : 'Offensive Opportunity:'}</strong> {isTh ? 'เที่ยวบินของคู่แข่งคนน้อยมาก หากเราเปิดเส้นทางบินชนโดยใช้เครื่องบินที่ทันสมัยกว่าและบริการระดับพรีเมียม จะสามารถแย่งผู้โดยสารและบีบให้คู่แข่งถอนตัวได้!' : 'Rival flights have extremely low load factors. Entering this corridor with superior aircraft and service can capture market share and force their exit!'}
                             </div>
                           </div>
 
@@ -1231,7 +1250,7 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                             }}
                             className="px-3 py-1.5 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-100 rounded-lg text-xs font-bold transition cursor-pointer shrink-0"
                           >
-                            Attack Corridor (เปิดบินชน)
+                            {t.board.attackCorridor}
                           </button>
                         </div>
                       ))}
@@ -1243,7 +1262,7 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                 <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-2 text-xs">
                   <div className="text-slate-300 font-bold flex items-center gap-2">
                     <Award className="w-4 h-4 text-yellow-400" />
-                    <span>WORLD CHAMPIONSHIP RACE (สถานะการแข่งขันสู่แชมป์โลก 7 ทวีป):</span>
+                    <span>{t.board.worldChampionship}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
                     {rivalHubCounts.map(({ rival, hubsCount, activeRoutes }) => (
@@ -1259,7 +1278,7 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                           Hubs: <strong className="text-sky-300">{hubsCount} / 7</strong> • Routes: <strong className="text-amber-300">{activeRoutes}</strong>
                         </div>
                         <div className="text-[10px] text-slate-500 mt-0.5">
-                          กลยุทธ์ AI: {rival.personality || 'BALANCED'}
+                          {isTh ? 'กลยุทธ์ AI:' : 'AI Strategy:'} {rival.personality || 'BALANCED'}
                         </div>
                       </div>
                     ))}
@@ -1272,10 +1291,10 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                     <div className="flex items-center justify-between border-b border-indigo-500/30 pb-2">
                       <div className="text-indigo-200 font-bold flex items-center gap-2 text-sm">
                         <Calendar className="w-4 h-4 text-indigo-400 animate-pulse" />
-                        <span>UPCOMING WORLD SPECTACLES RADAR (ปฏิทินมหกรรมโลก & การแจ้งเตือนล่วงหน้า 3 - 12 เดือน):</span>
+                        <span>{t.board.spectaclesRadar}</span>
                       </div>
                       <span className="text-[10px] font-mono text-indigo-300 bg-indigo-900/60 px-2 py-0.5 rounded border border-indigo-400">
-                        ADVANCE STRATEGIC INTELLIGENCE
+                        {isTh ? 'เรดาร์ข่าวกรองระดับสูง' : 'ADVANCE STRATEGIC INTELLIGENCE'}
                       </span>
                     </div>
 
@@ -1292,15 +1311,17 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
                                   ? 'bg-rose-950 text-rose-300 border-rose-500 animate-pulse'
                                   : 'bg-indigo-950 text-indigo-300 border-indigo-500'
                               }`}>
-                                {item.quartersUntil === 1 ? '🔥 อีก 3 เดือน!' : `อีก ${item.quartersUntil * 3} เดือน (${item.quartersUntil}Q)`}
+                                {item.quartersUntil === 1
+                                  ? (isTh ? '🔥 อีก 3 เดือน!' : '🔥 Next 3 Months!')
+                                  : (isTh ? `อีก ${item.quartersUntil * 3} เดือน (${item.quartersUntil}Q)` : `In ${item.quartersUntil * 3} mo (${item.quartersUntil}Q)`)}
                               </span>
                             </div>
                             <div className="text-[11px] text-slate-300 leading-snug line-clamp-2">
                               {ev.description}
                             </div>
                             <div className="flex items-center justify-between text-[10px] pt-1 text-slate-400 border-t border-slate-800">
-                              <span>เมืองเป้าหมาย: <strong className="text-indigo-300">{affectedCities || 'Global'}</strong></span>
-                              <span className="text-emerald-400 font-bold">ดีมานด์: +{item.estimatedDemandSurgePct}%</span>
+                              <span>{isTh ? 'เมืองเป้าหมาย:' : 'Host Cities:'} <strong className="text-indigo-300">{affectedCities || (isTh ? 'ทั่วโลก' : 'Global')}</strong></span>
+                              <span className="text-emerald-400 font-bold">{isTh ? 'ดีมานด์:' : 'Demand:'} +{item.estimatedDemandSurgePct}%</span>
                             </div>
                           </div>
                         );
@@ -1316,20 +1337,22 @@ export const BoardMeetingModal: React.FC<BoardMeetingModalProps> = ({
         {/* Footer */}
         <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0 font-mono gap-3 flex-wrap">
           <div className="text-xs text-slate-400 hidden sm:block">
-            Aerobiz Executive Intelligence System • Real-time Economic Modeling &amp; Rival Reconnaissance
+            {isTh
+              ? 'ระบบข่าวกรองและสารสนเทศยุทธศาสตร์การบิน Aerobiz • แบบจำลองเศรษฐศาสตร์และเรดาร์คู่แข่งแบบเรียลไทม์'
+              : 'Aerobiz Executive Intelligence System • Real-time Economic Modeling & Rival Reconnaissance'}
           </div>
           <div className="flex items-center gap-2.5">
             <button
               onClick={onClose}
               className="px-4 py-2.5 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/60 text-rose-200 hover:text-white rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
             >
-              ✕ ยกเลิกการประชุม (Cancel / Exit)
+              {t.board.cancelExitBtn}
             </button>
             <button
               onClick={onClose}
               className="px-5 py-2.5 bg-indigo-900/80 hover:bg-indigo-800 text-white rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow border border-indigo-500/50 active:scale-95"
             >
-              Adjourn Meeting (ปิดการประชุม)
+              {t.board.adjournMeetingBtn}
             </button>
           </div>
         </div>

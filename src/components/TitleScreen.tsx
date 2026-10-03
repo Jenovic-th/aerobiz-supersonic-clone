@@ -19,6 +19,7 @@ import {
   Music,
 } from 'lucide-react';
 import { bgmPlayer } from '../utils/lofiBgm';
+import { useI18n } from '../utils/i18n';
 
 interface TitleScreenProps {
   onNewGame: () => void;
@@ -33,6 +34,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   onOpenSaveLoad,
   onOpenSettings,
 }) => {
+  const { lang, setLanguage, t } = useI18n();
   const [latestSave, setLatestSave] = useState<{
     isAutoSave: boolean;
     metadata: SaveMetadata;
@@ -58,7 +60,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
 
   const handleExitGame = () => {
     playSound.click();
-    if (window.confirm('คุณต้องการออกจากเกมและปิดโปรแกรมหรือไม่?')) {
+    if (window.confirm(t.title.exitConfirm)) {
       if (typeof window !== 'undefined' && (window as any).electronAPI?.quit) {
         (window as any).electronAPI.quit();
       } else if (window.close) {
@@ -86,24 +88,60 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       />
 
       {/* 2. TOP STATUS BAR */}
-      <header className="relative z-10 w-full px-6 py-4 flex justify-between items-center text-xs border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-md">
+      <header className="relative z-10 w-full px-4 sm:px-6 py-3 flex justify-between items-center text-xs border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-3 py-1 bg-sky-950/80 border border-sky-400/60 rounded-full font-mono font-bold text-sky-300">
             <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
-            <span>KOEI SUPERSONIC ENGINE</span>
+            <span>{t.title.engineBadge}</span>
           </div>
           <span className="text-slate-500 hidden sm:inline">•</span>
           <span className="text-slate-400 font-mono hidden sm:inline">
-            1980 – 2090 CHRONOLOGICAL TIMELINE
+            {t.title.timeline}
           </span>
         </div>
 
-        <div className="flex items-center gap-3 font-mono text-slate-400">
-          <span className="px-2.5 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-amber-300 font-bold hidden sm:inline">
-            v2.6.0 HD STANDALONE
+        <div className="flex items-center gap-2 sm:gap-3 font-mono text-slate-400">
+          {/* Prominent Language Switcher Pill */}
+          <div className="flex items-center p-0.5 bg-slate-900 border border-slate-700/90 rounded-xl text-xs font-mono shadow-sm">
+            <button
+              onClick={() => {
+                playSound.click();
+                setLanguage('th');
+              }}
+              data-testid="title-lang-th-btn"
+              className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer flex items-center gap-1 text-xs ${
+                lang === 'th'
+                  ? 'bg-sky-600 text-white shadow-[0_0_10px_rgba(2,132,199,0.5)]'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="เปลี่ยนเป็นภาษาไทย"
+            >
+              <span>🇹🇭</span>
+              <span>ไทย</span>
+            </button>
+            <button
+              onClick={() => {
+                playSound.click();
+                setLanguage('en');
+              }}
+              data-testid="title-lang-en-btn"
+              className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer flex items-center gap-1 text-xs ${
+                lang === 'en'
+                  ? 'bg-sky-600 text-white shadow-[0_0_10px_rgba(2,132,199,0.5)]'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="Switch to English"
+            >
+              <span>🇬🇧</span>
+              <span>ENG</span>
+            </button>
+          </div>
+
+          <span className="px-2.5 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-amber-300 font-bold hidden md:inline">
+            v2.6.0 HD
           </span>
 
-          {/* Quick Lo-Fi Ambient BGM Toggle */}
+          {/* Quick Lo-Fi / Chiptune BGM Toggle */}
           <button
             onClick={() => {
               playSound.click();
@@ -121,11 +159,13 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 ? 'bg-purple-950/80 border-purple-400 text-purple-200 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
                 : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-500'
             }`}
-            title="เปิด/ปิด ดนตรีคลอ Lo-Fi (Background Music)"
+            title={lang === 'th' ? 'เปิด/ปิด ดนตรีประกอบ BGM' : 'Toggle Background Music'}
           >
             <Music className={`w-3.5 h-3.5 ${bgmActive ? 'text-purple-300 animate-pulse' : 'text-slate-500'}`} />
-            <span>Lo-Fi BGM:</span>
-            <span className={bgmActive ? 'text-emerald-400' : 'text-slate-500'}>{bgmActive ? 'ON' : 'OFF'}</span>
+            <span>{t.title.bgmQuickToggle}</span>
+            <span className={bgmActive ? 'text-emerald-400' : 'text-slate-500'}>
+              {bgmActive ? t.title.bgmOn : t.title.bgmOff}
+            </span>
           </button>
 
           <button
@@ -134,7 +174,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               onOpenSettings();
             }}
             className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition cursor-pointer"
-            title="Game Settings"
+            title={t.title.settingsBtn}
           >
             <Settings className="w-4 h-4" />
           </button>
@@ -155,13 +195,13 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           </div>
 
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-black font-mono tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-sky-200 to-indigo-300 drop-shadow-xl">
-            AEROBIZ
+            {t.title.gameTitle}
           </h1>
           <div className="text-2xl sm:text-4xl md:text-5xl font-black italic tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-500 font-mono -mt-1 sm:-mt-2">
-            SUPERSONIC
+            {t.title.gameSubtitle}
           </div>
           <p className="text-slate-400 font-medium text-xs sm:text-sm mt-2 tracking-widest uppercase font-mono">
-            Commercial Airline Tycoon Simulation
+            {t.title.genreDesc}
           </p>
         </div>
 
@@ -177,10 +217,10 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               <div className="flex items-center justify-between w-full mb-1.5">
                 <div className="flex items-center gap-2 font-black font-mono text-emerald-300 text-sm tracking-wide">
                   <Play className="w-4 h-4 text-emerald-400 fill-emerald-400" />
-                  <span>Resume Flight Operations (เล่นต่อ)</span>
+                  <span>{t.title.resumeBtn}</span>
                 </div>
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-emerald-900/60 text-emerald-200 border border-emerald-500/50 rounded-full">
-                  {latestSave.isAutoSave ? 'AUTO-SAVE' : 'SAVED GAME'}
+                  {latestSave.isAutoSave ? t.title.autoSave : t.title.manualSave}
                 </span>
               </div>
 
@@ -192,9 +232,9 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 </span>
               </div>
               <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1 font-mono">
-                <span>Fleet: {latestSave.metadata.fleetCount} planes</span>
+                <span>{lang === 'th' ? `ฝูงบิน: ${latestSave.metadata.fleetCount} ลำ` : `Fleet: ${latestSave.metadata.fleetCount} planes`}</span>
                 <span>•</span>
-                <span>Routes: {latestSave.metadata.routesCount} active</span>
+                <span>{lang === 'th' ? `เส้นทาง: ${latestSave.metadata.routesCount} เส้นทาง` : `Routes: ${latestSave.metadata.routesCount} active`}</span>
                 <span>•</span>
                 <span className="text-emerald-300 font-bold">
                   ${latestSave.metadata.cashK.toLocaleString()}K
@@ -218,10 +258,10 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               </div>
               <div>
                 <div className="font-black text-white text-sm font-mono tracking-wide group-hover:text-sky-200">
-                  COMMENCE AIRLINE OPERATION (START SIMULATION)
+                  {t.title.newGameBtn}
                 </div>
                 <div className="text-xs text-slate-400">
-                  เริ่มเกมใหม่ • ก่อตั้งสายการบินและเลือกยุค 1980 / 2000 / 2020
+                  {t.title.newGameSub}
                 </div>
               </div>
             </div>
@@ -239,7 +279,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               className="p-3 bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700 hover:border-sky-400/70 rounded-2xl text-slate-200 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow active:scale-95"
             >
               <FolderOpen className="w-4 h-4 text-sky-400" />
-              <span>Load Save File</span>
+              <span>{t.title.loadSaveBtn}</span>
             </button>
 
             <button
@@ -251,7 +291,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
               className="p-3 bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700 hover:border-sky-400/70 rounded-2xl text-slate-200 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow active:scale-95"
             >
               <Settings className="w-4 h-4 text-slate-400" />
-              <span>Game Settings</span>
+              <span>{t.title.settingsBtn}</span>
             </button>
           </div>
 
@@ -262,7 +302,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             className="w-full py-2.5 bg-slate-950/60 hover:bg-rose-950/50 border border-slate-800 hover:border-rose-500/50 rounded-2xl text-slate-400 hover:text-rose-300 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow active:scale-95"
           >
             <Power className="w-3.5 h-3.5" />
-            <span>Exit Game (ออกจากโปรแกรม)</span>
+            <span>{t.title.exitBtn}</span>
           </button>
         </div>
       </main>
@@ -270,13 +310,13 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       {/* 4. FOOTER CREDITS */}
       <footer className="relative z-10 w-full px-6 py-3 border-t border-slate-800/80 bg-slate-950/80 backdrop-blur-md flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-500 font-mono gap-1">
         <div>
-          Inspired by Koei <span className="text-slate-300 font-bold">Aerobiz</span> &{' '}
+          {lang === 'th' ? 'ได้แรงบันดาลใจจาก' : 'Inspired by'} Koei <span className="text-slate-300 font-bold">Aerobiz</span> &{' '}
           <span className="text-slate-300 font-bold">Aerobiz Supersonic</span> (1992 – 1994)
         </div>
         <div className="flex items-center gap-4 text-slate-400">
-          <span>Keyboard: [Esc] Back</span>
+          <span>{lang === 'th' ? 'แป้นพิมพ์: [Esc] ย้อนกลับ' : 'Keyboard: [Esc] Back'}</span>
           <span>•</span>
-          <span className="text-emerald-400">Save Storage Active</span>
+          <span className="text-emerald-400">{lang === 'th' ? 'ระบบบันทึกข้อมูลพร้อมใช้งาน' : 'Save Storage Active'}</span>
         </div>
       </footer>
     </div>

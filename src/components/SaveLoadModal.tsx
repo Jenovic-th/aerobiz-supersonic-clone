@@ -8,6 +8,7 @@ import {
   exportSaveFile,
 } from '../utils/saveLoad';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useI18n } from '../utils/i18n';
 import {
   X,
   Save,
@@ -47,6 +48,9 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
   onImportSave,
 }) => {
   useEscapeKey(onClose, isOpen);
+  const { t, lang } = useI18n();
+  const isTh = lang === 'th';
+
   const [manualMeta, setManualMeta] = useState<SaveMetadata | null>(null);
   const [autoMeta, setAutoMeta] = useState<SaveMetadata | null>(null);
   const [statusMessage, setStatusMessage] = useState<{
@@ -83,7 +87,9 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
   const handleManualQuickSave = () => {
     if (!gameState) {
       setStatusMessage({
-        text: 'ไม่มีเกมที่กำลังเล่นอยู่ กรุณาเริ่มเกมใหม่หรือโหลดเกมก่อนทำการบันทึก',
+        text: isTh
+          ? 'ไม่มีเกมที่กำลังเล่นอยู่ กรุณาเริ่มเกมใหม่หรือโหลดเกมก่อนทำการบันทึก'
+          : 'No active game in progress. Start a new game or load a save first.',
         type: 'error',
       });
       return;
@@ -95,13 +101,17 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
       setTimeout(() => setJustSaved(false), 2500);
       const now = new Date().toLocaleTimeString();
       setStatusMessage({
-        text: 'บันทึกข้อมูลเกมลงใน Local Storage สำเร็จแล้วเมื่อ ' + now,
+        text: isTh
+          ? `บันทึกข้อมูลเกมลงใน Local Storage สำเร็จแล้วเมื่อ ${now}`
+          : `Saved game to Local Storage successfully at ${now}`,
         type: 'success',
       });
       onQuickSave();
     } else {
       setStatusMessage({
-        text: 'ไม่สามารถบันทึกเกมลงใน Local Storage ได้ กรุณาลองใช้ Export Save File',
+        text: isTh
+          ? 'ไม่สามารถบันทึกเกมลงใน Local Storage ได้ กรุณาลองใช้ Export Save File'
+          : 'Failed to save to Local Storage. Please use Export Save File.',
         type: 'error',
       });
     }
@@ -122,7 +132,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
   };
 
   const formatTimestamp = (isoString?: string) => {
-    if (!isoString) return 'ไม่มีข้อมูล';
+    if (!isoString) return isTh ? 'ไม่มีข้อมูล' : 'No data';
     try {
       const d = new Date(isoString);
       return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
@@ -142,20 +152,20 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
             </div>
             <div>
               <h2 className="text-xl md:text-2xl font-black text-slate-100 flex items-center gap-2.5">
-                <span>Save & Load Game Data</span>
+                <span>{t.saveLoad.title}</span>
                 <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 font-bold">
                   SYSTEM
                 </span>
               </h2>
               <div className="text-xs sm:text-sm text-slate-400 font-mono mt-0.5">
-                บันทึกเซฟลงเบราว์เซอร์ โหลดเซฟย้อนหลัง และสำรองไฟล์เซฟ (.json)
+                {t.saveLoad.subtitle}
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
-            title="Close (Esc)"
+            title={`${t.common.close} (Esc)`}
             data-testid="modal-close-header-btn"
           >
             <X className="w-6 h-6" />
@@ -169,7 +179,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
             <div className="p-4 bg-slate-950/80 border border-slate-700/80 rounded-2xl flex flex-wrap items-center justify-between gap-3 font-mono text-xs sm:text-sm shadow-inner">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-slate-400">สถานะเกมปัจจุบัน:</span>
+                <span className="text-slate-400">{t.saveLoad.activeGame}</span>
                 <strong className="text-white text-base">{playerAirline.name}</strong>
               </div>
               <div className="flex items-center gap-3 text-slate-300 flex-wrap">
@@ -180,17 +190,17 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                 <span className="text-sky-300 font-bold">Turn {gameState.turnNumber}</span>
                 <span>•</span>
                 <span className="text-emerald-400 font-bold">
-                  ${playerAirline.cashK.toLocaleString()}K
+                  ${playerAirline.cashK.toLocaleString()}K {t.common.cash}
                 </span>
                 <span>•</span>
-                <span>{playerRoutes.length} Routes</span>
+                <span>{playerRoutes.length} {t.common.route}</span>
               </div>
             </div>
           ) : (
             <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-2xl flex items-center gap-2.5 font-mono text-xs sm:text-sm text-slate-400">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
               <span>
-                ยังไม่มีเกมที่กำลังเล่นอยู่ (สามารถเลือกโหลดเซฟด่วน, เซฟอัตโนมัติ หรือนำเข้าไฟล์ .json เพื่อเข้าสู่เกมได้ทันที)
+                {t.saveLoad.noActiveGame}
               </span>
             </div>
           )}
@@ -219,16 +229,16 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2 font-bold text-slate-100 text-sm">
                     <Save className="w-4 h-4 text-emerald-400" />
-                    <span>ช่องเซฟด่วน (Quick Save)</span>
+                    <span>{t.saveLoad.quickSaveTitle}</span>
                   </div>
-                  <span className="text-xs font-mono text-slate-400">Browser Storage</span>
+                  <span className="text-xs font-mono text-slate-400">{isTh ? 'บันทึกในเบราว์เซอร์' : 'Browser Storage'}</span>
                 </div>
 
                 <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 text-xs font-mono space-y-1.5">
                   <div className="flex justify-between items-center text-slate-300">
-                    <span className="text-slate-400">บันทึกล่าสุด:</span>
+                    <span className="text-slate-400">{t.saveLoad.latestSave}</span>
                     <span className="text-emerald-300 font-bold">
-                      {manualMeta ? formatTimestamp(manualMeta.savedAt) : 'ยังไม่มีข้อมูลเซฟด่วน'}
+                      {manualMeta ? formatTimestamp(manualMeta.savedAt) : t.saveLoad.noQuickSave}
                     </span>
                   </div>
                   {manualMeta && (
@@ -236,7 +246,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                       <span>
                         {manualMeta.airlineName} • {manualMeta.currentYear} Q{manualMeta.currentQuarter} (Turn {manualMeta.turnNumber})
                       </span>
-                      <span className="text-emerald-400 font-bold">${manualMeta.cashK.toLocaleString()}K Cash</span>
+                      <span className="text-emerald-400 font-bold">${manualMeta.cashK.toLocaleString()}K {t.common.cash}</span>
                     </div>
                   )}
                 </div>
@@ -254,30 +264,30 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                       ? 'bg-emerald-500 text-slate-950 ring-2 ring-emerald-300 scale-98'
                       : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white'
                   }`}
-                  title={!gameState ? 'ไม่มีเกมที่กำลังเล่นอยู่' : 'บันทึกเซฟด่วน'}
+                  title={!gameState ? (isTh ? 'ไม่มีเกมที่กำลังเล่นอยู่' : 'No active game running') : t.saveLoad.saveQuickBtn}
                 >
                   <Save className="w-4 h-4" />
-                  <span>{justSaved ? '✓ บันทึกสำเร็จแล้ว!' : '💾 บันทึกเซฟทันที (Quick Save)'}</span>
+                  <span>{justSaved ? t.saveLoad.saveSuccess : t.saveLoad.saveQuickBtn}</span>
                 </button>
 
                 {manualMeta && (
                   <>
                     {confirmLoadType === 'manual' ? (
                       <div className="flex items-center gap-2 bg-rose-950/80 border border-rose-500 p-1.5 rounded-xl">
-                        <span className="text-xs text-rose-200 font-bold px-1">ยืนยันโหลดเซฟ?</span>
+                        <span className="text-xs text-rose-200 font-bold px-1">{t.saveLoad.confirmLoad}</span>
                         <button
                           type="button"
                           onClick={() => handleExecuteLoad(false)}
                           className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition cursor-pointer"
                         >
-                          ยืนยัน
+                          {t.common.confirm}
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmLoadType(null)}
                           className="px-2 py-1 bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs transition cursor-pointer"
                         >
-                          ยกเลิก
+                          {t.common.cancel}
                         </button>
                       </div>
                     ) : (
@@ -287,7 +297,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                         className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-sky-300 rounded-xl font-bold text-xs sm:text-sm border border-slate-600 transition cursor-pointer flex items-center gap-2"
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
-                        <span>โหลดเซฟด่วนนี้</span>
+                        <span>{t.saveLoad.loadQuickBtn}</span>
                       </button>
                     )}
                   </>
@@ -301,16 +311,16 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2 font-bold text-slate-100 text-sm">
                     <Clock className="w-4 h-4 text-sky-400" />
-                    <span>เซฟอัตโนมัติประจำไตรมาส (Auto-Save)</span>
+                    <span>{t.saveLoad.autoSaveTitle}</span>
                   </div>
-                  <span className="text-xs font-mono text-slate-400">Quarter Checkpoint</span>
+                  <span className="text-xs font-mono text-slate-400">{isTh ? 'บันทึกสิ้นไตรมาส' : 'Quarter Checkpoint'}</span>
                 </div>
 
                 <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 text-xs font-mono space-y-1.5">
                   <div className="flex justify-between items-center text-slate-300">
-                    <span className="text-slate-400">เซฟอัตโนมัติเมื่อ:</span>
+                    <span className="text-slate-400">{t.saveLoad.latestSave}</span>
                     <span className="text-sky-300 font-bold">
-                      {autoMeta ? formatTimestamp(autoMeta.savedAt) : 'ยังไม่มีข้อมูล Auto-Save'}
+                      {autoMeta ? formatTimestamp(autoMeta.savedAt) : t.saveLoad.noAutoSave}
                     </span>
                   </div>
                   {autoMeta && (
@@ -318,7 +328,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                       <span>
                         {autoMeta.airlineName} • {autoMeta.currentYear} Q{autoMeta.currentQuarter} (Turn {autoMeta.turnNumber})
                       </span>
-                      <span className="text-emerald-400 font-bold">${autoMeta.cashK.toLocaleString()}K Cash</span>
+                      <span className="text-emerald-400 font-bold">${autoMeta.cashK.toLocaleString()}K {t.common.cash}</span>
                     </div>
                   )}
                 </div>
@@ -329,20 +339,20 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                   <>
                     {confirmLoadType === 'auto' ? (
                       <div className="flex items-center gap-2 bg-rose-950/80 border border-rose-500 p-1.5 rounded-xl w-fit">
-                        <span className="text-xs text-rose-200 font-bold px-1">ยืนยันโหลด Auto-Save?</span>
+                        <span className="text-xs text-rose-200 font-bold px-1">{t.saveLoad.confirmLoadAuto}</span>
                         <button
                           type="button"
                           onClick={() => handleExecuteLoad(true)}
                           className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition cursor-pointer"
                         >
-                          ยืนยัน
+                          {t.common.confirm}
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmLoadType(null)}
                           className="px-2 py-1 bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs transition cursor-pointer"
                         >
-                          ยกเลิก
+                          {t.common.cancel}
                         </button>
                       </div>
                     ) : (
@@ -352,14 +362,14 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                         className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl font-bold text-xs sm:text-sm border border-slate-600 transition cursor-pointer flex items-center gap-2"
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
-                        <span>โหลดข้อมูล Auto-Save ล่าสุด</span>
+                        <span>{t.saveLoad.loadAutoBtn}</span>
                       </button>
                     )}
                   </>
                 )}
                 {!autoMeta && (
                   <span className="text-xs text-slate-500 italic font-mono">
-                    Auto-Save จะถูกสร้างขึ้นอัตโนมัติเมื่อสิ้นสุดแต่ละไตรมาส
+                    {t.saveLoad.autoSaveNote}
                   </span>
                 )}
               </div>
@@ -371,7 +381,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-bold text-slate-100">
                 <FileJson className="w-4 h-4 text-purple-400" />
-                <span>สำรองข้อมูลเป็นไฟล์ลงเครื่อง (PC File Backup)</span>
+                <span>{t.saveLoad.exportTitle}</span>
               </div>
               <span className="text-[11px] font-mono text-slate-400">.json format</span>
             </div>
@@ -384,7 +394,9 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                   if (!gameState) return;
                   onExportSave();
                   setStatusMessage({
-                    text: 'ส่งออกไฟล์เซฟ (.json) ไปยังเครื่อง PC สำเร็จแล้ว',
+                    text: isTh
+                      ? 'ส่งออกไฟล์บันทึกเกม (.json) เรียบร้อยแล้ว'
+                      : 'Save file (.json) exported successfully to your computer.',
                     type: 'info',
                   });
                 }}
@@ -394,14 +406,14 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                     ? 'border-slate-800 text-slate-500 cursor-not-allowed opacity-50'
                     : 'hover:bg-slate-950 border-slate-700 hover:border-sky-500 cursor-pointer group'
                 }`}
-                title={!gameState ? 'ไม่มีเกมที่กำลังเล่นอยู่' : 'ส่งออกไฟล์เซฟ'}
+                title={!gameState ? (isTh ? 'ไม่มีเกมที่กำลังเล่นอยู่' : 'No active game running') : t.saveLoad.exportBtn}
               >
                 <div className="flex items-center gap-2 font-bold text-sky-300 text-xs md:text-sm">
                   <Download className="w-4 h-4 group-hover:translate-y-0.5 transition" />
-                  <span>Export Save File (.json)</span>
+                  <span>{t.saveLoad.exportBtn}</span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  ดาวน์โหลดไฟล์เซฟเก็บไว้บนคอมพิวเตอร์ นำไปเล่นต่อที่เครื่องอื่นได้
+                  {t.saveLoad.exportDesc}
                 </p>
               </button>
 
@@ -413,10 +425,10 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
               >
                 <div className="flex items-center gap-2 font-bold text-amber-300 text-xs md:text-sm">
                   <Upload className="w-4 h-4 group-hover:-translate-y-0.5 transition" />
-                  <span>Import Save File (.json)</span>
+                  <span>{t.saveLoad.importBtn}</span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  เลือกไฟล์เซฟจากเครื่อง PC เพื่อกู้คืนข้อมูลเกมกลับมาเล่นต่อ
+                  {t.saveLoad.importDesc}
                 </p>
               </button>
             </div>
@@ -441,7 +453,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
             data-testid="modal-close-footer-btn"
           >
             <X className="w-4 h-4 text-slate-400" />
-            <span>Close (ปิดหน้าต่าง)</span>
+            <span>{t.common.close}</span>
           </button>
         </div>
       </div>

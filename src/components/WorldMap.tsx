@@ -7,6 +7,7 @@ import { REGION_LAND_POLYGONS, getRegionAtPoint } from '../data/regionLandPolygo
 import { ZoomIn, ZoomOut, RotateCcw, Globe, ArrowLeft, MapPin, Plane, Building2, Briefcase, Navigation, Compass } from 'lucide-react';
 import { calculateDistance } from '../simulation/engine';
 import { AIRCRAFTS } from '../data/aircrafts';
+import { useI18n } from '../utils/i18n';
 
 interface WorldMapProps {
   playerAirline: Airline;
@@ -380,6 +381,8 @@ export const WorldMap: React.FC<WorldMapProps> = ({
   selectedCity,
   onSelectCity,
 }) => {
+  const { lang, t } = useI18n();
+  const isTh = lang === 'th';
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -1797,7 +1800,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
             className="px-4 py-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white rounded-xl font-bold text-xs md:text-sm shadow-2xl border-2 border-sky-400 flex items-center gap-2 cursor-pointer animate-in fade-in transition"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>◄ Back to Global World Map</span>
+            <span>{isTh ? '◄ ย้อนกลับไปแผนที่โลก' : '◄ Back to Global World Map'}</span>
           </button>
         </div>
       )}
@@ -1807,14 +1810,14 @@ export const WorldMap: React.FC<WorldMapProps> = ({
       <div className="absolute bottom-5 right-5 flex flex-col gap-1.5 z-10 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-700 shadow-2xl">
         <button
           onClick={() => handleZoomByFactor(1.2)}
-          title="Zoom In"
+          title={isTh ? 'ซูมเข้า' : 'Zoom In'}
           className="p-2.5 hover:bg-slate-800 text-slate-200 hover:text-white rounded-lg transition cursor-pointer"
         >
           <ZoomIn className="w-5 h-5 text-sky-400" />
         </button>
         <button
           onClick={() => handleZoomByFactor(1 / 1.2)}
-          title="Zoom Out"
+          title={isTh ? 'ซูมออก' : 'Zoom Out'}
           className="p-2.5 hover:bg-slate-800 text-slate-200 hover:text-white rounded-lg transition cursor-pointer"
         >
           <ZoomOut className="w-5 h-5 text-sky-400" />
@@ -1828,7 +1831,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
               setPan({ x: 0, y: 0 });
             }
           }}
-          title="Reset View"
+          title={isTh ? 'รีเซ็ตมุมมอง' : 'Reset View'}
           className="p-2.5 hover:bg-slate-800 text-slate-200 hover:text-white rounded-lg transition cursor-pointer"
         >
           <RotateCcw className="w-5 h-5 text-amber-400" />
@@ -1842,9 +1845,11 @@ export const WorldMap: React.FC<WorldMapProps> = ({
             <span className="text-lg">💼</span>
             <div>
               <div className="text-[11px] font-black uppercase text-sky-400 tracking-wider">
-                Diplomatic Corps
+                {isTh ? 'คณะทูตการบิน' : 'Diplomatic Corps'}
               </div>
-              <div className="text-[9px] text-slate-400 font-mono">4 Field Envoys</div>
+              <div className="text-[9px] text-slate-400 font-mono">
+                {isTh ? 'ทูตภาคสนาม 4 ท่าน' : '4 Field Envoys'}
+              </div>
             </div>
           </div>
 
@@ -1866,8 +1871,8 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                     }}
                     title={
                       isDispatched && mission
-                        ? `${neg.name}: Stationed in ${mission.targetCityName} (${mission.type.replace(/_/g, ' ')}) • Click to Focus Map`
-                        : `${neg.name}: On Standby at Headquarters`
+                        ? `${neg.name}: ${isTh ? 'ประจำการที่' : 'Stationed in'} ${mission.targetCityName} (${mission.type.replace(/_/g, ' ')})`
+                        : `${neg.name}: ${isTh ? 'สแตนด์บายที่สำนักงานใหญ่' : 'On Standby at Headquarters'}`
                     }
                     className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer ${
                       isDispatched
@@ -1897,7 +1902,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                         )}
                       </div>
                       <div className="text-[10px] text-slate-400 font-mono truncate max-w-[85px]">
-                        {isDispatched ? mission?.targetCityName : 'Ready'}
+                        {isDispatched ? mission?.targetCityName : (isTh ? 'พร้อม' : 'Ready')}
                       </div>
                     </div>
                   </button>
@@ -1911,7 +1916,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
           <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700 px-4 py-1.5 rounded-xl text-xs md:text-sm text-slate-200 shadow-2xl flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-amber-400 inline-block shadow"></span>
-              <span className="font-bold">Your HQ</span>
+              <span className="font-bold">{isTh ? 'สำนักงานใหญ่ของคุณ' : 'Your HQ'}</span>
             </div>
             {airlines
               ?.filter((a) => !a.isHuman)
@@ -1921,20 +1926,20 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                     className="w-3 h-3 rounded-full inline-block shadow"
                     style={{ backgroundColor: ai.color }}
                   ></span>
-                  <span className="font-bold text-slate-300">{ai.name.split(' ')[0]} HQ</span>
+                  <span className="font-bold text-slate-300">{ai.name.split(' ')[0]} {isTh ? 'สำนักงานใหญ่' : 'HQ'}</span>
                 </div>
               ))}
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block shadow"></span>
-              <span className="font-bold">Slots Owned</span>
+              <span className="font-bold">{isTh ? 'สล็อตที่มีสิทธิ์บิน' : 'Slots Owned'}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-5 h-0.5 bg-sky-400 inline-block rounded"></span>
-              <span className="font-bold">Air Routes</span>
+              <span className="font-bold">{isTh ? 'เส้นทางบิน' : 'Air Routes'}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-5 h-1 bg-red-500 inline-block rounded animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
-              <span className="font-bold text-red-400">Deficit Route (ขาดทุน)</span>
+              <span className="font-bold text-red-400">{isTh ? 'เส้นทางขาดทุน' : 'Deficit Route'}</span>
             </div>
           </div>
         )}
@@ -1969,7 +1974,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
               <div className="mb-2.5 p-2 bg-amber-950/40 border border-amber-500/60 rounded-xl">
                 <div className="text-[11px] font-black text-amber-300 uppercase flex items-center gap-1.5 mb-1.5">
                   <span>💼</span>
-                  <span>Stationed Envoys ({cityEnvoys.length})</span>
+                  <span>{isTh ? `ทูตการบินประจำการ (${cityEnvoys.length})` : `Stationed Envoys (${cityEnvoys.length})`}</span>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   {cityEnvoys.map((env) => (
@@ -1986,10 +1991,10 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                         <div className="font-bold text-slate-100 truncate">{env.name}</div>
                         <div className="text-[10px] text-amber-200/80 truncate">
                           {env.currentMission?.type === 'SLOT_NEGOTIATION'
-                            ? `Negotiating ${env.currentMission.requestedSlots || 10} Slots`
+                            ? (isTh ? `เจรจาขอ ${env.currentMission.requestedSlots || 10} สล็อต` : `Negotiating ${env.currentMission.requestedSlots || 10} Slots`)
                             : env.currentMission?.type === 'SUBSIDIARY_ACQUISITION'
-                            ? `Acquiring ${env.currentMission.ventureName || 'Venture'}`
-                            : 'Chartering Regional Hub'}
+                            ? (isTh ? `เข้าซื้อกิจการ ${env.currentMission.ventureName || 'ธุรกิจ'}` : `Acquiring ${env.currentMission.ventureName || 'Venture'}`)
+                            : (isTh ? 'เจรจาจัดตั้งฮับภูมิภาค' : 'Chartering Regional Hub')}
                         </div>
                       </div>
                     </div>
@@ -2001,13 +2006,13 @@ export const WorldMap: React.FC<WorldMapProps> = ({
 
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-              <span className="text-slate-400 block text-[11px]">Population:</span>
+              <span className="text-slate-400 block text-[11px]">{isTh ? 'ประชากร:' : 'Population:'}</span>
               <span className="font-black text-slate-100 font-mono text-sm">
                 {hoveredCity.population}M
               </span>
             </div>
             <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-              <span className="text-slate-400 block text-[11px]">Your Slots:</span>
+              <span className="text-slate-400 block text-[11px]">{isTh ? 'สล็อตของคุณ:' : 'Your Slots:'}</span>
               <span className="font-black text-emerald-400 font-mono text-sm">
                 {(() => {
                   const owned = playerAirline.slots[hoveredCity.id] || 0;
@@ -2023,20 +2028,20 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                   if (owned === 0) return '0 / ' + hoveredCity.baseSlots;
                   return (
                     <span>
-                      {free} <span className="text-slate-400 text-[10px] font-normal">ว่าง</span> / {owned}
+                      {free} <span className="text-slate-400 text-[10px] font-normal">{isTh ? 'ว่าง' : 'free'}</span> / {owned}
                     </span>
                   );
                 })()}
               </span>
             </div>
             <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-              <span className="text-slate-400 block text-[11px]">Business Index:</span>
+              <span className="text-slate-400 block text-[11px]">{isTh ? 'ดัชนีธุรกิจ:' : 'Business Index:'}</span>
               <span className="text-amber-300 font-black font-mono text-sm">
                 {hoveredCity.businessIndex}/100
               </span>
             </div>
             <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-              <span className="text-slate-400 block text-[11px]">Tourism Index:</span>
+              <span className="text-slate-400 block text-[11px]">{isTh ? 'ดัชนีท่องเที่ยว:' : 'Tourism Index:'}</span>
               <span className="text-pink-300 font-black font-mono text-sm">
                 {hoveredCity.tourismIndex}/100
               </span>
@@ -2056,12 +2061,16 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                   <div className="flex items-center gap-2">
                     <span className="text-base text-amber-400">★</span>
                     <div>
-                      <span className="text-xs font-bold text-sky-300 block">Your Primary Home Base (HQ)</span>
-                      <span className="text-[10px] text-slate-400">Main hub for airline network expansion</span>
+                      <span className="text-xs font-bold text-sky-300 block">
+                        {isTh ? 'ฐานการบินหลัก (สำนักงานใหญ่)' : 'Your Primary Home Base (HQ)'}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {isTh ? 'ศูนย์กลางหลักในการขยายเครือข่ายเส้นทางบิน' : 'Main hub for airline network expansion'}
+                      </span>
                     </div>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400 font-black">
-                    BASE HQ
+                    {isTh ? 'ฐานหลัก' : 'BASE HQ'}
                   </span>
                 </div>
               );
@@ -2083,10 +2092,10 @@ export const WorldMap: React.FC<WorldMapProps> = ({
             );
             const demandBadge =
               demandFactor >= 85
-                ? { label: '🔥 Premier Golden Route (High Passenger Demand)', color: 'text-amber-300' }
+                ? { label: isTh ? '🔥 เส้นทางสายทองคำ (ผู้โดยสารหนาแน่นมาก)' : '🔥 Premier Golden Route (High Passenger Demand)', color: 'text-amber-300' }
                 : demandFactor >= 60
-                ? { label: '📈 High-Traffic Commercial Corridor', color: 'text-emerald-300' }
-                : { label: '🌱 Developing Regional Feeder Route', color: 'text-sky-300' };
+                ? { label: isTh ? '📈 เส้นทางพาณิชย์หลักที่มีศักยภาพสูง' : '📈 High-Traffic Commercial Corridor', color: 'text-emerald-300' }
+                : { label: isTh ? '🌱 เส้นทางป้อนผู้โดยสารระดับภูมิภาค' : '🌱 Developing Regional Feeder Route', color: 'text-sky-300' };
 
             return (
               <div className="mt-2.5 p-2.5 bg-slate-950/90 border border-slate-700/80 rounded-xl space-y-2 font-mono">
@@ -2094,45 +2103,47 @@ export const WorldMap: React.FC<WorldMapProps> = ({
                 <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
                   <div className="flex items-center gap-1.5 text-xs text-slate-300">
                     <Plane className="w-3.5 h-3.5 text-sky-400" />
-                    <span>Distance from HQ ({homeCity.name}):</span>
+                    <span>{isTh ? `ระยะทางจากฐานหลัก (${homeCity.name}):` : `Distance from HQ (${homeCity.name}):`}</span>
                   </div>
                   <div className="text-right">
                     <span className="font-black text-amber-300 text-sm md:text-base">
-                      {distKm.toLocaleString()} km
+                      {distKm.toLocaleString()} {isTh ? 'กม.' : 'km'}
                     </span>
                   </div>
                 </div>
 
                 {/* Fleet Reachability Assessment */}
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-[11px] text-slate-400">Fleet Reachability:</span>
+                  <span className="text-[11px] text-slate-400">{isTh ? 'พิสัยบินของฝูงบิน:' : 'Fleet Reachability:'}</span>
                   {canReach ? (
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/50">
-                      ✓ Flyable with Current Fleet
+                      {isTh ? '✓ ฝูงบินปัจจุบันบินถึง' : '✓ Flyable with Current Fleet'}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-500/50">
-                      ⚠️ Out of Range (Fleet Max: {maxFleetRange.toLocaleString()} km)
+                      {isTh ? `⚠️ เกินพิสัยบิน (ฝูงบินสูงสุด: ${maxFleetRange.toLocaleString()} กม.)` : `⚠️ Out of Range (Fleet Max: ${maxFleetRange.toLocaleString()} km)`}
                     </span>
                   )}
                 </div>
 
                 {canReach ? (
                   <div className="text-[10px] text-slate-400 leading-tight">
-                    Capable Airframes:{' '}
+                    {isTh ? 'เครื่องบินที่บินถึง:' : 'Capable Airframes:'}{' '}
                     <span className="text-slate-200 font-sans font-semibold">
                       {uniqueCapableNames.join(', ')}
                     </span>
                   </div>
                 ) : (
                   <div className="text-[10px] text-amber-200/80 leading-tight italic">
-                    Requires procuring long-range airframe from Aircraft Market (Catalog has models up to 12,400+ km).
+                    {isTh
+                      ? 'จำเป็นต้องจัดซื้อเครื่องบินพิสัยไกลจากตลาดอากาศยาน (มีรุ่นบินไกลสูงสุดกว่า 12,400+ กม.)'
+                      : 'Requires procuring long-range airframe from Aircraft Market (Catalog has models up to 12,400+ km).'}
                   </div>
                 )}
 
                 {/* Popularity / Route Potential */}
                 <div className="pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
-                  <span className="text-slate-400">Route Potential:</span>
+                  <span className="text-slate-400">{isTh ? 'ศักยภาพเส้นทาง:' : 'Route Potential:'}</span>
                   <span className={`font-bold ${demandBadge.color}`}>{demandBadge.label}</span>
                 </div>
               </div>
@@ -2140,7 +2151,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
           })()}
 
           <div className="mt-2.5 text-center py-1.5 bg-sky-900/50 border border-sky-500/50 text-sky-200 rounded-lg font-bold text-xs">
-            Click City to Inspect or Assign Envoys
+            {isTh ? 'คลิกที่เมืองเพื่อดูข้อมูลหรือส่งทูตเจรจา' : 'Click City to Inspect or Assign Envoys'}
           </div>
         </div>
       )}

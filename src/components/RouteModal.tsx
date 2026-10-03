@@ -4,6 +4,7 @@ import { CITIES } from '../data/cities';
 import { AIRCRAFTS } from '../data/aircrafts';
 import { calculateDistance, calculateBaseFare, calculateRouteInceptionCostK, calculateRouteDemand, simulateRoutePerformance } from '../simulation/engine';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useI18n } from '../utils/i18n';
 import { X, Plane, AlertCircle, AlertTriangle, CheckCircle2, ShoppingCart, ArrowRight, Compass } from 'lucide-react';
 import { AircraftVisual } from './AircraftVisual';
 import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
@@ -38,6 +39,11 @@ export const RouteModal: React.FC<RouteModalProps> = ({
   currentQuarter,
 }) => {
   useEscapeKey(onClose);
+  const { t, lang } = useI18n();
+  const isTh = lang === 'th';
+  const kmUnit = isTh ? 'กม.' : 'km';
+  const flightsUnit = isTh ? 'เที่ยว/สัปดาห์' : 'flt/wk';
+
   // Authorized Departure Bases: Corporate HQ + Established Regional Hubs
   const authorizedBases = useMemo(() => {
     const baseIds = new Set([playerAirline.homeCityId, ...(playerAirline.hubCityIds || [])]);
@@ -289,13 +295,13 @@ export const RouteModal: React.FC<RouteModalProps> = ({
 
   // Dynamic button label providing immediate clarity on any launch blockage
   const launchButtonLabel = useMemo(() => {
-    if (isDuplicateRoute) return '🚫 มีเส้นทางบินนี้อยู่แล้ว (Duplicate)';
-    if (originFreeSlots === 0) return `🚫 สล็อตต้นทางเต็ม (${originCity?.name || originId}: 0 ว่าง)`;
-    if (destFreeSlots === 0) return `🚫 สล็อตปลายทางไม่พอ (${destCity?.name || destId}: 0 ว่าง)`;
-    if (maxWeeklyFlights <= 0) return '🚫 สล็อตไม่เพียงพอ (Max 0 เที่ยว/สัปดาห์)';
-    if (capableFleet.length === 0) return '🚫 ไม่มีเครื่องบินว่างที่บินถึง';
-    if (!canAffordInception) return `🚫 เงินไม่พอจ่ายค่าจัดตั้งสถานี ($${inceptionCostK.toLocaleString()}K)`;
-    return `Launch Route ($${inceptionCostK.toLocaleString()}K)`;
+    if (isDuplicateRoute) return isTh ? '🚫 มีเส้นทางบินนี้อยู่แล้ว' : '🚫 Route Already Active';
+    if (originFreeSlots === 0) return isTh ? `🚫 สล็อตต้นทางเต็ม (${originCity?.name || originId}: 0 ว่าง)` : `🚫 Origin Slots Full (${originCity?.name || originId}: 0 Free)`;
+    if (destFreeSlots === 0) return isTh ? `🚫 สล็อตปลายทางไม่พอ (${destCity?.name || destId}: 0 ว่าง)` : `🚫 Dest Slots Full (${destCity?.name || destId}: 0 Free)`;
+    if (maxWeeklyFlights <= 0) return isTh ? '🚫 สล็อตไม่เพียงพอ (0 เที่ยว/สัปดาห์)' : '🚫 Insufficient Slots (0 flt/wk)';
+    if (capableFleet.length === 0) return isTh ? '🚫 ไม่มีเครื่องบินว่างที่บินถึง' : '🚫 No Capable Idle Aircraft';
+    if (!canAffordInception) return isTh ? `🚫 เงินไม่พอจ่ายค่าเปิดเส้นทาง ($${inceptionCostK.toLocaleString()}K)` : `🚫 Insufficient Funds ($${inceptionCostK.toLocaleString()}K)`;
+    return isTh ? `เปิดเส้นทางบิน ($${inceptionCostK.toLocaleString()}K)` : `Launch Route ($${inceptionCostK.toLocaleString()}K)`;
   }, [
     isDuplicateRoute,
     originFreeSlots,
@@ -308,6 +314,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
     destCity,
     destId,
     inceptionCostK,
+    isTh,
   ]);
 
   const handleLaunch = () => {
@@ -363,20 +370,20 @@ export const RouteModal: React.FC<RouteModalProps> = ({
             </div>
             <div>
               <h2 className="text-xl md:text-2xl font-black text-slate-100 flex items-center gap-2.5">
-                <span>Open New Commercial Flight Route</span>
+                <span>{t.routeInauguration.title}</span>
                 <span className="text-xs font-mono px-2.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400 font-bold">
-                  ESTABLISH ROUTE
+                  {isTh ? 'เปิดเส้นทาง' : 'ESTABLISH ROUTE'}
                 </span>
               </h2>
               <div className="text-xs sm:text-sm text-sky-300/80 font-mono mt-0.5">
-                Connect International Air Hubs & Assign Aircraft
+                {t.routeInauguration.subtitle}
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
-            title="Close (Esc)"
+            title={`${t.common.close} (Esc)`}
             data-testid="modal-close-header-btn"
           >
             <X className="w-6 h-6" />
@@ -391,10 +398,10 @@ export const RouteModal: React.FC<RouteModalProps> = ({
               <label className="block text-slate-300 font-bold mb-1.5 text-xs md:text-sm font-mono flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-sky-400" />
-                  Departure Base (HQ / Hub)
+                  {t.routeInauguration.originHub}
                 </span>
                 <span className="text-[10px] text-sky-400 font-bold">
-                  {originCity.id === playerAirline.homeCityId ? '🏛️ Corporate HQ' : '🌐 Regional Hub'}
+                  {originCity.id === playerAirline.homeCityId ? (isTh ? '🏛️ สำนักงานใหญ่' : '🏛️ Corporate HQ') : (isTh ? '🌐 ศูนย์การบินภูมิภาค' : '🌐 Regional Hub')}
                 </span>
               </label>
               <select
@@ -405,9 +412,12 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                 {authorizedBases.map((city) => {
                   const isHQ = city.id === playerAirline.homeCityId;
                   const info = getCitySlotInfo(city.id);
+                  const roleLabel = isHQ ? (isTh ? 'สำนักงานใหญ่' : 'Corporate HQ') : (isTh ? 'ฮับภูมิภาค' : 'Regional Hub');
+                  const slotLabel = isTh ? `[ว่าง: ${info.free}/${info.total} สล็อต]` : `[Free: ${info.free}/${info.total} Slots]`;
+                  const fullWarning = info.free === 0 ? (isTh ? ' ⛔ สล็อตเต็ม' : ' ⛔ Full') : '';
                   return (
                     <option key={city.id} value={city.id}>
-                      {city.name} ({city.id}) — {isHQ ? 'Corporate HQ' : 'Regional Hub'} [ว่าง: {info.free}/{info.total} สล็อต]{info.free === 0 ? ' ⛔ สล็อตเต็ม' : ''}
+                      {city.name} ({city.id}) — {roleLabel} {slotLabel}{fullWarning}
                     </option>
                   );
                 })}
@@ -417,7 +427,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
             <div>
               <label className="block text-slate-300 font-bold mb-1.5 text-xs md:text-sm font-mono flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                Arrival (Destination City)
+                {t.routeInauguration.destinationCity}
               </label>
               <select
                 value={destId}
@@ -433,9 +443,11 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                       return m && m.rangeKm >= distToCity;
                     });
                     const info = getCitySlotInfo(city.id);
+                    const slotLabel = isTh ? `[ว่าง: ${info.free}/${info.total} สล็อต]` : `[Free: ${info.free}/${info.total} Slots]`;
+                    const statusTag = info.free === 0 ? (isTh ? '⛔ สล็อตหมด' : '⛔ No Slots') : hasCapablePlane ? (isTh ? '✓ พร้อมบิน' : '✓ Flyable') : (isTh ? '⚠️ พิสัยบินไม่ถึง' : '⚠️ Need Long-Range');
                     return (
                       <option key={city.id} value={city.id}>
-                        {city.name} ({city.id}) — {distToCity.toLocaleString()} km [ว่าง: {info.free}/{info.total} สล็อต] {info.free === 0 ? '⛔ สล็อตหมด' : hasCapablePlane ? '✓ Flyable' : '⚠️ Need Long-Range'}
+                        {city.name} ({city.id}) — {distToCity.toLocaleString()} {kmUnit} {slotLabel} {statusTag}
                       </option>
                     );
                   })}
@@ -447,14 +459,14 @@ export const RouteModal: React.FC<RouteModalProps> = ({
               <div className="col-span-1 md:col-span-2 px-3.5 py-2 rounded-xl bg-sky-950/80 border border-sky-400/80 text-sky-200 text-xs flex items-center gap-2">
                 <span className="text-base">🌐</span>
                 <span>
-                  <strong>Regional Hub Spoke Service:</strong> Flights radiating from <strong>{originCity.name} Hub</strong> enjoy <strong>+18% Transit Passenger Boost</strong> from your connected trunk network!
+                  <strong>{isTh ? 'บริการเชื่อมต่อเครือข่ายฮับภูมิภาค:' : 'Regional Hub Spoke Service:'}</strong> {isTh ? `เที่ยวบินที่บินออกจากฮับ ${originCity.name} ได้รับโบนัสผู้โดยสารต่อเครื่อง +18%!` : `Flights radiating from ${originCity.name} Hub enjoy +18% Transit Passenger Boost!`}
                 </span>
               </div>
             ) : authorizedBases.length === 1 ? (
               <div className="col-span-1 md:col-span-2 px-3.5 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-300 text-xs flex items-center gap-2">
                 <span className="text-base">💡</span>
                 <span>
-                  <strong>Aerobiz Hub & Spoke Rule:</strong> Routes depart from your Corporate HQ ({originCity.name}). To branch out within another continent (e.g. Europe or America), fly into that region and charter a Regional Hub ($15M • +15 Slots)!
+                  <strong>{isTh ? 'กติกาการขยายฮับการบิน:' : 'Aerobiz Hub & Spoke Rule:'}</strong> {isTh ? `เที่ยวบินจะเริ่มต้นจากสำนักงานใหญ่ (${originCity.name}) หากต้องการเปิดบินภายในทวีปอื่น ให้บินเข้าทวีปนั้นและก่อตั้งฮับภูมิภาค ($15M • +15 สล็อต)` : `Routes depart from your Corporate HQ (${originCity.name}). To branch out within another continent, fly into that region and charter a Regional Hub ($15M • +15 Slots)!`}
                 </span>
               </div>
             ) : null}
@@ -462,21 +474,21 @@ export const RouteModal: React.FC<RouteModalProps> = ({
             {/* Flight Metrics Summary Bar */}
             <div className="col-span-1 md:col-span-2 flex flex-wrap justify-between items-center text-xs md:text-sm text-slate-300 border-t border-slate-700/80 pt-3 gap-2 font-mono">
               <div className="flex items-center gap-2">
-                <span className="text-slate-400">Corridor Distance:</span>
+                <span className="text-slate-400">{t.routeInauguration.flightDistance}:</span>
                 <span className="font-black text-amber-300 text-sm md:text-base">
-                  {distance.toLocaleString()} km
+                  {distance.toLocaleString()} {kmUnit}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-slate-400">Standard Base Fare:</span>
+                <span className="text-slate-400">{t.routeInauguration.baseFare}:</span>
                 <span className="font-black text-emerald-400 text-sm md:text-base">
                   ${baseFare}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-slate-400">Airport Slot Clearance:</span>
+                <span className="text-slate-400">{isTh ? 'โควตาสล็อตสนามบิน:' : 'Airport Slot Clearance:'}</span>
                 <span className={`font-bold ${maxWeeklyFlights > 0 ? 'text-sky-300' : 'text-rose-400'}`}>
-                  Max {maxWeeklyFlights} flights/week
+                  {isTh ? `สูงสุด ${maxWeeklyFlights} เที่ยว/สัปดาห์` : `Max ${maxWeeklyFlights} flights/week`}
                 </span>
               </div>
             </div>
@@ -486,7 +498,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
               <div className="flex items-center justify-between text-xs font-mono flex-wrap gap-2">
                 <span className="font-bold text-slate-200 flex items-center gap-1.5">
                   <Compass className="w-4 h-4 text-sky-400" />
-                  <span>AIRPORT SLOT STATUS (สถานะโควตาสล็อตสนามบิน)</span>
+                  <span>{isTh ? 'สถานะโควตาสล็อตสนามบิน' : 'AIRPORT SLOT CLEARANCE DASHBOARD'}</span>
                 </span>
                 <span
                   className={`font-black px-2.5 py-0.5 rounded-full border text-xs ${
@@ -496,8 +508,8 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                   }`}
                 >
                   {maxWeeklyFlights > 0
-                    ? `✓ โควตาสูงสุด: ${maxWeeklyFlights} เที่ยว/สัปดาห์`
-                    : '⛔ สล็อตไม่พอ (0 เที่ยว/สัปดาห์)'}
+                    ? (isTh ? `✓ โควตาสูงสุด: ${maxWeeklyFlights} เที่ยว/สัปดาห์` : `✓ Max Clearance: ${maxWeeklyFlights} flt/wk`)
+                    : (isTh ? '⛔ สล็อตไม่พอ (0 เที่ยว/สัปดาห์)' : '⛔ Insufficient Slots (0 flt/wk)')}
                 </span>
               </div>
 
@@ -510,7 +522,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                 >
                   <div className="flex justify-between items-center mb-1.5">
                     <span className="font-black text-sky-300 flex items-center gap-1">
-                      <span>🛫 ต้นทาง:</span>
+                      <span>🛫 {isTh ? 'ต้นทาง:' : 'Origin:'}</span>
                       <span>{originCity.name} ({originCity.id})</span>
                     </span>
                     <span
@@ -520,12 +532,12 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                           : 'bg-rose-500/30 text-rose-200 font-bold border border-rose-500'
                       }`}
                     >
-                      {originFreeSlots > 0 ? `${originFreeSlots} สล็อตว่าง` : '⛔ 0 สล็อต (เต็ม)'}
+                      {originFreeSlots > 0 ? (isTh ? `${originFreeSlots} สล็อตว่าง` : `${originFreeSlots} Free Slots`) : (isTh ? '⛔ 0 สล็อต (เต็ม)' : '⛔ 0 Slots (Full)')}
                     </span>
                   </div>
                   <div className="text-[11px] text-slate-300 font-mono space-y-0.5">
-                    <div>สล็อตที่ถือครอง: <strong className="text-white">{originTotalSlots}</strong> สล็อต</div>
-                    <div>ถูกใช้โดยเส้นทางอื่น: <strong className="text-amber-400">{originUsedSlots}</strong> สล็อต</div>
+                    <div>{isTh ? 'สล็อตที่ถือครอง: ' : 'Slots held: '}<strong className="text-white">{originTotalSlots}</strong> {isTh ? 'สล็อต' : 'slots'}</div>
+                    <div>{isTh ? 'ถูกใช้โดยเส้นทางอื่น: ' : 'Committed to routes: '}<strong className="text-amber-400">{originUsedSlots}</strong> {isTh ? 'สล็อต' : 'slots'}</div>
                   </div>
                 </div>
 
@@ -537,7 +549,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                 >
                   <div className="flex justify-between items-center mb-1.5">
                     <span className="font-black text-emerald-300 flex items-center gap-1">
-                      <span>🛬 ปลายทาง:</span>
+                      <span>🛬 {isTh ? 'ปลายทาง:' : 'Destination:'}</span>
                       <span>{destCity.name} ({destCity.id})</span>
                     </span>
                     <span
@@ -547,12 +559,12 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                           : 'bg-rose-500/30 text-rose-200 font-bold border border-rose-500'
                       }`}
                     >
-                      {destFreeSlots > 0 ? `${destFreeSlots} สล็อตว่าง` : '⛔ 0 สล็อต (ไม่มีสล็อต)'}
+                      {destFreeSlots > 0 ? (isTh ? `${destFreeSlots} สล็อตว่าง` : `${destFreeSlots} Free Slots`) : (isTh ? '⛔ 0 สล็อต (ไม่มีสล็อต)' : '⛔ 0 Slots (None)')}
                     </span>
                   </div>
                   <div className="text-[11px] text-slate-300 font-mono space-y-0.5">
-                    <div>สล็อตที่ถือครอง: <strong className="text-white">{destTotalSlots}</strong> สล็อต</div>
-                    <div>ถูกใช้โดยเส้นทางอื่น: <strong className="text-amber-400">{destUsedSlots}</strong> สล็อต</div>
+                    <div>{isTh ? 'สล็อตที่ถือครอง: ' : 'Slots held: '}<strong className="text-white">{destTotalSlots}</strong> {isTh ? 'สล็อต' : 'slots'}</div>
+                    <div>{isTh ? 'ถูกใช้โดยเส้นทางอื่น: ' : 'Committed to routes: '}<strong className="text-amber-400">{destUsedSlots}</strong> {isTh ? 'สล็อต' : 'slots'}</div>
                   </div>
                 </div>
               </div>
@@ -563,11 +575,15 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                   <div className="flex items-center gap-2 text-rose-200 font-bold">
                     <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
                     <span>
-                      สล็อตสนามบินต้นทาง ({originCity.name}) ถูกใช้จนเต็มแล้ว! ({originUsedSlots}/{originTotalSlots} สล็อต)
+                      {isTh
+                        ? `สล็อตสนามบินต้นทาง (${originCity.name}) ถูกใช้จนเต็มแล้ว! (${originUsedSlots}/${originTotalSlots} สล็อต)`
+                        : `Origin airport (${originCity.name}) slots are fully utilized! (${originUsedSlots}/${originTotalSlots} slots)`}
                     </span>
                   </div>
                   <p className="text-[11px] text-rose-200/80 leading-relaxed">
-                    เส้นทางเดิมของคุณได้ใช้โควตาสล็อตทั้งหมดของ {originCity.name} ไปแล้ว จึงไม่สามารถเปิดเที่ยวบินเพิ่มได้
+                    {isTh
+                      ? `เส้นทางเดิมของคุณได้ใช้โควตาสล็อตทั้งหมดของ ${originCity.name} ไปแล้ว จึงไม่สามารถเปิดเที่ยวบินเพิ่มได้`
+                      : `Your existing routes have committed all landing slots at ${originCity.name}. Please reallocate flights or negotiate more slots.`}
                   </p>
                   <div className="flex items-center gap-2 pt-1 flex-wrap">
                     {onOpenManageRoutes && (
@@ -579,7 +595,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                         }}
                         className="px-3 py-1.5 bg-rose-700 hover:bg-rose-600 text-white rounded-lg font-bold text-xs transition cursor-pointer shadow flex items-center gap-1.5"
                       >
-                        <span>🔧 ลดเที่ยวบินเส้นทางเดิม (Manage Routes)</span>
+                        <span>{isTh ? '🔧 จัดการเส้นทางเดิม' : '🔧 Manage Routes'}</span>
                       </button>
                     )}
                     {onOpenSlotModal && (
@@ -591,7 +607,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                         }}
                         className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-300 rounded-lg font-bold text-xs border border-slate-600 transition cursor-pointer flex items-center gap-1.5"
                       >
-                        <span>💼 ส่งทูตขอสล็อตเพิ่ม (Envoy)</span>
+                        <span>{isTh ? '💼 ส่งทูตขอสล็อตเพิ่ม' : '💼 Dispatch Negotiator'}</span>
                       </button>
                     )}
                   </div>
@@ -603,10 +619,12 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                 <div className="p-3 bg-amber-950/80 border border-amber-500/80 rounded-xl text-xs space-y-2">
                   <div className="flex items-center gap-2 text-amber-200 font-bold">
                     <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>สนามบินปลายทาง ({destCity.name}) ไม่มีสล็อตว่าง!</span>
+                    <span>{isTh ? `สนามบินปลายทาง (${destCity.name}) ไม่มีสล็อตว่าง!` : `Destination airport (${destCity.name}) has 0 available slots!`}</span>
                   </div>
                   <p className="text-[11px] text-amber-200/80 leading-relaxed">
-                    สายการบินของคุณยังไม่มีสล็อตที่เมืองนี้ หรือใช้โควตาเต็มแล้ว ต้องส่งทูตเจรจาขอสล็อตก่อน
+                    {isTh
+                      ? 'สายการบินของคุณยังไม่มีสล็อตที่เมืองนี้ หรือใช้โควตาเต็มแล้ว ต้องส่งทูตเจรจาขอสล็อตก่อน'
+                      : 'Your airline holds no unused landing clearance in this city. Dispatch an envoy to negotiate a bilateral treaty.'}
                   </p>
                   {onOpenSlotModal && (
                     <div className="pt-1">
@@ -618,7 +636,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                         }}
                         className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-white rounded-lg font-bold text-xs transition cursor-pointer shadow flex items-center gap-1.5"
                       >
-                        <span>💼 ส่งทูตไปเจรจาสล็อตที่ {destCity.name}</span>
+                        <span>{isTh ? `💼 ส่งทูตไปเจรจาสล็อตที่ ${destCity.name}` : `💼 Dispatch Envoy to ${destCity.name}`}</span>
                       </button>
                     </div>
                   )}
@@ -631,14 +649,14 @@ export const RouteModal: React.FC<RouteModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-slate-200 font-black text-sm md:text-base font-mono flex items-center gap-2">
-                <span>Assign Aircraft from Available Fleet</span>
+                <span>{t.routeInauguration.selectFleet}</span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-950 text-sky-300 border border-sky-500/60 font-bold">
-                  {selectedInstanceIds.length} Selected ({totalFleetSeats} Seats Total)
+                  {selectedInstanceIds.length} {isTh ? 'ลำ' : 'Selected'} ({totalFleetSeats} {isTh ? 'ที่นั่ง' : 'Seats Total'})
                 </span>
               </label>
 
               <span className="text-xs text-slate-400 font-mono hidden sm:inline">
-                Required Range: ≥ {distance.toLocaleString()} km • Click to toggle multiple aircraft
+                {isTh ? `พิสัยบินขั้นต่ำ: ≥ ${distance.toLocaleString()} กม.` : `Required Range: ≥ ${distance.toLocaleString()} km`}
               </span>
             </div>
 
@@ -681,13 +699,13 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                             {isSelected && (
                               <span className="px-2 py-0.2 rounded bg-sky-500 text-slate-950 text-[10px] font-mono font-black flex items-center gap-1">
                                 <CheckCircle2 className="w-3 h-3" />
-                                <span>ASSIGNED (#{selectedIndex + 1})</span>
+                                <span>{isTh ? `เลือกประจำการ (#${selectedIndex + 1})` : `ASSIGNED (#${selectedIndex + 1})`}</span>
                               </span>
                             )}
                           </div>
                           <div className="text-xs text-slate-300 mt-0.5 font-mono">
-                            Capacity: <strong className="text-sky-300">{model.capacity} seats</strong> • Speed: {model.speedKmh} km/h • Certified Range:{' '}
-                            <strong className="text-emerald-400 font-mono">{model.rangeKm.toLocaleString()} km</strong>
+                            {isTh ? 'ความจุ: ' : 'Capacity: '}<strong className="text-sky-300">{model.capacity} {isTh ? 'ที่นั่ง' : 'seats'}</strong> • {isTh ? 'ความเร็ว: ' : 'Speed: '}{model.speedKmh} km/h • {isTh ? 'พิสัยบิน: ' : 'Certified Range: '}{' '}
+                            <strong className="text-emerald-400 font-mono">{model.rangeKm.toLocaleString()} {kmUnit}</strong>
                           </div>
                         </div>
                       </div>
@@ -695,7 +713,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                       <div className="flex items-center gap-3 self-end sm:self-center">
                         <span className="text-xs px-3 py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500 font-bold font-mono flex items-center gap-1.5 shadow">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Range Certified</span>
+                          <span>{isTh ? 'พิสัยบินผ่านเกณฑ์' : 'Range Certified'}</span>
                         </span>
                       </div>
                     </div>
@@ -711,10 +729,12 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                   </div>
                   <div>
                     <h4 className="font-black text-amber-300 text-sm md:text-base font-mono">
-                      All Company Aircraft Currently Deployed
+                      {isTh ? 'เครื่องบินทั้งหมดกำลังบินประจำการ' : 'All Company Aircraft Currently Deployed'}
                     </h4>
                     <p className="text-xs text-slate-300 mt-0.5">
-                      All {playerAirline.fleet.length} aircraft in your company fleet are currently assigned to active commercial rotations.
+                      {isTh
+                        ? `เครื่องบินทั้งหมด ${playerAirline.fleet.length} ลำของคุณกำลังบินในเส้นทางพาณิชย์อื่น`
+                        : `All ${playerAirline.fleet.length} aircraft in your company fleet are currently assigned to active commercial rotations.`}
                     </p>
                   </div>
                 </div>
@@ -726,7 +746,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                       className="px-4 py-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white rounded-xl font-bold text-xs md:text-sm font-mono flex items-center gap-2 shadow-lg cursor-pointer border border-sky-400"
                     >
                       <ShoppingCart className="w-4 h-4 text-sky-200" />
-                      <span>Open Aircraft Market to Purchase Airframe</span>
+                      <span>{t.routeInauguration.shopPlanesBtn}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -741,12 +761,12 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                   </div>
                   <div>
                     <h4 className="font-black text-rose-300 text-sm md:text-base font-mono flex items-center gap-2">
-                      <span>No Aircraft in Fleet with Required Range ({distance.toLocaleString()} km)</span>
+                      <span>{isTh ? `ไม่มีเครื่องบินว่างที่มีพิสัยบินถึง (${distance.toLocaleString()} กม.)` : `No Aircraft in Fleet with Required Range (${distance.toLocaleString()} km)`}</span>
                     </h4>
                     <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                      You have <strong className="text-white">{idleFleet.length} idle aircraft</strong> in your hangar, but their maximum flight range is only{' '}
-                      <strong className="text-amber-300 font-mono">{maxIdleFleetRange.toLocaleString()} km</strong>, which is insufficient to fly this{' '}
-                      <strong className="text-rose-300 font-mono">{distance.toLocaleString()} km</strong> corridor. Incapable aircraft have been filtered out.
+                      {isTh
+                        ? `คุณมีเครื่องบินว่าง ${idleFleet.length} ลำ แต่พิสัยบินสูงสุดเพียง ${maxIdleFleetRange.toLocaleString()} กม. ซึ่งไม่เพียงพอสำหรับระยะทาง ${distance.toLocaleString()} กม.`
+                        : `You have ${idleFleet.length} idle aircraft in your hangar, but their maximum flight range is only ${maxIdleFleetRange.toLocaleString()} km, which is insufficient to fly this ${distance.toLocaleString()} km corridor.`}
                     </p>
                   </div>
                 </div>
@@ -756,7 +776,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                   <div className="p-3 bg-slate-950/90 rounded-xl border border-slate-800 space-y-2 font-mono">
                     <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                       <Compass className="w-3.5 h-3.5 text-sky-400" />
-                      <span>Aircraft in Market Qualified for this Distance (Year {currentYear}):</span>
+                      <span>{isTh ? `เครื่องบินในตลาดที่บินถึงระยะนี้ได้ (ปี ${currentYear}):` : `Aircraft in Market Qualified for this Distance (Year ${currentYear}):`}</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {marketCapableModels.slice(0, 4).map((m) => (
@@ -765,7 +785,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                           className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs flex items-center gap-2"
                         >
                           <span className="font-bold text-slate-100">{m.model}</span>
-                          <span className="text-[10px] text-emerald-400">{m.rangeKm.toLocaleString()} km</span>
+                          <span className="text-[10px] text-emerald-400">{m.rangeKm.toLocaleString()} {kmUnit}</span>
                           <span className="text-[10px] text-slate-400">${m.priceK.toLocaleString()}K</span>
                         </div>
                       ))}
@@ -776,14 +796,14 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                 {onOpenAircraftShop && (
                   <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-3">
                     <span className="text-xs text-slate-400 font-mono">
-                      Acquire a long-haul airframe to unlock this lucrative route:
+                      {isTh ? 'สั่งซื้อเครื่องบินพิสัยไกลเพื่อเปิดเส้นทางนี้:' : 'Acquire a long-haul airframe to unlock this lucrative route:'}
                     </span>
                     <button
                       onClick={onOpenAircraftShop}
                       className="px-4 py-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-700 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-black text-xs md:text-sm font-mono flex items-center gap-2 shadow-xl cursor-pointer border border-emerald-400"
                     >
                       <ShoppingCart className="w-4 h-4 text-emerald-200" />
-                      <span>Go to Aircraft Market to Buy Capable Aircraft</span>
+                      <span>{t.routeInauguration.shopPlanesBtn}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -797,9 +817,9 @@ export const RouteModal: React.FC<RouteModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
               <div>
                 <div className="flex justify-between mb-1.5 text-sm font-mono">
-                  <span className="font-bold text-slate-200">Weekly Flight Frequency:</span>
+                  <span className="font-bold text-slate-200">{t.routeInauguration.frequencySelection}:</span>
                   <span className={`font-black text-base ${maxWeeklyFlights === 0 ? 'text-rose-400 font-bold' : 'text-sky-400'}`}>
-                    {maxWeeklyFlights === 0 ? '0 flights / week (⛔ สล็อตเต็ม)' : `${weeklyFrequency} flights / week`}
+                    {maxWeeklyFlights === 0 ? (isTh ? '0 เที่ยว/สัปดาห์ (⛔ สล็อตเต็ม)' : '0 flt/wk (⛔ Full)') : `${weeklyFrequency} ${flightsUnit}`}
                   </span>
                 </div>
                 <input
@@ -816,13 +836,13 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                   }`}
                 />
                 <div className="text-xs text-slate-400 mt-1.5 font-mono">
-                  Origin slots: <strong className={originFreeSlots > 0 ? 'text-emerald-400' : 'text-rose-400'}>{originFreeSlots} free</strong> • Dest slots: <strong className={destFreeSlots > 0 ? 'text-emerald-400' : 'text-rose-400'}>{destFreeSlots} free</strong> (Max permitted: <strong className={maxWeeklyFlights > 0 ? 'text-sky-300' : 'text-rose-400'}>{maxWeeklyFlights}/wk</strong>)
+                  {isTh ? 'สล็อตต้นทาง: ' : 'Origin slots: '}<strong className={originFreeSlots > 0 ? 'text-emerald-400' : 'text-rose-400'}>{originFreeSlots} {isTh ? 'ว่าง' : 'free'}</strong> • {isTh ? 'สล็อตปลายทาง: ' : 'Dest slots: '}<strong className={destFreeSlots > 0 ? 'text-emerald-400' : 'text-rose-400'}>{destFreeSlots} {isTh ? 'ว่าง' : 'free'}</strong> ({isTh ? 'อนุญาตสูงสุด: ' : 'Max permitted: '}<strong className={maxWeeklyFlights > 0 ? 'text-sky-300' : 'text-rose-400'}>{maxWeeklyFlights} {flightsUnit}</strong>)
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between mb-1.5 text-sm font-mono">
-                  <span className="font-bold text-slate-200">Ticket Fare Price:</span>
+                  <span className="font-bold text-slate-200">{t.routeInauguration.pricingStrategy}:</span>
                   <span
                     className={`font-black text-base ${
                       priceModifierPct > 0
@@ -845,9 +865,9 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                   className="w-full accent-blue-500 cursor-pointer h-2.5 bg-slate-700 rounded-lg"
                 />
                 <div className="text-xs text-slate-400 mt-1.5 flex justify-between font-mono">
-                  <span>-50% (Discount)</span>
-                  <span>Base (${baseFare})</span>
-                  <span>+50% (Premium)</span>
+                  <span>-50% ({isTh ? 'ประหยัด' : 'Discount'})</span>
+                  <span>{isTh ? 'ฐาน' : 'Base'} (${baseFare})</span>
+                  <span>+50% ({isTh ? 'พรีเมียม' : 'Premium'})</span>
                 </div>
               </div>
             </div>
@@ -857,25 +877,25 @@ export const RouteModal: React.FC<RouteModalProps> = ({
           {estimate && capableFleet.length > 0 && (
             <div className="bg-slate-950 p-4 rounded-2xl border-2 border-slate-700 grid grid-cols-2 md:grid-cols-4 gap-3 text-center shadow-inner">
               <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                <div className="text-xs text-slate-400 mb-0.5 font-mono">Quarterly Capacity</div>
+                <div className="text-xs text-slate-400 mb-0.5 font-mono">{isTh ? 'ความจุ/ไตรมาส' : 'Quarterly Capacity'}</div>
                 <div className="font-black text-slate-100 font-mono text-base">
-                  {estimate.capacity.toLocaleString()} seats
+                  {estimate.capacity.toLocaleString()} {isTh ? 'ที่นั่ง' : 'seats'}
                 </div>
               </div>
               <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                <div className="text-xs text-slate-400 mb-0.5 font-mono">Est. Passengers</div>
+                <div className="text-xs text-slate-400 mb-0.5 font-mono">{isTh ? 'ผู้โดยสารคาดการณ์' : 'Est. Passengers'}</div>
                 <div className="font-black text-sky-400 font-mono text-base">
                   {estimate.passengers.toLocaleString()} ({estimate.loadFactorPct}%)
                 </div>
               </div>
               <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                <div className="text-xs text-slate-400 mb-0.5 font-mono">Est. Revenue</div>
+                <div className="text-xs text-slate-400 mb-0.5 font-mono">{isTh ? 'รายรับคาดการณ์' : 'Est. Revenue'}</div>
                 <div className="font-black text-emerald-400 font-mono text-base">
                   +${estimate.revenueK.toLocaleString()}K
                 </div>
               </div>
               <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                <div className="text-xs text-slate-400 mb-0.5 font-mono">Est. Net Profit</div>
+                <div className="text-xs text-slate-400 mb-0.5 font-mono">{isTh ? 'กำไรสุทธิคาดการณ์' : 'Est. Net Profit'}</div>
                 <div
                   className={`font-black font-mono text-lg ${
                     estimate.profitK >= 0 ? 'text-emerald-300' : 'text-rose-400'
@@ -888,13 +908,14 @@ export const RouteModal: React.FC<RouteModalProps> = ({
               </div>
             </div>
           )}
+
           {/* Duplicate Route Warning */}
           {isDuplicateRoute && (
             <div className="p-3 bg-amber-950/70 border border-amber-500/80 rounded-xl flex items-center gap-3 text-xs font-mono text-amber-200">
               <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
               <div>
-                <span className="font-bold block">Route Already Active (เส้นทางนี้เปิดทำการบินอยู่แล้ว):</span>
-                Your airline already operates flights between {originCity.name} and {destCity.name}. Use "My Routes" to adjust flight frequencies or assign additional airframes!
+                <span className="font-bold block">{isTh ? 'เส้นทางนี้เปิดทำการบินอยู่แล้ว' : 'Route Already Active'}:</span>
+                {isTh ? `สายการบินของคุณมีเที่ยวบินระหว่าง ${originCity.name} และ ${destCity.name} อยู่แล้ว กรุณาไปที่ "เส้นทางของฉัน" เพื่อปรับแต่ง` : `Your airline already operates flights between ${originCity.name} and ${destCity.name}. Use "My Routes" to adjust flight frequencies or assign additional airframes!`}
               </div>
             </div>
           )}
@@ -906,27 +927,27 @@ export const RouteModal: React.FC<RouteModalProps> = ({
             {isDuplicateRoute ? (
               <span className="text-amber-400 font-bold flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Route already active (Duplicate)</span>
+                <span>{isTh ? 'เส้นทางบินซ้ำซ้อน' : 'Route already active (Duplicate)'}</span>
               </span>
             ) : capableFleet.length > 0 ? (
               <span className="text-emerald-400 font-bold flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Verified for {distance.toLocaleString()} km service</span>
+                <span>{isTh ? `ผ่านการรับรองพิสัยบิน ${distance.toLocaleString()} กม.` : `Verified for ${distance.toLocaleString()} km service`}</span>
               </span>
             ) : (
               <span className="text-rose-400 font-bold flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                <span>Select certified airframe to establish route</span>
+                <span>{isTh ? 'กรุณาเลือกเครื่องบินที่มีพิสัยบินถึง' : 'Select certified airframe to establish route'}</span>
               </span>
             )}
 
             <div className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 flex items-center gap-2">
-              <span className="text-slate-400">ค่าจัดตั้งสถานี (Inception Fee):</span>
+              <span className="text-slate-400">{t.routeInauguration.routeInceptionCost}:</span>
               <strong className={canAffordInception ? 'text-amber-400 font-bold' : 'text-rose-400 font-bold'}>
                 ${inceptionCostK.toLocaleString()}K
               </strong>
               {!canAffordInception && (
-                <span className="text-[10px] text-rose-400 font-bold">(เงินทุนไม่พอ)</span>
+                <span className="text-[10px] text-rose-400 font-bold">{isTh ? '(เงินทุนไม่พอ)' : '(Insufficient Funds)'}</span>
               )}
             </div>
           </div>
@@ -938,7 +959,7 @@ export const RouteModal: React.FC<RouteModalProps> = ({
               data-testid="modal-close-footer-btn"
             >
               <X className="w-4 h-4 text-slate-400" />
-              <span>Cancel / Close (ปิด)</span>
+              <span>{t.common.cancel}</span>
             </button>
             <button
               disabled={
@@ -950,21 +971,6 @@ export const RouteModal: React.FC<RouteModalProps> = ({
                 isDuplicateRoute
               }
               onClick={handleLaunch}
-              title={
-                isDuplicateRoute
-                  ? 'มีเส้นทางบินระหว่างคู่นี้อยู่แล้ว (Duplicate Route)'
-                  : originFreeSlots === 0
-                  ? `สนามบินต้นทาง (${originCity.name}) ไม่มีสล็อตว่าง กรุณาลดเที่ยวบินเส้นทางเดิมหรือเจรจาขอสล็อต`
-                  : destFreeSlots === 0
-                  ? `สนามบินปลายทาง (${destCity.name}) ไม่มีสล็อตว่าง กรุณาส่งทูตไปเจรจาขอสล็อต`
-                  : maxWeeklyFlights <= 0
-                  ? 'สล็อตการบินไม่เพียงพอที่จะจัดสรรเที่ยวบิน'
-                  : capableFleet.length === 0
-                  ? 'ไม่มีเครื่องบินว่างในฝูงบินที่พิสัยบินถึง'
-                  : !canAffordInception
-                  ? `ต้องการเงินทุน $${inceptionCostK.toLocaleString()}K เพื่อจัดตั้งสถานี`
-                  : 'เปิดเส้นทางบินพาณิชย์'
-              }
               className="px-6 py-2.5 bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 hover:from-blue-500 hover:to-sky-500 disabled:opacity-40 disabled:pointer-events-none text-white rounded-xl font-black text-xs md:text-sm shadow-xl transition border border-sky-400 cursor-pointer flex items-center gap-2"
             >
               <Plane className="w-4 h-4 shrink-0" />

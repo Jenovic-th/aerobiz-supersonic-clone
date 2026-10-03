@@ -22,6 +22,7 @@ import {
 import { ExecutiveRosterModal } from './ExecutiveRosterModal';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
 import { playSound } from '../utils/audio';
+import { useI18n } from '../utils/i18n';
 
 interface ExecutiveHeaderProps {
   gameState: GameState;
@@ -48,6 +49,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
   onOpenSettings,
   onOpenNews,
 }) => {
+  const { lang, setLanguage, t } = useI18n();
   const [showRoster, setShowRoster] = useState(false);
   const [quickSavedAnimation, setQuickSavedAnimation] = useState(false);
   const [saveToast, setSaveToast] = useState<string | null>(null);
@@ -70,7 +72,9 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
     };
   }, [showSystemMenu]);
 
-  const quarterNames = ['Q1 (Jan-Mar)', 'Q2 (Apr-Jun)', 'Q3 (Jul-Sep)', 'Q4 (Oct-Dec)'];
+  const quarterNames = lang === 'th'
+    ? ['Q1 (ม.ค.-มี.ค.)', 'Q2 (เม.ย.-มิ.ย.)', 'Q3 (ก.ค.-ก.ย.)', 'Q4 (ต.ค.-ธ.ค.)']
+    : ['Q1 (Jan-Mar)', 'Q2 (Apr-Jun)', 'Q3 (Jul-Sep)', 'Q4 (Oct-Dec)'];
   const currentQuarterText = quarterNames[gameState.currentQuarter - 1];
 
   const negotiators = playerAirline.negotiators || [];
@@ -110,8 +114,8 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
           <span className="text-slate-500">•</span>
           <span className="text-sky-300 font-mono">
             {gameState.gameMode === 'SANDBOX_INFINITE'
-              ? `Turn ${gameState.turnNumber} ♾️`
-              : `Turn ${gameState.turnNumber}/80 🏆`}
+              ? (lang === 'th' ? `เทิร์น ${gameState.turnNumber} ♾️` : `Turn ${gameState.turnNumber} ♾️`)
+              : (lang === 'th' ? `เทิร์น ${gameState.turnNumber}/80 🏆` : `Turn ${gameState.turnNumber}/80 🏆`)}
           </span>
         </div>
       </div>
@@ -121,7 +125,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
         {/* Cash */}
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/50">
           <DollarSign className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span className="text-slate-400 text-xs hidden sm:inline">Cash:</span>
+          <span className="text-slate-400 text-xs hidden sm:inline">{t.header.treasury}:</span>
           <span className="text-emerald-300 font-black text-sm md:text-base tracking-wider font-mono">
             ${playerAirline.cashK.toLocaleString()}K
           </span>
@@ -130,7 +134,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
         {/* Industry Rank */}
         <div className="flex items-center gap-1.5 px-3 py-1.5">
           <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
-          <span className="text-slate-400 text-xs hidden md:inline">Rank:</span>
+          <span className="text-slate-400 text-xs hidden md:inline">{t.header.rank}:</span>
           <span
             className={`font-black font-mono text-xs md:text-sm ${
               playerRank === 1 ? 'text-amber-300' : playerRank === 2 ? 'text-slate-200' : 'text-amber-500'
@@ -144,13 +148,17 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
         <button
           onClick={() => setShowRoster(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-700/50 transition cursor-pointer text-xs"
-          title="คลิกเพื่อดูทำเนียบทูตเจรจา (Envoys Roster)"
+          title={lang === 'th' ? 'คลิกเพื่อดูทำเนียบทูตเจรจา' : 'Click to view envoys roster'}
         >
           <Users className="w-4 h-4 text-sky-400 shrink-0" />
-          <span className="text-slate-400 hidden xl:inline">Envoys:</span>
-          <span className="text-emerald-300 font-bold font-mono">{availableCount} Free</span>
+          <span className="text-slate-400 hidden xl:inline">{t.header.negotiators}:</span>
+          <span className="text-emerald-300 font-bold font-mono">
+            {availableCount} {lang === 'th' ? 'พร้อม' : 'Free'}
+          </span>
           {onMissionCount > 0 && (
-            <span className="text-amber-400 font-bold font-mono">({onMissionCount} Out)</span>
+            <span className="text-amber-400 font-bold font-mono">
+              ({onMissionCount} {lang === 'th' ? 'เจรจา' : 'Out'})
+            </span>
           )}
         </button>
 
@@ -187,10 +195,10 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
                 ? 'bg-sky-600 border-sky-300 text-white ring-2 ring-sky-400/50'
                 : 'bg-slate-800 hover:bg-slate-700 border-slate-600 hover:border-sky-400 text-slate-200'
             }`}
-            title="System & Game Management (เมนูระบบ / รีสตาร์ท / ตั้งค่า / ออกจากเกม)"
+            title={lang === 'th' ? 'เมนูระบบ / รีสตาร์ท / ตั้งค่า / บันทึกเกม' : 'System menu, settings, save and restart'}
           >
             <Settings className="w-4 h-4 text-sky-400" />
-            <span className="font-bold">System</span>
+            <span className="font-bold">{t.header.systemMenu}</span>
             <ChevronDown
               className={`w-3.5 h-3.5 transition-transform ${showSystemMenu ? 'rotate-180' : ''}`}
             />
@@ -200,8 +208,33 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
           {showSystemMenu && (
             <div className="absolute right-0 top-full mt-2 w-64 bg-slate-900/95 backdrop-blur-xl border-2 border-slate-700 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="px-3.5 py-2.5 bg-slate-950/80 border-b border-slate-800 text-[11px] font-mono text-slate-400 font-bold uppercase tracking-wider flex items-center justify-between">
-                <span>Executive System Menu</span>
+                <span>{t.header.systemMenu}</span>
                 <span className="text-sky-400 font-mono text-[10px]">● Live</span>
+              </div>
+
+              {/* In-menu Language Switcher */}
+              <div className="p-2 border-b border-slate-800 bg-slate-950/40">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400 font-semibold">{lang === 'th' ? 'ภาษา UI' : 'Language'}:</span>
+                  <div className="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-[11px]">
+                    <button
+                      onClick={() => { playSound.click(); setLanguage('th'); }}
+                      className={`px-2 py-0.5 rounded-md font-bold transition cursor-pointer ${
+                        lang === 'th' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      🇹🇭 ไทย
+                    </button>
+                    <button
+                      onClick={() => { playSound.click(); setLanguage('en'); }}
+                      className={`px-2 py-0.5 rounded-md font-bold transition cursor-pointer ${
+                        lang === 'en' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      🇬🇧 ENG
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="p-1.5 space-y-1 text-xs">
@@ -216,7 +249,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
                 >
                   <div className="flex items-center gap-2.5 font-semibold">
                     <Newspaper className="w-4 h-4 text-amber-400" />
-                    <span>Global News Chronicle</span>
+                    <span>{t.header.newsChronicle}</span>
                   </div>
                   {hasUnreadNews && (
                     <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-mono font-bold animate-pulse">
@@ -231,7 +264,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
                     setShowSystemMenu(false);
                     if (onQuickSave) onQuickSave();
                     setQuickSavedAnimation(true);
-                    setSaveToast('💾 บันทึกเกมลงใน Local Storage สำเร็จ!');
+                    setSaveToast(lang === 'th' ? '💾 บันทึกเกมลงใน Local Storage สำเร็จ!' : '💾 Game saved to Local Storage successfully!');
                     setTimeout(() => {
                       setQuickSavedAnimation(false);
                       setSaveToast(null);
@@ -241,7 +274,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
                   className="w-full px-3 py-2 text-left rounded-xl hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition cursor-pointer"
                 >
                   <Save className="w-4 h-4 text-emerald-400" />
-                  <div className="flex-1 font-semibold">Quick Save (เซฟด่วน)</div>
+                  <div className="flex-1 font-semibold">{t.header.quickSave}</div>
                 </button>
 
                 {/* 2. Save & Load Modal */}
@@ -254,7 +287,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
                   className="w-full px-3 py-2 text-left rounded-xl hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition cursor-pointer"
                 >
                   <Database className="w-4 h-4 text-sky-400" />
-                  <div className="flex-1 font-semibold">Save & Load Management</div>
+                  <div className="flex-1 font-semibold">{t.header.saveLoadManager}</div>
                 </button>
 
                 {/* 3. Game Settings */}
@@ -267,7 +300,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
                   className="w-full px-3 py-2 text-left rounded-xl hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition cursor-pointer"
                 >
                   <Sliders className="w-4 h-4 text-purple-400" />
-                  <div className="flex-1 font-semibold">Game Settings (การตั้งค่า)</div>
+                  <div className="flex-1 font-semibold">{t.header.gameSettings}</div>
                 </button>
 
                 <div className="border-t border-slate-800 my-1" />
@@ -284,9 +317,9 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
                 >
                   <RotateCcw className="w-4 h-4 text-amber-400" />
                   <div>
-                    <div className="font-bold">Restart Game (เริ่มเกมใหม่)</div>
+                    <div className="font-bold">{t.header.restartSimulation}</div>
                     <div className="text-[10px] text-amber-400/70 font-normal">
-                      รีสตาร์ทเริ่มรอบใหม่จากขั้นตอนสร้างสายการบิน
+                      {lang === 'th' ? 'รีสตาร์ทเริ่มรอบใหม่จากขั้นตอนสร้างสายการบิน' : 'Restart and create new airline from scratch'}
                     </div>
                   </div>
                 </button>
@@ -303,9 +336,9 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
                 >
                   <Home className="w-4 h-4 text-indigo-400" />
                   <div>
-                    <div className="font-bold">Main Title Screen (กลับหน้าปก)</div>
+                    <div className="font-bold">{t.header.returnToTitle}</div>
                     <div className="text-[10px] text-indigo-400/70 font-normal">
-                      กลับสู่หน้าปกหลักของเกม
+                      {lang === 'th' ? 'กลับสู่หน้าปกหลักของเกม' : 'Return to main title screen'}
                     </div>
                   </div>
                 </button>
@@ -321,7 +354,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
                   className="w-full px-3 py-2 text-left rounded-xl hover:bg-rose-950/40 text-rose-400 hover:text-rose-200 flex items-center gap-2.5 transition cursor-pointer"
                 >
                   <Power className="w-4 h-4 text-rose-400" />
-                  <div className="flex-1 font-bold">Exit Game (ออกจากโปรแกรม)</div>
+                  <div className="flex-1 font-bold">{t.header.exitApp}</div>
                 </button>
               </div>
             </div>
@@ -380,25 +413,31 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
               </div>
               <div>
                 <h3 className="text-base font-black font-mono">
-                  {confirmAction === 'restart' && 'ยืนยันการเริ่มเกมใหม่ (Restart Game)'}
-                  {confirmAction === 'title' && 'กลับสู่หน้าปกหลัก (Return to Title)'}
-                  {confirmAction === 'exit' && 'ออกจากเกม (Exit Game)'}
+                  {confirmAction === 'restart' && (lang === 'th' ? 'ยืนยันการเริ่มเกมใหม่' : 'Restart Simulation')}
+                  {confirmAction === 'title' && (lang === 'th' ? 'กลับสู่หน้าปกหลัก' : 'Return to Title Screen')}
+                  {confirmAction === 'exit' && (lang === 'th' ? 'ออกจากเกม' : 'Exit Aerobiz Supersonic')}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  {confirmAction === 'restart' && 'เริ่มสร้างสายการบินรอบใหม่'}
-                  {confirmAction === 'title' && 'กลับสู่หน้าแรกของเกม'}
-                  {confirmAction === 'exit' && 'ปิดและยุติการทำงานของโปรแกรม'}
+                  {confirmAction === 'restart' && (lang === 'th' ? 'เริ่มสร้างสายการบินรอบใหม่' : 'Start fresh simulation')}
+                  {confirmAction === 'title' && (lang === 'th' ? 'กลับสู่หน้าแรกของเกม' : 'Leave to main title')}
+                  {confirmAction === 'exit' && (lang === 'th' ? 'ปิดและยุติการทำงานของโปรแกรม' : 'Quit application')}
                 </p>
               </div>
             </div>
 
             <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 text-xs text-slate-300 leading-relaxed font-mono">
               {confirmAction === 'restart' &&
-                'คุณต้องการยกเลิกความคืบหน้าปัจจุบันและเริ่มสร้างสายการบินรอบใหม่หรือไม่? (แนะนำให้เซฟเกมไว้ก่อนหากยังต้องการเล่นต่อ)'}
+                (lang === 'th'
+                  ? 'คุณต้องการยกเลิกความคืบหน้าปัจจุบันและเริ่มสร้างสายการบินรอบใหม่หรือไม่? (แนะนำให้เซฟเกมไว้ก่อนหากยังต้องการเล่นต่อ)'
+                  : 'Are you sure you want to discard current simulation progress and start over? (Recommended to save first).')}
               {confirmAction === 'title' &&
-                'คุณต้องการออกจากรอบการเล่นปัจจุบันและกลับสู่หน้าปกของเกมหรือไม่? ความคืบหน้าที่ไม่ได้บันทึกจะสูญหาย'}
+                (lang === 'th'
+                  ? 'คุณต้องการออกจากรอบการเล่นปัจจุบันและกลับสู่หน้าปกของเกมหรือไม่? ความคืบหน้าที่ไม่ได้บันทึกจะสูญหาย'
+                  : 'Return to main title screen? Any unsaved progress will be lost.')}
               {confirmAction === 'exit' &&
-                'คุณต้องการปิดโปรแกรมและออกจากเกมหรือไม่? ตรวจสอบให้แน่ใจว่าได้บันทึกเกมเรียบร้อยแล้ว'}
+                (lang === 'th'
+                  ? 'คุณต้องการปิดโปรแกรมและออกจากเกมหรือไม่? ตรวจสอบให้แน่ใจว่าได้บันทึกเกมเรียบร้อยแล้ว'
+                  : 'Are you sure you want to quit the game? Ensure you have saved your game.')}
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
@@ -411,7 +450,7 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
                 data-testid="confirm-dialog-cancel-btn"
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer"
               >
-                ยกเลิก (Cancel)
+                {t.common.cancel}
               </button>
               <button
                 type="button"
@@ -442,9 +481,9 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
                     : 'bg-rose-600 hover:bg-rose-500 text-white'
                 }`}
               >
-                {confirmAction === 'restart' && 'เริ่มรอบใหม่'}
-                {confirmAction === 'title' && 'กลับหน้าปก'}
-                {confirmAction === 'exit' && 'ออกจากเกม'}
+                {confirmAction === 'restart' && (lang === 'th' ? 'เริ่มรอบใหม่' : 'Restart')}
+                {confirmAction === 'title' && (lang === 'th' ? 'กลับหน้าปก' : 'Title Screen')}
+                {confirmAction === 'exit' && (lang === 'th' ? 'ออกจากเกม' : 'Exit')}
               </button>
             </div>
           </div>
@@ -453,3 +492,4 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
     </header>
   );
 };
+

@@ -12,6 +12,7 @@ import {
   SaveMetadata,
 } from '../utils/saveLoad';
 import { playSound } from '../utils/audio';
+import { useI18n } from '../utils/i18n';
 import {
   Sparkles,
   Globe2,
@@ -46,6 +47,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   onStartGame,
   onBackToTitle,
 }) => {
+  const { lang, setLanguage, t } = useI18n();
   // Wizard Navigation Step: 1 = Era & Mode, 2 = Competitors, 3 = HQ & Capital, 4 = Review & Launch
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4>(1);
 
@@ -53,7 +55,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const [gameMode, setGameMode] = useState<GameMode>('CAMPAIGN_20YR');
   const [selectedEra, setSelectedEra] = useState<1 | 2 | 3>(1);
   const [airlineName, setAirlineName] = useState<string>('Siam Supersonic Airways');
-  const [playerCeoName, setPlayerCeoName] = useState<string>('You (Chief Executive)');
+  const [playerCeoName, setPlayerCeoName] = useState<string>(lang === 'th' ? 'คุณ (ประธานบริหาร)' : 'You (Chief Executive)');
   const [homeCityId, setHomeCityId] = useState<string>('BKK');
   const [difficulty, setDifficulty] = useState<number>(2); // 1 = $100M, 2 = $75M, 3 = $50M
 
@@ -123,45 +125,51 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   const eraDescriptions = {
     1: {
       yearRange: '1980 – 2000',
-      title: '1980: Widebody Jets & Cold War',
-      tagline: 'ยุคสงครามเย็น & เครื่องบินลำตัวกว้าง',
-      subtitle: 'The golden age of 747 jumbos, DC-10, Concorde, and the collapse of the Eastern Bloc.',
+      title: lang === 'th' ? '1980: ยุคเบิกฟ้าไอพ่นและสงครามเย็น' : '1980: Widebody Jets & Cold War',
+      tagline: lang === 'th' ? 'เครื่องบินลำตัวกว้าง & การสิ้นสุดของกลุ่มตะวันออก' : 'Cold War Frontiers & Widebody Revolution',
+      subtitle: lang === 'th'
+        ? 'ยุคทองของ B747 จัมโบ้, DC-10, คองคอร์ด SST และวิกฤตการณ์น้ำมัน'
+        : 'The golden age of 747 jumbos, DC-10, Concorde, and the collapse of the Eastern Bloc.',
       planes: 'B747-200B, B727-200, DC-10-30, Concorde SST, A300B4, Tu-154B',
-      events: '1982/1986/1990/1994 World Cups, 1990 Gulf War, 1997 Asian Crisis',
-      starterPlane: 'Boeing 727-200 Trijet',
+      events: lang === 'th' ? 'ฟุตบอลโลก 1982-1994, สงครามอ่าวเปอร์เซีย, วิกฤติต้มยำกุ้ง' : '1982/1986/1990/1994 World Cups, 1990 Gulf War, 1997 Asian Crisis',
+      starterPlane: lang === 'th' ? 'โบอิ้ง 727-200 ไตรเจ็ต' : 'Boeing 727-200 Trijet',
       starterPlaneId: 'B727-200',
       icon: Shield,
       accent: 'border-sky-500 text-sky-400 bg-sky-950/30',
       glow: 'shadow-[0_0_30px_rgba(56,189,248,0.25)]',
-      badge: 'HISTORICAL GOLDEN ERA',
+      badge: lang === 'th' ? 'ยุคทองแห่งประวัติศาสตร์' : 'HISTORICAL GOLDEN ERA',
     },
     2: {
       yearRange: '2000 – 2020',
-      title: '2000: Modern Mega-Jets & Efficiency',
-      tagline: 'ยุคเมกะเจ็ต & ประสิทธิภาพคอมโพสิต',
-      subtitle: 'The dawn of the A380 Superjumbo, B787 Dreamliner, and A350 long-range cruising.',
+      title: lang === 'th' ? '2000: ยุคเมกะเจ็ตและประสิทธิภาพสูง' : '2000: Modern Mega-Jets & Efficiency',
+      tagline: lang === 'th' ? 'สองเครื่องยนต์ทรงพลัง & ตลาดการบินเปิดเสรี' : 'Twin-Engine Giants & Composite Efficiency',
+      subtitle: lang === 'th'
+        ? 'การกำเนิดของ A380 ซูเปอร์จัมโบ้, B787 ดรีมไลเนอร์ และ B777 พิสัยบินข้ามทวีป'
+        : 'The dawn of the A380 Superjumbo, B787 Dreamliner, and A350 long-range cruising.',
       planes: 'Airbus A380-800, B787-8 Dreamliner, A350-900, B777-200ER',
-      events: '2002/2006/2010/2014 World Cups, 2001 Aviation Shock, 2008 Financial Crisis',
-      starterPlane: 'Boeing 777-200ER Twin-Jet',
+      events: lang === 'th' ? 'ฟุตบอลโลก 2002-2014, ช็อกการบิน 2001, วิกฤติการเงิน 2008' : '2002/2006/2010/2014 World Cups, 2001 Aviation Shock, 2008 Financial Crisis',
+      starterPlane: lang === 'th' ? 'โบอิ้ง 777-200ER ทวินเจ็ต' : 'Boeing 777-200ER Twin-Jet',
       starterPlaneId: 'B777-200ER',
       icon: Globe2,
       accent: 'border-amber-500 text-amber-400 bg-amber-950/30',
       glow: 'shadow-[0_0_30px_rgba(245,158,11,0.25)]',
-      badge: 'MODERN JETLINER AGE',
+      badge: lang === 'th' ? 'ยุคไอพ่นสมัยใหม่' : 'MODERN JETLINER AGE',
     },
     3: {
       yearRange: '2020 – 2040+',
-      title: '2020: Next-Gen, Supersonic & Future Tech',
-      tagline: 'ยุคอนาคต & ความเร็วเหนือเสียงยุคใหม่',
-      subtitle: 'Ultra long-range A321XLR, Boom Overture SST, Airbus ZEROe Hydrogen, Tesla AeroStar & SpaceX.',
+      title: lang === 'th' ? '2020: ยุคความเร็วเหนือเสียงและอนาคต' : '2020: Next-Gen, Supersonic & Future Tech',
+      tagline: lang === 'th' ? 'ความเร็วเหนือเสียงยุคใหม่ & เทคโนโลยีสะอาด' : 'Supersonic Renaissance & Green Tech',
+      subtitle: lang === 'th'
+        ? 'เครื่องบินพิสัยไกลพิเศษ A321XLR, บูม โอเวอร์เจอร์ SST และการขนส่งแห่งอนาคต'
+        : 'Ultra long-range A321XLR, Boom Overture SST, Airbus ZEROe Hydrogen, Tesla AeroStar & SpaceX.',
       planes: 'Boom SST, A321XLR, B777X, Tesla AeroStar, SpaceX Starship P2P',
-      events: '2022/2026/2030 World Cups, 2024 Olympics, Clean Hydrogen Energy, Suborbital Hops',
-      starterPlane: 'Airbus A321neo-XLR Ultra-Range',
+      events: lang === 'th' ? 'ฟุตบอลโลก 2022-2030, โอลิมปิก 2024, พลังงานไฮโดรเจนสะอาด' : '2022/2026/2030 World Cups, 2024 Olympics, Clean Hydrogen Energy, Suborbital Hops',
+      starterPlane: lang === 'th' ? 'แอร์บัส A321neo-XLR พิสัยไกล' : 'Airbus A321neo-XLR Ultra-Range',
       starterPlaneId: 'A321XLR',
       icon: Rocket,
       accent: 'border-emerald-500 text-emerald-400 bg-emerald-950/30',
       glow: 'shadow-[0_0_30px_rgba(16,185,129,0.25)]',
-      badge: 'HYPERSONIC & FUTURE TECH',
+      badge: lang === 'th' ? 'ยุคความเร็วเหนือเสียง & อนาคต' : 'HYPERSONIC & FUTURE TECH',
     },
   };
 
@@ -449,13 +457,13 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
   // Regions list for HQ filter
   const regions = [
-    { id: 'ALL', label: 'All Continents (ทั้งหมด)' },
-    { id: 'EAST_SOUTHEAST_ASIA', label: 'East & SE Asia' },
-    { id: 'EUROPE', label: 'Europe' },
-    { id: 'NORTH_AMERICA', label: 'North America' },
-    { id: 'MIDDLE_EAST_SOUTH_ASIA', label: 'Middle East & South Asia' },
-    { id: 'SOUTH_AMERICA', label: 'South America' },
-    { id: 'OCEANIA', label: 'Oceania' },
+    { id: 'ALL', label: lang === 'th' ? 'ทุกทวีป' : 'All Continents' },
+    { id: 'EAST_SOUTHEAST_ASIA', label: lang === 'th' ? 'เอเชียตะวันออก & SE Asia' : 'East & SE Asia' },
+    { id: 'EUROPE', label: lang === 'th' ? 'ยุโรป' : 'Europe' },
+    { id: 'NORTH_AMERICA', label: lang === 'th' ? 'อเมริกาเหนือ' : 'North America' },
+    { id: 'MIDDLE_EAST_SOUTH_ASIA', label: lang === 'th' ? 'ตะวันออกกลาง & เอเชียใต้' : 'Middle East & South Asia' },
+    { id: 'SOUTH_AMERICA', label: lang === 'th' ? 'อเมริกาใต้' : 'South America' },
+    { id: 'OCEANIA', label: lang === 'th' ? 'โอเชียเนีย' : 'Oceania' },
   ];
 
   const filteredCities = useMemo(() => {
@@ -464,10 +472,10 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
   }, [selectedRegionFilter]);
 
   const stepLabels = [
-    { num: 1, title: 'Choose Era', thai: 'เลือกยุค' },
-    { num: 2, title: 'Competitors', thai: 'ผู้เล่น & คู่แข่ง' },
-    { num: 3, title: 'HQ & Capital', thai: 'สำนักงานใหญ่ & ทุน' },
-    { num: 4, title: 'Launch', thai: 'สรุป & เริ่มการบิน' },
+    { num: 1, title: lang === 'th' ? 'เลือกยุค' : 'Choose Era' },
+    { num: 2, title: lang === 'th' ? 'คู่แข่ง AI' : 'Competitors' },
+    { num: 3, title: lang === 'th' ? 'สำนักงานใหญ่ & ทุน' : 'HQ & Capital' },
+    { num: 4, title: lang === 'th' ? 'สรุป & เริ่มบิน' : 'Review & Launch' },
   ];
 
   return (
@@ -495,10 +503,10 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
               }}
               data-testid="setup-back-title-btn"
               className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-sky-400 rounded-xl text-xs font-bold font-mono transition cursor-pointer active:scale-95 shadow"
-              title="Return to Title Screen (กลับหน้าปก)"
+              title={lang === 'th' ? 'กลับหน้าแรกของเกม' : 'Return to Title Screen'}
             >
               <ArrowLeft className="w-4 h-4 text-sky-400" />
-              <span>Title Screen</span>
+              <span>{lang === 'th' ? 'กลับหน้าแรก' : 'Title Screen'}</span>
             </button>
           )}
 
@@ -511,7 +519,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 AEROBIZ SUPERSONIC
               </div>
               <div className="text-[10px] text-slate-400 font-mono">
-                NEW AIRLINE FOUNDATION WIZARD
+                {lang === 'th' ? 'ขั้นตอนก่อตั้งสายการบินพาณิชย์ใหม่' : 'NEW AIRLINE FOUNDATION WIZARD'}
               </div>
             </div>
           </div>
@@ -564,26 +572,48 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
           })}
         </div>
 
-        {/* Right: Quick Import & Status */}
+        {/* Right: Language Switcher, Quick Import & Status */}
         <div className="flex items-center gap-3">
+          {/* Front Language Switcher */}
+          <div className="flex items-center bg-slate-950/80 p-0.5 rounded-xl border border-slate-700/80">
+            <button
+              onClick={() => { playSound.click(); setLanguage('th'); }}
+              className={`px-2 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
+                lang === 'th' ? 'bg-sky-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span>🇹🇭</span>
+              <span>ไทย</span>
+            </button>
+            <button
+              onClick={() => { playSound.click(); setLanguage('en'); }}
+              className={`px-2 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
+                lang === 'en' ? 'bg-sky-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span>🇬🇧</span>
+              <span>ENG</span>
+            </button>
+          </div>
+
           {availableSave && (
             <button
               onClick={handleResumeSave}
               className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900/90 text-emerald-300 border border-emerald-400/60 rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
-              title="Resume existing save"
+              title={lang === 'th' ? 'เล่นต่อจากบันทึกล่าสุด' : 'Resume existing save'}
             >
               <Zap className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Resume Saved</span>
+              <span>{lang === 'th' ? 'เล่นต่อ' : 'Resume Saved'}</span>
             </button>
           )}
 
           <button
             onClick={() => importFileRef.current?.click()}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
-            title="Import Save File (.json)"
+            title={lang === 'th' ? 'นำเข้าไฟล์เซฟ (.json)' : 'Import Save File (.json)'}
           >
             <Upload className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">Import .json</span>
+            <span className="hidden sm:inline">{lang === 'th' ? 'นำเข้า .json' : 'Import .json'}</span>
           </button>
         </div>
       </header>
@@ -607,15 +637,17 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
             {/* Step Heading */}
             <div className="text-center mb-3 shrink-0">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-950/70 border border-sky-400/40 text-sky-300 font-mono text-xs font-bold mb-1">
-                <span>STEP 1 / 4</span>
+                <span>{lang === 'th' ? 'ขั้นตอนที่ 1 / 4' : 'STEP 1 / 4'}</span>
                 <span>•</span>
-                <span>HISTORICAL TIMELINE & SCENARIO</span>
+                <span>{lang === 'th' ? 'ยุคประวัติศาสตร์และโหมดการเล่น' : 'HISTORICAL TIMELINE & SCENARIO'}</span>
               </div>
               <h2 className="text-2xl lg:text-3xl font-black font-mono text-white tracking-wide">
-                SELECT STARTING ERA & CHRONOLOGY
+                {lang === 'th' ? 'เลือกยุคประวัติศาสตร์การบิน' : 'SELECT STARTING ERA & CHRONOLOGY'}
               </h2>
               <p className="text-xs text-slate-400">
-                เลือกยุคประวัติศาสตร์การบินและโหมดการจำลองเพื่อเริ่มต้นก่อตั้งสายการบิน
+                {lang === 'th'
+                  ? 'เลือกยุคประวัติศาสตร์การบินและโหมดการจำลองเพื่อเริ่มต้นก่อตั้งสายการบิน'
+                  : 'Select historical aviation era and simulation scenario to commence foundation'}
               </p>
             </div>
 
@@ -681,14 +713,14 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                     {/* Starter Aircraft & Events Preview */}
                     <div className="mt-4 pt-3 border-t border-slate-800 space-y-2">
                       <div className="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80 text-[11px] font-mono">
-                        <span className="text-slate-400 block text-[10px]">STARTER JETLINER:</span>
+                        <span className="text-slate-400 block text-[10px]">{lang === 'th' ? 'เครื่องบินเริ่มต้น:' : 'STARTER JETLINER:'}</span>
                         <span className="font-bold text-white flex items-center gap-1.5 mt-0.5">
                           <Plane className="w-3 h-3 text-sky-400" />
                           {era.starterPlane}
                         </span>
                       </div>
                       <div className="text-[10px] text-slate-400 font-mono truncate">
-                        <span className="text-slate-500 font-bold">Fleet:</span> {era.planes}
+                        <span className="text-slate-500 font-bold">{lang === 'th' ? 'ฝูงบิน:' : 'Fleet:'}</span> {era.planes}
                       </div>
                     </div>
                   </div>
@@ -702,10 +734,12 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 <Trophy className="w-5 h-5 text-amber-400" />
                 <div>
                   <div className="text-xs font-bold text-white font-mono uppercase">
-                    Simulation Mode (โหมดการเล่น)
+                    {lang === 'th' ? 'โหมดการจำลอง' : 'Simulation Mode'}
                   </div>
                   <div className="text-[11px] text-slate-400">
-                    เลือกเงื่อนไขชัยชนะตามกฎเดิม Koei 20 ปี หรือเล่นแบบไม่จำกัดเวลา
+                    {lang === 'th'
+                      ? 'เลือกเงื่อนไขชัยชนะตามกฎเดิม 20 ปี หรือเล่นแบบไม่จำกัดเวลา'
+                      : 'Choose classic 20-year victory condition or infinite sandbox play'}
                   </div>
                 </div>
               </div>
@@ -722,7 +756,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                       : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
                   }`}
                 >
-                  🏆 Classic 20-Year Campaign (80 Quarters)
+                  {lang === 'th' ? '🏆 แคมเปญคลาสสิก 20 ปี (80 ไตรมาส)' : '🏆 Classic 20-Year Campaign (80 Quarters)'}
                 </button>
                 <button
                   onClick={() => {
@@ -735,7 +769,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                       : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
                   }`}
                 >
-                  ♾️ Infinite Sandbox Mode
+                  {lang === 'th' ? '♾️ แซนด์บ็อกซ์ไม่จำกัดเวลา' : '♾️ Infinite Sandbox Mode'}
                 </button>
               </div>
             </div>
@@ -751,15 +785,17 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-4 mb-2 shrink-0">
               <div>
                 <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-sky-950/70 border border-sky-400/40 text-sky-300 font-mono text-xs font-bold mb-1">
-                  <span>STEP 2 / 4</span>
+                  <span>{lang === 'th' ? 'ขั้นตอนที่ 2 / 4' : 'STEP 2 / 4'}</span>
                   <span>•</span>
-                  <span>AIRLINE CONGLOMERATES & RIVALS</span>
+                  <span>{lang === 'th' ? 'สายการบินและคู่แข่งในตลาด' : 'AIRLINE CONGLOMERATES & RIVALS'}</span>
                 </div>
                 <h2 className="text-2xl lg:text-3xl font-black font-mono text-white tracking-wide">
-                  PLAYERS & COMPETITORS SETUP
+                  {lang === 'th' ? 'ตั้งค่าผู้เล่นและคู่แข่ง AI' : 'PLAYERS & COMPETITORS SETUP'}
                 </h2>
                 <p className="text-xs text-slate-400">
-                  รองรับการแข่งขันสูงสุด 4 สายการบินในตลาดโลก (สามารถตั้งชื่อหรือใช้ชื่อสุ่มได้ทันที)
+                  {lang === 'th'
+                    ? 'รองรับการแข่งขันสูงสุด 4 สายการบินในตลาดโลก (สามารถตั้งชื่อหรือสุ่มชื่อใหม่ได้)'
+                    : 'Configure up to 4 global airline conglomerates (freely customize names or re-roll)'}
                 </p>
               </div>
 
@@ -767,7 +803,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
               <div className="flex items-center gap-3">
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-1 flex items-center gap-1">
                   <span className="text-[11px] font-mono text-slate-400 px-2 font-bold">
-                    Competitors:
+                    {lang === 'th' ? 'คู่แข่ง AI:' : 'Competitors:'}
                   </span>
                   {[1, 2, 3].map((num) => (
                     <button
@@ -782,7 +818,9 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           : 'text-slate-400 hover:text-white hover:bg-slate-800'
                       }`}
                     >
-                      {num} Rival{num > 1 ? 's' : ''} ({num + 1} Total)
+                      {lang === 'th'
+                        ? `${num} คู่แข่ง (รวม ${num + 1})`
+                        : `${num} Rival${num > 1 ? 's' : ''} (${num + 1} Total)`}
                     </button>
                   ))}
                 </div>
@@ -790,10 +828,10 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 <button
                   onClick={handleRerollAllRivals}
                   className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-sky-400 rounded-xl text-xs font-bold font-mono transition cursor-pointer shadow active:scale-95"
-                  title="Randomize all AI rival airlines and personalities"
+                  title={lang === 'th' ? 'สุ่มสายการบินและบุคลิกของคู่แข่งใหม่' : 'Randomize all AI rival airlines and personalities'}
                 >
                   <Shuffle className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Re-roll Rivals</span>
+                  <span>{lang === 'th' ? 'สุ่มคู่แข่งใหม่' : 'Re-roll Rivals'}</span>
                 </button>
               </div>
             </div>
@@ -808,11 +846,11 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse" />
                       <span className="font-mono text-xs font-black text-sky-400 tracking-wider">
-                        SLOT 1 • PLAYER (HUMAN)
+                        {lang === 'th' ? 'สล็อต 1 • สายการบินของคุณ' : 'SLOT 1 • PLAYER (HUMAN)'}
                       </span>
                     </div>
                     <span className="text-[10px] px-2 py-0.5 bg-sky-950 text-sky-300 border border-sky-400/40 rounded-full font-mono font-bold">
-                      YOU
+                      {lang === 'th' ? 'คุณ' : 'YOU'}
                     </span>
                   </div>
 
@@ -820,15 +858,15 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   <div className="space-y-1 mb-3">
                     <div className="flex items-center justify-between">
                       <label className="text-[11px] font-bold text-slate-300 font-mono">
-                        AIRLINE NAME:
+                        {lang === 'th' ? 'ชื่อสายการบิน:' : 'AIRLINE NAME:'}
                       </label>
                       <button
                         onClick={handleRandomizePlayerName}
                         className="text-[10px] text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 cursor-pointer"
-                        title="Randomize name"
+                        title={lang === 'th' ? 'สุ่มชื่อสายการบิน' : 'Randomize name'}
                       >
                         <Shuffle className="w-3 h-3" />
-                        <span>Random</span>
+                        <span>{lang === 'th' ? 'สุ่ม' : 'Random'}</span>
                       </button>
                     </div>
                     <input
@@ -836,7 +874,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                       value={airlineName}
                       onChange={(e) => setAirlineName(e.target.value)}
                       className="w-full bg-slate-950 border border-slate-700 focus:border-sky-400 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none"
-                      placeholder="Enter airline name"
+                      placeholder={lang === 'th' ? 'กรอกชื่อสายการบิน' : 'Enter airline name'}
                       maxLength={32}
                     />
                   </div>
@@ -844,14 +882,14 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   {/* CEO Name Input */}
                   <div className="space-y-1 mb-3">
                     <label className="text-[11px] font-bold text-slate-400 font-mono">
-                      CEO / EXECUTIVE:
+                      {lang === 'th' ? 'ประธานบริหาร:' : 'CEO / EXECUTIVE:'}
                     </label>
                     <input
                       type="text"
                       value={playerCeoName}
                       onChange={(e) => setPlayerCeoName(e.target.value)}
                       className="w-full bg-slate-950 border border-slate-700 focus:border-sky-400 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none font-mono"
-                      placeholder="CEO Name"
+                      placeholder={lang === 'th' ? 'ชื่อประธานบริหาร' : 'CEO Name'}
                       maxLength={28}
                     />
                   </div>
@@ -860,11 +898,11 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 {/* Slot Footer Meta */}
                 <div className="pt-3 border-t border-slate-800 space-y-1 text-[11px] font-mono">
                   <div className="flex justify-between text-slate-400">
-                    <span>Executive Role:</span>
-                    <span className="text-white font-bold">Airline President</span>
+                    <span>{lang === 'th' ? 'ตำแหน่งผู้บริหาร:' : 'Executive Role:'}</span>
+                    <span className="text-white font-bold">{lang === 'th' ? 'ประธานกรรมการสายการบิน' : 'Airline President'}</span>
                   </div>
                   <div className="flex justify-between text-slate-400">
-                    <span>Headquarters:</span>
+                    <span>{lang === 'th' ? 'สำนักงานใหญ่:' : 'Headquarters:'}</span>
                     <span className="text-sky-400 font-bold">{selectedHomeCity.name}</span>
                   </div>
                 </div>
@@ -883,9 +921,11 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                       className="bg-slate-950/40 border-2 border-dashed border-slate-800 rounded-3xl p-4 flex flex-col items-center justify-center text-slate-600 font-mono text-xs space-y-2 opacity-50"
                     >
                       <Bot className="w-8 h-8 stroke-1 text-slate-700" />
-                      <div className="font-bold text-slate-500">SLOT {slotNum} INACTIVE</div>
+                      <div className="font-bold text-slate-500">
+                        {lang === 'th' ? `สล็อต ${slotNum} ไม่ได้ใช้งาน` : `SLOT ${slotNum} INACTIVE`}
+                      </div>
                       <div className="text-[10px] text-center text-slate-600">
-                        เพิ่มจำนวนคู่แข่งด้านบนเพื่อเปิดสล็อตนี้
+                        {lang === 'th' ? 'เพิ่มจำนวนคู่แข่งด้านบนเพื่อเปิดใช้งาน' : 'Increase competitors above to activate slot'}
                       </div>
                     </div>
                   );
@@ -908,11 +948,11 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                             style={{ backgroundColor: profile.color }}
                           />
                           <span className="font-mono text-xs font-black text-slate-300 tracking-wider">
-                            SLOT {slotNum} • RIVAL #{idx + 1}
+                            {lang === 'th' ? `สล็อต ${slotNum} • คู่แข่งที่ ${idx + 1}` : `SLOT ${slotNum} • RIVAL #${idx + 1}`}
                           </span>
                         </div>
                         <span className="text-[10px] px-2 py-0.5 bg-slate-800 text-slate-400 border border-slate-700 rounded-full font-mono font-bold">
-                          AI TYCOON
+                          {lang === 'th' ? 'คู่แข่ง AI' : 'AI TYCOON'}
                         </span>
                       </div>
 
@@ -920,15 +960,15 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                       <div className="space-y-1 mb-3">
                         <div className="flex items-center justify-between">
                           <label className="text-[11px] font-bold text-slate-400 font-mono">
-                            AIRLINE NAME:
+                            {lang === 'th' ? 'ชื่อสายการบิน:' : 'AIRLINE NAME:'}
                           </label>
                           <button
                             onClick={() => handleRandomizeAiName(idx)}
                             className="text-[10px] text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1 cursor-pointer"
-                            title="Randomize AI name"
+                            title={lang === 'th' ? 'สุ่มชื่อสายการบิน AI' : 'Randomize AI name'}
                           >
                             <Shuffle className="w-3 h-3" />
-                            <span>Random</span>
+                            <span>{lang === 'th' ? 'สุ่ม' : 'Random'}</span>
                           </button>
                         </div>
                         <input
@@ -948,7 +988,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                       {/* CEO Name Input */}
                       <div className="space-y-1 mb-3">
                         <label className="text-[11px] font-bold text-slate-500 font-mono">
-                          CEO / RIVAL TYCOON:
+                          {lang === 'th' ? 'ประธานบริหารคู่แข่ง:' : 'CEO / RIVAL TYCOON:'}
                         </label>
                         <input
                           type="text"
@@ -983,7 +1023,9 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
             {/* Bottom Tip */}
             <div className="text-center text-[11px] text-slate-500 font-mono shrink-0">
-              💡 ทิป: ทั้ง 4 สายการบินสามารถแก้ไขชื่อและซีอีโอได้ หรือใช้ชื่อที่ระบบสุ่มมาให้พร้อมเริ่มเล่นได้ทันที
+              {lang === 'th'
+                ? '💡 ทิป: ทั้ง 4 สายการบินสามารถแก้ไขชื่อและซีอีโอได้ หรือใช้ชื่อที่ระบบสุ่มมาให้พร้อมเริ่มเล่นได้ทันที'
+                : '💡 Tip: All 4 airlines support custom naming or instant play with randomized presets.'}
             </div>
           </div>
         )}
@@ -996,15 +1038,17 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
             {/* Step Heading */}
             <div className="text-center mb-2 shrink-0">
               <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-sky-950/70 border border-sky-400/40 text-sky-300 font-mono text-xs font-bold mb-1">
-                <span>STEP 3 / 4</span>
+                <span>{lang === 'th' ? 'ขั้นตอนที่ 3 / 4' : 'STEP 3 / 4'}</span>
                 <span>•</span>
-                <span>GLOBAL BASE & VENTURE CAPITAL</span>
+                <span>{lang === 'th' ? 'ฐานการบินและเงินทุนตั้งต้น' : 'GLOBAL BASE & VENTURE CAPITAL'}</span>
               </div>
               <h2 className="text-2xl lg:text-3xl font-black font-mono text-white tracking-wide">
-                SELECT HEADQUARTERS & STARTING CAPITAL
+                {lang === 'th' ? 'เลือกเมืองศูนย์กลางและเงินทุนเริ่มต้น' : 'SELECT HEADQUARTERS & STARTING CAPITAL'}
               </h2>
               <p className="text-xs text-slate-400">
-                เลือกเมืองหลวงศูนย์กลางการบินโลกและระดับเงินทุนในการก่อตั้งสายการบิน
+                {lang === 'th'
+                  ? 'เลือกเมืองศูนย์กลางการบินโลกและระดับเงินทุนในการก่อตั้งสายการบิน'
+                  : 'Choose world primary hub city and starting venture capital treasury'}
               </p>
             </div>
 
@@ -1017,11 +1061,11 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                     <div className="flex items-center gap-2">
                       <Building2 className="w-5 h-5 text-sky-400" />
                       <span className="font-bold text-sm font-mono text-white">
-                        WORLD HEADQUARTERS (PRIMARY HUB)
+                        {lang === 'th' ? 'สำนักงานใหญ่ (ฮับหลักการบิน)' : 'WORLD HEADQUARTERS (PRIMARY HUB)'}
                       </span>
                     </div>
                     <span className="text-[11px] font-mono px-2 py-0.5 bg-sky-950 text-sky-300 border border-sky-500/40 rounded-full font-bold">
-                      25 Slots Granted
+                      {lang === 'th' ? '25 สล็อตเริ่มต้น' : '25 Slots Granted'}
                     </span>
                   </div>
 
@@ -1057,7 +1101,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                     >
                       {filteredCities.map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.name} ({c.id}) — {c.country} • Pop: {c.population}M
+                          {c.name} ({c.id}) — {c.country} • {lang === 'th' ? `ประชากร: ${c.population} ล้าน` : `Pop: ${c.population}M`}
                         </option>
                       ))}
                     </select>
@@ -1084,23 +1128,23 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           {selectedHomeCity.population}M
                         </div>
                         <div className="text-[10px] text-slate-400 uppercase font-bold">
-                          Metropolitan Pop
+                          {lang === 'th' ? 'ประชากรเขตเมือง' : 'Metropolitan Pop'}
                         </div>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-800/80 text-center font-mono text-xs">
                       <div className="bg-slate-900 p-2 rounded-xl border border-slate-800">
-                        <span className="text-slate-400 text-[10px] block">Business Rating</span>
+                        <span className="text-slate-400 text-[10px] block">{lang === 'th' ? 'ดัชนีธุรกิจ' : 'Business Rating'}</span>
                         <span className="font-bold text-amber-400">{selectedHomeCity.businessIndex}/100</span>
                       </div>
                       <div className="bg-slate-900 p-2 rounded-xl border border-slate-800">
-                        <span className="text-slate-400 text-[10px] block">Tourism Rating</span>
+                        <span className="text-slate-400 text-[10px] block">{lang === 'th' ? 'ดัชนีท่องเที่ยว' : 'Tourism Rating'}</span>
                         <span className="font-bold text-sky-400">{selectedHomeCity.tourismIndex}/100</span>
                       </div>
                       <div className="bg-slate-900 p-2 rounded-xl border border-slate-800">
-                        <span className="text-slate-400 text-[10px] block">Starting Slots</span>
-                        <span className="font-bold text-emerald-400">25 Base Slots</span>
+                        <span className="text-slate-400 text-[10px] block">{lang === 'th' ? 'สล็อตตั้งต้น' : 'Starting Slots'}</span>
+                        <span className="font-bold text-emerald-400">{lang === 'th' ? '25 สล็อต' : '25 Base Slots'}</span>
                       </div>
                     </div>
                   </div>
@@ -1108,7 +1152,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
 
                 {/* AI Placement Strategy */}
                 <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-mono">
-                  <span className="text-slate-400">AI Rivals Placement:</span>
+                  <span className="text-slate-400">{lang === 'th' ? 'การจัดวางคู่แข่ง AI:' : 'AI Rivals Placement:'}</span>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setPlacementMode('DISTRIBUTED')}
@@ -1118,7 +1162,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           : 'bg-slate-950 border-slate-800 text-slate-400'
                       }`}
                     >
-                      🎲 Distributed (คนละทวีป)
+                      {lang === 'th' ? '🎲 กระจายทั่วโลก (คนละทวีป)' : '🎲 Distributed (Separate Continents)'}
                     </button>
                     <button
                       onClick={() => setPlacementMode('CUSTOM')}
@@ -1128,7 +1172,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                           : 'bg-slate-950 border-slate-800 text-slate-400'
                       }`}
                     >
-                      ⚙️ Preset Hubs
+                      {lang === 'th' ? '⚙️ เมืองประจำสายการบิน' : '⚙️ Preset Hubs'}
                     </button>
                   </div>
                 </div>
@@ -1140,7 +1184,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   <div className="flex items-center gap-2 mb-3">
                     <DollarSign className="w-5 h-5 text-emerald-400" />
                     <span className="font-bold text-sm font-mono text-white">
-                      INITIAL CAPITAL & DIFFICULTY
+                      {lang === 'th' ? 'เงินทุนเริ่มต้นและระดับความยาก' : 'INITIAL CAPITAL & DIFFICULTY'}
                     </span>
                   </div>
 
@@ -1149,26 +1193,32 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                     {[
                       {
                         level: 1,
-                        title: 'Normal CEO',
+                        title: lang === 'th' ? 'ผู้บริหารทั่วไป' : 'Normal CEO',
                         cash: '$100,000K',
-                        desc: 'Casual & Forgiving. เหมาะสำหรับผู้เริ่มต้น บริหารกระแสเงินสดคล่องตัว',
+                        desc: lang === 'th'
+                          ? 'เล่นง่าย สบายๆ เหมาะสำหรับผู้เริ่มต้น บริหารกระแสเงินสดคล่องตัว'
+                          : 'Casual & forgiving. Best for newcomers with flexible cashflow cushion',
                         border: 'border-emerald-500/60',
                         color: 'text-emerald-400',
                       },
                       {
                         level: 2,
-                        title: 'Seasoned Tycoon',
+                        title: lang === 'th' ? 'นักบริหารมืออาชีพ' : 'Seasoned Tycoon',
                         cash: '$75,000K',
-                        desc: 'Authentic Koei Standard. สมดุล ท้าทาย และสมจริง (แนะนำ)',
+                        desc: lang === 'th'
+                          ? 'มาตรฐาน Koei สมดุล ท้าทาย และสมจริงในการบริหาร (แนะนำ)'
+                          : 'Authentic Koei standard. Balanced, challenging, and realistic',
                         border: 'border-sky-500/60',
                         color: 'text-sky-400',
                         recommended: true,
                       },
                       {
                         level: 3,
-                        title: 'Hardcore Tycoon',
+                        title: lang === 'th' ? 'ผู้เชี่ยวชาญระดับสูง' : 'Hardcore Tycoon',
                         cash: '$50,000K',
-                        desc: 'Strict Budget & High Stakes. เงินทุนจำกัด ผิดพลาดไม่ได้แม้แต่เที่ยวบินเดียว',
+                        desc: lang === 'th'
+                          ? 'งบประมาณจำกัด ท้าทายสูง ต้องวางแผนและบริหารเส้นทางอย่างเข้มงวด'
+                          : 'Strict budget & high stakes. Tight capital requiring disciplined operations',
                         border: 'border-rose-500/60',
                         color: 'text-rose-400',
                       },
@@ -1194,7 +1244,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                               </span>
                               {opt.recommended && (
                                 <span className="text-[9px] px-2 py-0.5 bg-amber-950 text-amber-300 border border-amber-500/50 rounded-full font-mono font-bold">
-                                  RECOMMENDED
+                                  {lang === 'th' ? 'แนะนำ' : 'RECOMMENDED'}
                                 </span>
                               )}
                             </div>
@@ -1212,19 +1262,19 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 {/* Starter Aircraft Info Box */}
                 <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-3 mt-3">
                   <div className="flex items-center justify-between text-xs font-mono mb-1">
-                    <span className="text-slate-400">Initial Fleet:</span>
-                    <span className="text-sky-300 font-bold">3 Aircraft Included</span>
+                    <span className="text-slate-400">{lang === 'th' ? 'ฝูงบินเริ่มต้น:' : 'Initial Fleet:'}</span>
+                    <span className="text-sky-300 font-bold">{lang === 'th' ? 'แถม 3 ลำฟรี' : '3 Aircraft Included'}</span>
                   </div>
                   <div className="text-xs font-bold text-white flex items-center gap-1.5">
                     <Plane className="w-3.5 h-3.5 text-sky-400" />
                     <span>{starterModel.model}</span>
                   </div>
                   <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-1">
-                    <span>Capacity: {starterModel.capacity} seats</span>
+                    <span>{lang === 'th' ? `ความจุ: ${starterModel.capacity} ที่นั่ง` : `Capacity: ${starterModel.capacity} seats`}</span>
                     <span>•</span>
-                    <span>Range: {starterModel.rangeKm.toLocaleString()} km</span>
+                    <span>{lang === 'th' ? `พิสัยบิน: ${starterModel.rangeKm.toLocaleString()} กม.` : `Range: ${starterModel.rangeKm.toLocaleString()} km`}</span>
                     <span>•</span>
-                    <span>Speed: {starterModel.speedKmh} km/h</span>
+                    <span>{lang === 'th' ? `ความเร็ว: ${starterModel.speedKmh} กม./ชม.` : `Speed: ${starterModel.speedKmh} km/h`}</span>
                   </div>
                 </div>
               </div>
@@ -1240,15 +1290,17 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
             {/* Step Heading */}
             <div className="text-center mb-2 shrink-0">
               <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-400/60 text-emerald-300 font-mono text-xs font-bold mb-1">
-                <span>STEP 4 / 4</span>
+                <span>{lang === 'th' ? 'ขั้นตอนที่ 4 / 4' : 'STEP 4 / 4'}</span>
                 <span>•</span>
-                <span>FINAL DOSSIER & CLEARANCE</span>
+                <span>{lang === 'th' ? 'สรุปข้อมูลก่อนเปิดดำเนินงาน' : 'FINAL DOSSIER & CLEARANCE'}</span>
               </div>
               <h2 className="text-2xl lg:text-3xl font-black font-mono text-white tracking-wide">
-                EXECUTIVE FLIGHT CLEARANCE
+                {lang === 'th' ? 'อนุมัติเปิดการดำเนินงานการบิน' : 'EXECUTIVE FLIGHT CLEARANCE'}
               </h2>
               <p className="text-xs text-slate-400">
-                ตรวจสอบความถูกต้องของแผนธุรกิจและข้อมูลสายการบินก่อนเริ่มเปิดเส้นทางบิน
+                {lang === 'th'
+                  ? 'ตรวจสอบความถูกต้องของแผนธุรกิจและข้อมูลสายการบินก่อนเริ่มเปิดเส้นทางบิน'
+                  : 'Review foundational business dossier before authorizing maiden flight operations'}
               </p>
             </div>
 
@@ -1259,7 +1311,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 <div>
                   <div className="flex items-center gap-2 text-sky-400 text-xs font-mono font-bold uppercase mb-2">
                     <Calendar className="w-4 h-4" />
-                    <span>1. TIMELINE & MODE</span>
+                    <span>{lang === 'th' ? '1. ยุคสมัย & โหมด' : '1. TIMELINE & MODE'}</span>
                   </div>
                   <div className="text-lg font-black font-mono text-white mb-1">
                     {activeEraInfo.yearRange}
@@ -1267,12 +1319,12 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   <div className="text-xs text-sky-300 font-bold mb-2">{activeEraInfo.tagline}</div>
                   <p className="text-xs text-slate-400 leading-relaxed">
                     {gameMode === 'CAMPAIGN_20YR'
-                      ? 'Classic 20-Year Campaign (80 Quarters) ประเมินผลแพ้ชนะเมื่อครบ 20 ปี'
-                      : 'Infinite Sandbox Mode เล่นต่อเนื่องแบบไม่จำกัดเวลา'}
+                      ? (lang === 'th' ? 'แคมเปญคลาสสิก 20 ปี (80 ไตรมาส) ประเมินผลเมื่อครบ 20 ปี' : 'Classic 20-Year Campaign (80 Quarters) with final evaluation')
+                      : (lang === 'th' ? 'โหมดแซนด์บ็อกซ์ เล่นต่อเนื่องไม่จำกัดเวลา' : 'Infinite Sandbox Mode without turn limitations')}
                   </p>
                 </div>
                 <div className="pt-2 border-t border-slate-800 text-[11px] font-mono text-slate-400">
-                  Start: <span className="text-white font-bold">{selectedEra === 1 ? '1980 Q1' : selectedEra === 2 ? '2000 Q1' : '2020 Q1'}</span>
+                  {lang === 'th' ? 'เริ่มบิน:' : 'Start:'} <span className="text-white font-bold">{selectedEra === 1 ? '1980 Q1' : selectedEra === 2 ? '2000 Q1' : '2020 Q1'}</span>
                 </div>
               </div>
 
@@ -1281,7 +1333,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 <div>
                   <div className="flex items-center gap-2 text-sky-400 text-xs font-mono font-bold uppercase mb-2">
                     <Plane className="w-4 h-4" />
-                    <span>2. YOUR AIRLINE</span>
+                    <span>{lang === 'th' ? '2. สายการบินของคุณ' : '2. YOUR AIRLINE'}</span>
                   </div>
                   <div className="text-base font-black font-mono text-white mb-1 truncate">
                     {airlineName}
@@ -1291,15 +1343,15 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   </div>
                   <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1 text-xs font-mono">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Headquarters:</span>
+                      <span className="text-slate-400">{lang === 'th' ? 'สำนักงานใหญ่:' : 'Headquarters:'}</span>
                       <span className="text-sky-300 font-bold">{selectedHomeCity.name} ({selectedHomeCity.id})</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Starting Slots:</span>
-                      <span className="text-emerald-400 font-bold">25 Slots</span>
+                      <span className="text-slate-400">{lang === 'th' ? 'สล็อตเริ่มต้น:' : 'Starting Slots:'}</span>
+                      <span className="text-emerald-400 font-bold">{lang === 'th' ? '25 สล็อต' : '25 Slots'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Capital:</span>
+                      <span className="text-slate-400">{lang === 'th' ? 'เงินทุนตั้งต้น:' : 'Capital:'}</span>
                       <span className="text-emerald-400 font-bold">
                         ${(difficulty === 1 ? 100000 : difficulty === 2 ? 75000 : 50000).toLocaleString()}K
                       </span>
@@ -1307,7 +1359,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   </div>
                 </div>
                 <div className="pt-2 border-t border-slate-800 text-[11px] font-mono text-slate-400">
-                  Fleet: <span className="text-white font-bold">3x {starterModel.model}</span>
+                  {lang === 'th' ? 'ฝูงบิน:' : 'Fleet:'} <span className="text-white font-bold">3x {starterModel.model}</span>
                 </div>
               </div>
 
@@ -1316,7 +1368,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 <div>
                   <div className="flex items-center gap-2 text-rose-400 text-xs font-mono font-bold uppercase mb-2">
                     <Users className="w-4 h-4" />
-                    <span>3. RIVALS ({rivalCount} AI)</span>
+                    <span>{lang === 'th' ? `3. คู่แข่ง AI (${rivalCount} สายการบิน)` : `3. RIVALS (${rivalCount} AI)`}</span>
                   </div>
                   <div className="space-y-2">
                     {currentRivalProfiles.slice(0, rivalCount).map((p, i) => {
@@ -1337,7 +1389,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                   </div>
                 </div>
                 <div className="pt-2 border-t border-slate-800 text-[11px] font-mono text-slate-400">
-                  Total Industry: <span className="text-white font-bold">{rivalCount + 1} Airlines</span>
+                  {lang === 'th' ? 'รวมทั้งอุตสาหกรรม:' : 'Total Industry:'} <span className="text-white font-bold">{lang === 'th' ? `${rivalCount + 1} สายการบิน` : `${rivalCount + 1} Airlines`}</span>
                 </div>
               </div>
 
@@ -1346,28 +1398,28 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
                 <div>
                   <div className="flex items-center gap-2 text-amber-400 text-xs font-mono font-bold uppercase mb-2">
                     <Trophy className="w-4 h-4" />
-                    <span>4. VICTORY MATRIX</span>
+                    <span>{lang === 'th' ? '4. เงื่อนไขและเป้าหมาย' : '4. VICTORY MATRIX'}</span>
                   </div>
                   <div className="text-sm font-bold text-white mb-2">
-                    Koei Tycoon Evaluation
+                    {lang === 'th' ? 'เป้าหมายความสำเร็จ Koei Tycoon' : 'Koei Tycoon Evaluation'}
                   </div>
                   <ul className="text-xs text-slate-300 space-y-1.5 leading-relaxed">
                     <li className="flex items-start gap-1.5">
                       <span className="text-emerald-400 font-bold">✓</span>
-                      <span>ขยายเส้นทางบินเชื่อมต่อทุกทวีปทั่วโลก</span>
+                      <span>{lang === 'th' ? 'ขยายเส้นทางบินเชื่อมต่อทุกทวีปทั่วโลก' : 'Connect flight networks across global continents'}</span>
                     </li>
                     <li className="flex items-start gap-1.5">
                       <span className="text-emerald-400 font-bold">✓</span>
-                      <span>รักษาผลกำไรต่อเนื่องและเลี่ยงภาวะล้มละลาย</span>
+                      <span>{lang === 'th' ? 'รักษาผลกำไรต่อเนื่องและเลี่ยงภาวะล้มละลาย' : 'Maintain operating profitability and avoid insolvency'}</span>
                     </li>
                     <li className="flex items-start gap-1.5">
                       <span className="text-emerald-400 font-bold">✓</span>
-                      <span>ครองอันดับ 1 มูลค่ากิจการในไตรมาสที่ 80</span>
+                      <span>{lang === 'th' ? 'ครองอันดับ 1 มูลค่ากิจการในไตรมาสที่ 80' : 'Achieve #1 total airline valuation by Quarter 80'}</span>
                     </li>
                   </ul>
                 </div>
                 <div className="pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-500">
-                  Ready for take-off clearance.
+                  {lang === 'th' ? 'พร้อมรับคำสั่งออกบิน' : 'Ready for take-off clearance.'}
                 </div>
               </div>
             </div>
@@ -1386,21 +1438,21 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
             <ChevronLeft className="w-4 h-4" />
             <span>
               {wizardStep === 1
-                ? 'Back to Title (กลับหน้าปก)'
-                : `Back to Step ${wizardStep - 1} (ย้อนกลับ)`}
+                ? (lang === 'th' ? 'กลับหน้าแรก' : 'Return to Title')
+                : (lang === 'th' ? `ย้อนกลับ: ขั้นตอนที่ ${wizardStep - 1}` : `Back to Step ${wizardStep - 1}`)}
             </span>
           </button>
         </div>
 
         {/* Center: Current Step Summary text */}
         <div className="hidden md:flex items-center gap-3 text-xs font-mono text-slate-400">
-          <span>Era: <strong className="text-sky-400">{activeEraInfo.yearRange}</strong></span>
+          <span>{lang === 'th' ? 'ยุค:' : 'Era:'} <strong className="text-sky-400">{activeEraInfo.yearRange}</strong></span>
           <span>•</span>
-          <span>Airline: <strong className="text-white">{airlineName}</strong></span>
+          <span>{lang === 'th' ? 'สายการบิน:' : 'Airline:'} <strong className="text-white">{airlineName}</strong></span>
           <span>•</span>
-          <span>HQ: <strong className="text-emerald-400">{selectedHomeCity.name}</strong></span>
+          <span>{lang === 'th' ? 'สำนักงานใหญ่:' : 'HQ:'} <strong className="text-emerald-400">{selectedHomeCity.name}</strong></span>
           <span>•</span>
-          <span>Cash: <strong className="text-emerald-300">${(difficulty === 1 ? 100000 : difficulty === 2 ? 75000 : 50000).toLocaleString()}K</strong></span>
+          <span>{lang === 'th' ? 'เงินทุน:' : 'Cash:'} <strong className="text-emerald-300">${(difficulty === 1 ? 100000 : difficulty === 2 ? 75000 : 50000).toLocaleString()}K</strong></span>
         </div>
 
         {/* Right: Next Step or Launch Game Button */}
@@ -1411,7 +1463,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
               data-testid={`wizard-next-step-${wizardStep}`}
               className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white rounded-2xl text-xs font-black font-mono transition cursor-pointer shadow-lg shadow-sky-950/50 hover:shadow-sky-500/25 active:scale-95"
             >
-              <span>Next: {stepLabels[wizardStep].title} (ถัดไป)</span>
+              <span>{lang === 'th' ? `ถัดไป: ${stepLabels[wizardStep].title}` : `Next: ${stepLabels[wizardStep].title}`}</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
@@ -1421,7 +1473,7 @@ export const NewGameSetupModal: React.FC<NewGameSetupModalProps> = ({
               className="flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-500 hover:via-teal-500 hover:to-sky-500 text-white rounded-2xl text-sm font-black font-mono transition cursor-pointer shadow-2xl shadow-emerald-950/80 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-95"
             >
               <Plane className="w-5 h-5 text-emerald-200" />
-              <span>COMMENCE AIRLINE OPERATION (เริ่มต้นการบิน)</span>
+              <span>{lang === 'th' ? 'เริ่มต้นการบินพาณิชย์' : 'COMMENCE AIRLINE OPERATION'}</span>
               <ChevronRight className="w-5 h-5" />
             </button>
           )}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AircraftModel } from '../types/game';
 import { getAircraftBlueprintData } from '../data/aircraftBlueprints';
 import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
+import { useI18n } from '../utils/i18n';
 import {
   Gauge,
   Compass,
@@ -22,6 +23,8 @@ interface AircraftBlueprintViewerProps {
 }
 
 export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = ({ model }) => {
+  const { t, lang } = useI18n();
+  const isTh = lang === 'th';
   const bp = getAircraftBlueprintData(model);
   const photoInfo = getAircraftPhotoInfo(model);
   const [viewMode, setViewMode] = useState<'PHOTO' | 'BLUEPRINT' | 'TECH_SPECS'>('PHOTO');
@@ -71,23 +74,23 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
 
             {isSST ? (
               <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400 font-black text-[11px] tracking-wide animate-pulse">
-                ⚡ SUPERSONIC FLAGSHIP
+                {t.blueprint.supersonicFlagship}
               </span>
             ) : isA380 || is747 ? (
               <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400 font-black text-[11px] tracking-wide">
-                👑 HEAVY DOUBLE-DECK QUEEN
+                {t.blueprint.heavyQueen}
               </span>
             ) : isFutureTech ? (
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400 font-black text-[11px] tracking-wide">
-                🚀 NEXT-GEN FUTURE TECH
+                {t.blueprint.nextGenTech}
               </span>
             ) : isWidebodyTwin || isWidebodyTrijet ? (
               <span className="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400 font-black text-[11px] tracking-wide">
-                🌐 WIDEBODY INTERCONTINENTAL
+                {t.blueprint.widebodyIntercon}
               </span>
             ) : (
               <span className="px-2.5 py-0.5 rounded-full bg-slate-700/60 text-slate-300 border border-slate-600 font-black text-[11px] tracking-wide">
-                ✈️ COMMERCIAL AIRLINER
+                {t.blueprint.airliner}
               </span>
             )}
           </div>
@@ -95,10 +98,10 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
           <div className="text-xs text-slate-400 font-mono mt-1 flex items-center gap-2.5 flex-wrap">
             <span className="text-sky-300 font-bold">{model.manufacturer}</span>
             <span>•</span>
-            <span>ERA {model.era}: {model.introYear} {model.retireYear ? `– ${model.retireYear}` : '– Present'}</span>
+            <span>{isTh ? `ยุค ${model.era}: ${model.introYear} ${model.retireYear ? `– ${model.retireYear}` : '– ปัจจุบัน'}` : `ERA ${model.era}: ${model.introYear} ${model.retireYear ? `– ${model.retireYear}` : '– Present'}`}</span>
             <span>•</span>
             <span className="text-slate-300">
-              {model.originBloc === 'WEST' ? '🇺🇸/🇪🇺 Western Aviation' : model.originBloc === 'EAST' ? '🇷🇺 Eastern Bloc' : '🌐 Global Consortium'}
+              {model.originBloc === 'WEST' ? t.blueprint.westernAviation : model.originBloc === 'EAST' ? t.blueprint.easternBloc : t.blueprint.globalConsortium}
             </span>
           </div>
         </div>
@@ -115,7 +118,7 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
               }`}
             >
               <Camera className="w-3.5 h-3.5 text-sky-300" />
-              <span>Real Photo</span>
+              <span>{t.blueprint.realPhoto}</span>
             </button>
             <button
               onClick={() => setViewMode('BLUEPRINT')}
@@ -126,7 +129,7 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
               }`}
             >
               <Layers className="w-3.5 h-3.5 text-sky-300" />
-              <span>CAD Profile</span>
+              <span>{t.blueprint.cadProfile}</span>
             </button>
             <button
               onClick={() => setViewMode('TECH_SPECS')}
@@ -137,12 +140,12 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
               }`}
             >
               <Info className="w-3.5 h-3.5" />
-              <span>Telemetry</span>
+              <span>{t.blueprint.telemetry}</span>
             </button>
           </div>
 
           <div className="bg-slate-950/90 border-2 border-emerald-500/70 px-3.5 py-1 rounded-xl text-right shrink-0">
-            <div className="text-[9px] text-emerald-300/90 font-mono uppercase tracking-wider">Unit Acquisition</div>
+            <div className="text-[9px] text-emerald-300/90 font-mono uppercase tracking-wider">{t.blueprint.unitAcquisition}</div>
             <div className="text-lg md:text-xl font-black font-mono text-emerald-400">
               ${model.priceK.toLocaleString()}K
             </div>
@@ -872,7 +875,7 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
           <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 shadow">
             <div className="flex items-center gap-1.5 text-sky-300 font-mono text-[10px] mb-0.5">
               <Users className="w-3.5 h-3.5 text-sky-400" />
-              <span>PASSENGERS</span>
+              <span>{isTh ? 'ผู้โดยสาร' : 'PASSENGERS'}</span>
             </div>
             <div className="text-xl font-black font-mono text-white">
               {model.capacity}
@@ -884,13 +887,13 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
           <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 shadow">
             <div className="flex items-center gap-1.5 text-emerald-300 font-mono text-[10px] mb-0.5">
               <Compass className="w-3.5 h-3.5 text-emerald-400" />
-              <span>MAX RANGE</span>
+              <span>{isTh ? 'พิสัยบินสูงสุด' : 'MAX RANGE'}</span>
             </div>
             <div className="text-xl font-black font-mono text-emerald-300">
-              {model.rangeKm.toLocaleString()} <span className="text-xs font-normal">km</span>
+              {model.rangeKm.toLocaleString()} <span className="text-xs font-normal">{isTh ? 'กม.' : 'km'}</span>
             </div>
             <div className="text-[10px] text-slate-400 font-mono truncate">
-              {model.rangeKm >= 11000 ? 'Intercontinental' : model.rangeKm >= 6000 ? 'Transoceanic' : 'Regional / Medium'}
+              {model.rangeKm >= 11000 ? (isTh ? 'ข้ามทวีป' : 'Intercontinental') : model.rangeKm >= 6000 ? (isTh ? 'ข้ามมหาสมุทร' : 'Transoceanic') : (isTh ? 'ภูมิภาค' : 'Regional / Medium')}
             </div>
           </div>
 
@@ -898,10 +901,10 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
           <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 shadow">
             <div className="flex items-center gap-1.5 text-amber-300 font-mono text-[10px] mb-0.5">
               <Gauge className="w-3.5 h-3.5 text-amber-400" />
-              <span>CRUISE SPEED</span>
+              <span>{isTh ? 'ความเร็วเดินทาง' : 'CRUISE SPEED'}</span>
             </div>
             <div className="text-xl font-black font-mono text-amber-300">
-              {model.speedKmh} <span className="text-xs font-normal">km/h</span>
+              {model.speedKmh} <span className="text-xs font-normal">{isTh ? 'กม./ชม.' : 'km/h'}</span>
             </div>
             <div className="text-[10px] text-amber-400 font-mono">{bp.machNumber}</div>
           </div>
@@ -910,13 +913,13 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
           <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 shadow">
             <div className="flex items-center gap-1.5 text-rose-300 font-mono text-[10px] mb-0.5">
               <Fuel className="w-3.5 h-3.5 text-rose-400" />
-              <span>FUEL BURN</span>
+              <span>{isTh ? 'อัตราสิ้นเปลือง' : 'FUEL BURN'}</span>
             </div>
             <div className="text-xl font-black font-mono text-rose-300">
-              {model.fuelBurnPerKm} <span className="text-xs font-normal">L/km</span>
+              {model.fuelBurnPerKm} <span className="text-xs font-normal">{isTh ? 'ลิตร/กม.' : 'L/km'}</span>
             </div>
             <div className="text-[10px] text-slate-400 font-mono">
-              {model.fuelBurnPerKm < 4 ? 'High Efficiency' : model.fuelBurnPerKm < 9 ? 'Moderate Burn' : 'Heavy Burner'}
+              {model.fuelBurnPerKm < 4 ? (isTh ? 'ประหยัดน้ำมัน' : 'High Efficiency') : model.fuelBurnPerKm < 9 ? (isTh ? 'ปานกลาง' : 'Moderate Burn') : (isTh ? 'สิ้นเปลืองสูง' : 'Heavy Burner')}
             </div>
           </div>
 
@@ -924,24 +927,24 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
           <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 shadow">
             <div className="flex items-center gap-1.5 text-cyan-300 font-mono text-[10px] mb-0.5">
               <Wrench className="w-3.5 h-3.5 text-cyan-400" />
-              <span>MAINTENANCE</span>
+              <span>{isTh ? 'ค่าบำรุงรักษา' : 'MAINTENANCE'}</span>
             </div>
             <div className="text-xl font-black font-mono text-cyan-300">
-              ${model.maintCostPerHour} <span className="text-xs font-normal">/hr</span>
+              ${model.maintCostPerHour} <span className="text-xs font-normal">{isTh ? '/ชม.' : '/hr'}</span>
             </div>
-            <div className="text-[10px] text-slate-400 font-mono">Per Flight Hour</div>
+            <div className="text-[10px] text-slate-400 font-mono">{isTh ? 'ต่อชั่วโมงบิน' : 'Per Flight Hour'}</div>
           </div>
 
           {/* Max Takeoff Weight */}
           <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/80 shadow">
             <div className="flex items-center gap-1.5 text-purple-300 font-mono text-[10px] mb-0.5">
               <Maximize2 className="w-3.5 h-3.5 text-purple-400" />
-              <span>MAX TAKE-OFF</span>
+              <span>{isTh ? 'น้ำหนักวิ่งขึ้นสูงสุด' : 'MAX TAKE-OFF'}</span>
             </div>
             <div className="text-xl font-black font-mono text-purple-300">
-              {bp.mtowTon} <span className="text-xs font-normal">tonnes</span>
+              {bp.mtowTon} <span className="text-xs font-normal">{isTh ? 'ตัน' : 'tonnes'}</span>
             </div>
-            <div className="text-[10px] text-slate-400 font-mono">FL{Math.round(bp.serviceCeilingFt / 100)} Ceiling</div>
+            <div className="text-[10px] text-slate-400 font-mono">{isTh ? `เพดานบิน FL${Math.round(bp.serviceCeilingFt / 100)}` : `FL${Math.round(bp.serviceCeilingFt / 100)} Ceiling`}</div>
           </div>
         </div>
 
@@ -950,7 +953,7 @@ export const AircraftBlueprintViewer: React.FC<AircraftBlueprintViewerProps> = (
           <div className="flex items-center gap-2 text-slate-300 font-mono">
             <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
             <span>
-              <strong className="text-sky-300">PROPULSION:</strong> {bp.engineType}
+              <strong className="text-sky-300">{isTh ? 'ระบบขับเคลื่อน:' : 'PROPULSION:'}</strong> {bp.engineType}
             </span>
           </div>
           <div className="text-slate-400 italic text-[11px] line-clamp-1">

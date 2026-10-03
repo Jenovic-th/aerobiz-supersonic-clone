@@ -5,6 +5,7 @@ import { AIRCRAFTS } from '../data/aircrafts';
 import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
 import { calculateDistance, calculateBaseFare, calculateRouteDemand, simulateRoutePerformance } from '../simulation/engine';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useI18n } from '../utils/i18n';
 import {
   X,
   Plane,
@@ -46,6 +47,11 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
   onDeleteRoute,
   gameState,
 }) => {
+  const { t, lang } = useI18n();
+  const isTh = lang === 'th';
+  const kmUnit = isTh ? 'กม.' : 'km';
+  const flightsUnit = isTh ? 'เที่ยว/สัปดาห์' : 'flt/wk';
+
   const cityMap = useMemo(() => new Map(CITIES.map((c) => [c.id, c])), []);
   const aircraftMap = useMemo(() => new Map(AIRCRAFTS.map((a) => [a.id, a])), []);
   const playerRoutes = routes.filter((r) => r.airlineId === playerAirline.id);
@@ -311,7 +317,9 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
     onUpdateRoute(updated, prevAssigned);
     setEditingRoute(null);
     setToastMessage(
-      `Saved changes for ${editingOrigin?.name} ➔ ${editingDest?.name}! (${editAircraftInstanceIds.length} aircraft assigned)`
+      isTh
+        ? `บันทึกการปรับแต่งเส้นทาง ${editingOrigin?.name} ➔ ${editingDest?.name} สำเร็จ! (${editAircraftInstanceIds.length} ลำ)`
+        : `Saved modifications for ${editingOrigin?.name} ➔ ${editingDest?.name}! (${editAircraftInstanceIds.length} aircraft assigned)`
     );
   };
 
@@ -320,7 +328,11 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
     if (!routeToClose) return;
     onDeleteRoute(routeToClose.id);
     setRouteToClose(null);
-    setToastMessage('Route decommissioned. Aircraft returned to hangar.');
+    setToastMessage(
+      isTh
+        ? 'ยกเลิกเส้นทางบินเรียบร้อยแล้ว เครื่องบินกลับเข้าสู่โรงเก็บ'
+        : 'Route decommissioned. Aircraft returned to hangar.'
+    );
   };
 
   return (
@@ -334,17 +346,17 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg md:text-xl font-black text-white font-mono flex items-center gap-2">
-                ACTIVE COMMERCIAL ROUTES NETWORK
+                {t.routes.myRoutesTitle}
               </h2>
               <div className="text-xs text-sky-300/80 font-mono">
-                {playerRoutes.length} Operational City Pairs • Route Frequency, Pricing & Maintenance Management
+                {playerRoutes.length} {t.routes.activeRoutesSubtitle}
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
-            title="Close (Esc)"
+            title={`${t.common.close} (Esc)`}
             data-testid="modal-close-header-btn"
           >
             <X className="w-6 h-6" />
@@ -356,178 +368,179 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
           {playerRoutes.length === 0 ? (
             <div className="text-center py-20 text-slate-400 text-base font-mono space-y-3">
               <Compass className="w-12 h-12 text-slate-600 mx-auto" />
-              <div className="font-bold text-slate-200">No active routes established yet!</div>
+              <div className="font-bold text-slate-200">{t.routes.noRoutesYet}</div>
               <p className="text-xs text-slate-400">
-                Click "Open Route" on the main operations hub to connect your global destinations.
+                {t.routes.noRoutesSub}
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               {playerRoutes.map((route) => {
-              const origin = cityMap.get(route.originCityId);
-              const dest = cityMap.get(route.destCityId);
-              const distKm = (origin && dest) ? calculateDistance(origin.lat, origin.lon, dest.lat, dest.lon) : 0;
-              const assignedPlanesList = playerAirline.fleet.filter((f) =>
-                route.assignedAircraftIds.includes(f.instanceId)
-              );
-              const assignedModelsList = assignedPlanesList
-                .map((f) => aircraftMap.get(f.modelId))
-                .filter(Boolean) as AircraftModel[];
-              const primaryModel = assignedModelsList[0] || null;
-              const photoInfo = primaryModel ? getAircraftPhotoInfo(primaryModel) : null;
-              const totalFleetSeats = assignedModelsList.reduce((sum, m) => sum + m.capacity, 0);
-              const isDualMode = route.weeklyFrequency <= 7 && assignedPlanesList.length > 1;
-              const stats = route.lastQuarterStats;
-              const maintTier =
-                (route.serviceQuality ?? 1.0) >= 1.2
-                  ? { label: 'Rigorous (125%)', color: 'bg-emerald-950/80 text-emerald-300 border-emerald-500' }
-                  : (route.serviceQuality ?? 1.0) < 1.0
-                  ? { label: 'Budget (80%)', color: 'bg-amber-950/80 text-amber-300 border-amber-500' }
-                  : { label: 'Standard (100%)', color: 'bg-sky-950/80 text-sky-300 border-sky-500' };
+                const origin = cityMap.get(route.originCityId);
+                const dest = cityMap.get(route.destCityId);
+                const distKm = (origin && dest) ? calculateDistance(origin.lat, origin.lon, dest.lat, dest.lon) : 0;
+                const assignedPlanesList = playerAirline.fleet.filter((f) =>
+                  route.assignedAircraftIds.includes(f.instanceId)
+                );
+                const assignedModelsList = assignedPlanesList
+                  .map((f) => aircraftMap.get(f.modelId))
+                  .filter(Boolean) as AircraftModel[];
+                const primaryModel = assignedModelsList[0] || null;
+                const photoInfo = primaryModel ? getAircraftPhotoInfo(primaryModel) : null;
+                const totalFleetSeats = assignedModelsList.reduce((sum, m) => sum + m.capacity, 0);
+                const isDualMode = route.weeklyFrequency <= 7 && assignedPlanesList.length > 1;
+                const stats = route.lastQuarterStats;
+                const maintTier =
+                  (route.serviceQuality ?? 1.0) >= 1.2
+                    ? { label: isTh ? 'พรีเมียม (125%)' : 'Rigorous (125%)', color: 'bg-emerald-950/80 text-emerald-300 border-emerald-500' }
+                    : (route.serviceQuality ?? 1.0) < 1.0
+                    ? { label: isTh ? 'ประหยัด (80%)' : 'Budget (80%)', color: 'bg-amber-950/80 text-amber-300 border-amber-500' }
+                    : { label: isTh ? 'มาตรฐาน (100%)' : 'Standard (100%)', color: 'bg-sky-950/80 text-sky-300 border-sky-500' };
 
-              return (
-                <div
-                  key={route.id}
-                  className="bg-slate-950/90 border border-slate-800 hover:border-slate-600 rounded-2xl p-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shadow-lg transition"
-                >
-                  <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                    {/* Aircraft Photo Thumbnail */}
-                    {photoInfo && (
-                      <div className="w-20 h-14 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 relative shadow shrink-0">
-                        <img
-                          src={photoInfo.photoUrl}
-                          alt={primaryModel?.model}
-                          className="w-full h-full object-cover object-center filter brightness-105"
-                        />
-                        {primaryModel?.isSupersonic && (
-                          <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black font-mono text-[8px]">
-                            SST
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="space-y-1.5 flex-1 min-w-0">
-                      <div className="flex items-center gap-2.5 flex-wrap">
-                        <span className="font-black text-base md:text-lg text-white font-mono flex items-center gap-2 flex-wrap">
-                          <span>{origin?.name} ({origin?.id}) ➔ {dest?.name} ({dest?.id})</span>
-                          <span className="text-xs px-2.5 py-0.5 rounded-full font-bold font-mono bg-sky-950/90 text-sky-300 border border-sky-500/80 shadow-sm flex items-center gap-1 shrink-0">
-                            <Compass className="w-3.5 h-3.5 text-sky-400" />
-                            <span>{distKm.toLocaleString()} km</span>
-                          </span>
-                        </span>
-                        <span
-                          className={`text-xs px-2.5 py-0.5 rounded-full font-bold font-mono ${
-                            route.status === 'ACTIVE'
-                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-500'
-                              : 'bg-amber-950 text-amber-300 border border-amber-500'
-                          }`}
-                        >
-                          {route.status}
-                        </span>
-                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold font-mono border ${maintTier.color}`}>
-                          Maint: {maintTier.label}
-                        </span>
-                      </div>
-
-                      <div className="text-xs text-slate-300 flex items-center gap-2.5 flex-wrap font-mono">
-                        <span className="text-sky-300">
-                          Distance: <strong>{distKm.toLocaleString()} km</strong>
-                        </span>
-                        <span>•</span>
-                        <span>
-                          Aircraft:{' '}
-                          <strong className="text-white">
-                            {assignedModelsList.length > 1
-                              ? `${assignedModelsList.length} Planes (${assignedModelsList.map(m => `${m.model} [พิสัยบิน ${m.rangeKm.toLocaleString()} km]`).join(', ')}) • ${totalFleetSeats} Seats`
-                              : primaryModel ? `${primaryModel.model} (พิสัยบิน ${primaryModel.rangeKm.toLocaleString()} km)` : 'Unassigned'}
-                          </strong>
-                        </span>
-                        {isDualMode && (
-                          <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400 font-bold text-[10px]">
-                            ⚡ DUAL
-                          </span>
-                        )}
-                        <span>•</span>
-                        <span>
-                          Frequency: <strong className="text-sky-300 font-mono">{route.weeklyFrequency} flights/wk</strong>
-                        </span>
-                        <span>•</span>
-                        <span>
-                          Ticket Price:{' '}
-                          <strong className="text-amber-300 font-mono">
-                            {route.priceModifierPct > 0 ? `+${route.priceModifierPct}%` : `${route.priceModifierPct}%`}
-                          </strong>
-                        </span>
-                      </div>
-
-                      {stats && (
-                        <div className="text-xs text-slate-200 pt-1 flex items-center gap-3 font-mono flex-wrap">
-                          <span>
-                            Pax: <strong className="text-sky-300">{stats.passengers.toLocaleString()}</strong> ({stats.loadFactorPct}%)
-                          </span>
-                          <span>•</span>
-                          <span>
-                            Rev: <strong className="text-emerald-400">+${stats.revenueK.toLocaleString()}K</strong>
-                          </span>
-                          <span>•</span>
-                          <span className={`font-black ${stats.profitK >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                            Net: {stats.profitK >= 0 ? `+$${stats.profitK.toLocaleString()}K` : `-$${Math.abs(stats.profitK).toLocaleString()}K`}
-                          </span>
+                return (
+                  <div
+                    key={route.id}
+                    className="bg-slate-950/90 border border-slate-800 hover:border-slate-600 rounded-2xl p-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shadow-lg transition"
+                  >
+                    <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                      {/* Aircraft Photo Thumbnail */}
+                      {photoInfo && (
+                        <div className="w-20 h-14 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 relative shadow shrink-0">
+                          <img
+                            src={photoInfo.photoUrl}
+                            alt={primaryModel?.model}
+                            className="w-full h-full object-cover object-center filter brightness-105"
+                          />
+                          {primaryModel?.isSupersonic && (
+                            <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black font-mono text-[8px]">
+                              SST
+                            </span>
+                          )}
                         </div>
                       )}
+
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <span className="font-black text-base md:text-lg text-white font-mono flex items-center gap-2 flex-wrap">
+                            <span>{origin?.name} ({origin?.id}) ➔ {dest?.name} ({dest?.id})</span>
+                            <span className="text-xs px-2.5 py-0.5 rounded-full font-bold font-mono bg-sky-950/90 text-sky-300 border border-sky-500/80 shadow-sm flex items-center gap-1 shrink-0">
+                              <Compass className="w-3.5 h-3.5 text-sky-400" />
+                              <span>{distKm.toLocaleString()} {kmUnit}</span>
+                            </span>
+                          </span>
+                          <span
+                            className={`text-xs px-2.5 py-0.5 rounded-full font-bold font-mono ${
+                              route.status === 'ACTIVE'
+                                ? 'bg-emerald-950 text-emerald-300 border border-emerald-500'
+                                : 'bg-amber-950 text-amber-300 border border-amber-500'
+                            }`}
+                          >
+                            {route.status === 'ACTIVE' ? t.common.active : t.common.suspended}
+                          </span>
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold font-mono border ${maintTier.color}`}>
+                            {isTh ? 'บำรุงรักษา: ' : 'Maint: '}{maintTier.label}
+                          </span>
+                        </div>
+
+                        {/* Telemetry line: strictly respecting Rule 7 for distance & range transparency */}
+                        <div className="text-xs text-slate-300 flex items-center gap-2.5 flex-wrap font-mono">
+                          <span className="text-sky-300">
+                            {t.routes.distanceLabel}: <strong>{distKm.toLocaleString()} {kmUnit}</strong>
+                          </span>
+                          <span>•</span>
+                          <span>
+                            {t.routes.aircraftLabel}:{' '}
+                            <strong className="text-white">
+                              {assignedModelsList.length > 1
+                                ? `${assignedModelsList.length} ${isTh ? 'ลำ' : 'Planes'} (${assignedModelsList.map(m => `${m.model} [${isTh ? 'พิสัยบิน ' + m.rangeKm.toLocaleString() + ' กม.' : 'Range ' + m.rangeKm.toLocaleString() + ' km'}]`).join(', ')}) • ${totalFleetSeats} ${isTh ? 'ที่นั่ง' : 'Seats'}`
+                                : primaryModel ? `${primaryModel.model} (${isTh ? 'พิสัยบิน ' + primaryModel.rangeKm.toLocaleString() + ' กม.' : 'Range ' + primaryModel.rangeKm.toLocaleString() + ' km'})` : (isTh ? 'ยังไม่ได้จัดสรร' : 'Unassigned')}
+                            </strong>
+                          </span>
+                          {isDualMode && (
+                            <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400 font-bold text-[10px]">
+                              {isTh ? '⚡ บินคู่ขนาน' : '⚡ DUAL'}
+                            </span>
+                          )}
+                          <span>•</span>
+                          <span>
+                            {t.routes.frequencyLabel}: <strong className="text-sky-300 font-mono">{route.weeklyFrequency} {flightsUnit}</strong>
+                          </span>
+                          <span>•</span>
+                          <span>
+                            {t.routes.pricing}:{' '}
+                            <strong className="text-amber-300 font-mono">
+                              {route.priceModifierPct > 0 ? `+${route.priceModifierPct}%` : `${route.priceModifierPct}%`}
+                            </strong>
+                          </span>
+                        </div>
+
+                        {stats && (
+                          <div className="text-xs text-slate-200 pt-1 flex items-center gap-3 font-mono flex-wrap">
+                            <span>
+                              {t.routes.paxLabel}: <strong className="text-sky-300">{stats.passengers.toLocaleString()}</strong> ({stats.loadFactorPct}%)
+                            </span>
+                            <span>•</span>
+                            <span>
+                              {t.routes.revenueLabel}: <strong className="text-emerald-400">+${stats.revenueK.toLocaleString()}K</strong>
+                            </span>
+                            <span>•</span>
+                            <span className={`font-black ${stats.profitK >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {t.routes.profitLabel}: {stats.profitK >= 0 ? `+$${stats.profitK.toLocaleString()}K` : `-$${Math.abs(stats.profitK).toLocaleString()}K`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions: Modify, Suspend, Close */}
+                    <div className="flex items-center gap-2.5 self-end lg:self-auto shrink-0">
+                      <button
+                        onClick={() => setEditingRoute(route)}
+                        data-testid="route-modify-btn"
+                        className="px-3.5 py-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white rounded-xl text-xs font-bold font-mono flex items-center gap-1.5 transition cursor-pointer shadow-md border border-sky-400 active:scale-95"
+                        title={isTh ? 'ปรับแต่งราคา ความถี่ เครื่องบิน และงบบำรุงรักษา' : 'Modify route pricing, frequency, aircraft, and maintenance'}
+                      >
+                        <Sliders className="w-3.5 h-3.5" /> {t.routes.modifyRoute}
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          onUpdateRoute({
+                            ...route,
+                            status: route.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE',
+                          })
+                        }
+                        className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold font-mono flex items-center gap-1.5 transition cursor-pointer border border-slate-700"
+                      >
+                        {route.status === 'ACTIVE' ? (
+                          <>
+                            <Pause className="w-3.5 h-3.5 text-amber-400" /> {t.routes.suspendRoute}
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3.5 h-3.5 text-emerald-400" /> {t.routes.resumeRoute}
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => setRouteToClose(route)}
+                        className="px-3 py-2 bg-rose-950/80 hover:bg-rose-900 border border-rose-600 text-rose-300 rounded-xl text-xs font-bold font-mono flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> {t.routes.closeRoute}
+                      </button>
                     </div>
                   </div>
-
-                  {/* Actions: Modify, Suspend, Close */}
-                  <div className="flex items-center gap-2.5 self-end lg:self-auto shrink-0">
-                    <button
-                      onClick={() => setEditingRoute(route)}
-                      data-testid="route-modify-btn"
-                      className="px-3.5 py-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white rounded-xl text-xs font-bold font-mono flex items-center gap-1.5 transition cursor-pointer shadow-md border border-sky-400 active:scale-95"
-                      title="Modify route pricing, frequency, aircraft, and maintenance"
-                    >
-                      <Sliders className="w-3.5 h-3.5" /> Modify Route (ปรับแต่ง)
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        onUpdateRoute({
-                          ...route,
-                          status: route.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE',
-                        })
-                      }
-                      className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold font-mono flex items-center gap-1.5 transition cursor-pointer border border-slate-700"
-                    >
-                      {route.status === 'ACTIVE' ? (
-                        <>
-                          <Pause className="w-3.5 h-3.5 text-amber-400" /> Suspend
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-3.5 h-3.5 text-emerald-400" /> Resume
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => setRouteToClose(route)}
-                      className="px-3 py-2 bg-rose-950/80 hover:bg-rose-900 border border-rose-600 text-rose-300 rounded-xl text-xs font-bold font-mono flex items-center gap-1.5 transition cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" /> Close
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Standardized Modal Footer */}
         <div className="bg-slate-950 px-6 py-3.5 border-t border-slate-800 flex justify-between items-center text-xs font-mono shrink-0">
           <div className="text-slate-400">
-            Active Routes: <strong className="text-sky-400 font-bold">{playerRoutes.length} Pairs</strong>
+            {isTh ? 'เส้นทางที่เปิดดำเนินการ:' : 'Active Routes:'} <strong className="text-sky-400 font-bold">{playerRoutes.length} {isTh ? 'เส้นทาง' : 'Pairs'}</strong>
           </div>
           <button
             onClick={onClose}
@@ -535,7 +548,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
             data-testid="modal-close-footer-btn"
           >
             <X className="w-4 h-4 text-slate-400" />
-            <span>Close (ปิดหน้าต่าง)</span>
+            <span>{t.common.close}</span>
           </button>
         </div>
       </div>
@@ -553,10 +566,10 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-base sm:text-lg font-black text-white tracking-wide font-mono truncate">
-                      MODIFY COMMERCIAL ROUTE PARAMETERS
+                      {t.routes.modifyTitle}
                     </h3>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400 font-bold shrink-0">
-                      OPERATIONAL DISPATCH
+                      {t.routes.operationalDispatch}
                     </span>
                   </div>
                   <div className="text-xs text-sky-300/90 font-mono flex items-center gap-2 mt-0.5 flex-wrap">
@@ -565,13 +578,13 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     </span>
                     <span className="px-2.5 py-0.5 rounded-full bg-sky-950 text-sky-300 border border-sky-400 font-bold flex items-center gap-1 shadow-sm">
                       <Compass className="w-3.5 h-3.5 text-sky-400" />
-                      <span>{editingDistance.toLocaleString()} km</span>
+                      <span>{editingDistance.toLocaleString()} {kmUnit}</span>
                     </span>
                     <span>•</span>
-                    <span>Base Fare: <strong>${editingBaseFare}</strong></span>
+                    <span>{t.routes.baseFare}: <strong>${editingBaseFare}</strong></span>
                     <span>•</span>
                     <span className={editingRoute.status === 'ACTIVE' ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
-                      Status: {editingRoute.status}
+                      {t.common.status}: {editingRoute.status === 'ACTIVE' ? t.common.active : t.common.suspended}
                     </span>
                   </div>
                 </div>
@@ -579,7 +592,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
               <button
                 onClick={() => setEditingRoute(null)}
                 className="p-1.5 sm:p-2 rounded-xl bg-slate-800 hover:bg-rose-900/70 border border-slate-700 hover:border-rose-500 text-slate-400 hover:text-white transition cursor-pointer shrink-0"
-                title="Close (Esc)"
+                title={`${t.common.close} (Esc)`}
                 data-testid="modal-close-header-btn"
               >
                 <X className="w-5 h-5" />
@@ -601,17 +614,17 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       </div>
                       <div>
                         <span className="text-xs font-mono font-bold text-sky-300 uppercase tracking-wider block">
-                          ASSIGNED ROUTE FLEET (ฝูงบินที่ประจำการในเส้นทาง):
+                          {t.routes.assignedPlanes}:
                         </span>
                         <span className="text-[11px] text-slate-400">
-                          {assignedInstances.length} ลำประจำการ • ความจุรวม {totalFleetSeats} ที่นั่ง/เที่ยว
-                          {isDualFlightMode && ' (โหมดออกบินคู่)'}
+                          {assignedInstances.length} {isTh ? 'ลำประจำการ' : 'aircraft assigned'} • {isTh ? 'ความจุรวม' : 'Total capacity'} {totalFleetSeats} {isTh ? 'ที่นั่ง/เที่ยว' : 'seats/flight'}
+                          {isDualFlightMode && (isTh ? ' (โหมดออกบินคู่)' : ' (Dual-flight mode)')}
                         </span>
                       </div>
                     </div>
                     <span className="text-xs font-mono text-sky-300 bg-sky-950/80 px-2.5 py-1 rounded-lg border border-sky-500/70 font-bold flex items-center gap-1.5 shadow-sm">
                       <Compass className="w-3.5 h-3.5 text-sky-400" />
-                      <span>ระยะทางบิน: <strong className="text-white">{editingDistance.toLocaleString()} km</strong></span>
+                      <span>{t.routes.distanceLabel}: <strong className="text-white">{editingDistance.toLocaleString()} {kmUnit}</strong></span>
                     </span>
                   </div>
 
@@ -620,12 +633,12 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     <div className="flex items-center justify-between text-xs font-mono text-slate-300">
                       <span className="font-bold flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                        เครื่องบินที่บินอยู่ในเส้นทางนี้ ({assignedInstances.length} ลำ):
+                        {isTh ? `เครื่องบินที่บินอยู่ในเส้นทางนี้ (${assignedInstances.length} ลำ):` : `Operating in this corridor (${assignedInstances.length} aircraft):`}
                       </span>
                       <span className="text-[11px] text-slate-400">
                         {assignedInstances.length === 1
-                          ? '1 ลำบินได้สูงสุด 7 เที่ยว/สัปดาห์'
-                          : `ฝูงบิน ${assignedInstances.length} ลำ (สูงสุด ${assignedInstances.length * 7} เที่ยว/สัปดาห์)`}
+                          ? (isTh ? '1 ลำบินได้สูงสุด 7 เที่ยว/สัปดาห์' : '1 aircraft max 7 flights/wk')
+                          : (isTh ? `ฝูงบิน ${assignedInstances.length} ลำ (สูงสุด ${assignedInstances.length * 7} เที่ยว/สัปดาห์)` : `${assignedInstances.length} aircraft (max ${assignedInstances.length * 7} flights/wk)`)}
                       </span>
                     </div>
 
@@ -659,16 +672,16 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                                   </span>
                                 </div>
                                 <div className="text-[10px] font-mono text-slate-300 flex items-center gap-2 flex-wrap">
-                                  <span>{model.capacity} ที่นั่ง</span>
+                                  <span>{model.capacity} {isTh ? 'ที่นั่ง' : 'seats'}</span>
                                   <span>•</span>
-                                  <span>พิสัยบิน: <strong className="text-sky-300">{model.rangeKm.toLocaleString()} km</strong></span>
+                                  <span>{isTh ? 'พิสัยบิน' : 'Range'}: <strong className="text-sky-300">{model.rangeKm.toLocaleString()} {kmUnit}</strong></span>
                                   <span>•</span>
-                                  <span>สภาพ: <strong className="text-emerald-400">{cond}%</strong></span>
+                                  <span>{isTh ? 'สภาพ' : 'Condition'}: <strong className="text-emerald-400">{cond}%</strong></span>
                                 </div>
                                 <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5 flex-wrap">
-                                  <span>ระยะทางบิน: <strong className="text-white">{editingDistance.toLocaleString()} km</strong></span>
+                                  <span>{t.routes.distanceLabel}: <strong className="text-white">{editingDistance.toLocaleString()} {kmUnit}</strong></span>
                                   <span className="text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-500/40">
-                                    ส่วนต่างพิสัย: +{(model.rangeKm - editingDistance).toLocaleString()} km
+                                    {t.routes.rangeSurplus}: +{(model.rangeKm - editingDistance).toLocaleString()} {kmUnit}
                                   </span>
                                 </div>
                               </div>
@@ -680,14 +693,14 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                                   type="button"
                                   onClick={() => handleRemoveAircraftFromRoute(plane.instanceId)}
                                   className="px-2.5 py-1.5 bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-600 rounded-lg text-[10px] font-mono font-bold transition cursor-pointer flex items-center gap-1 active:scale-95 shadow"
-                                  title="ปลดเครื่องบินลำนี้ออกจากเส้นทาง กลับเข้าสู่โรงเก็บ"
+                                  title={isTh ? 'ปลดเครื่องบินลำนี้ออกจากเส้นทาง กลับเข้าสู่โรงเก็บ' : 'Remove this aircraft and return to hangar'}
                                 >
                                   <X className="w-3 h-3" />
-                                  <span>ปลดออก</span>
+                                  <span>{t.routes.removePlane}</span>
                                 </button>
                               ) : (
                                 <span className="text-[9px] font-mono px-2 py-1 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                                  ลำหลัก
+                                  {isTh ? 'ลำหลัก' : 'Primary'}
                                 </span>
                               )}
                             </div>
@@ -702,10 +715,10 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     <div className="flex items-center justify-between text-xs font-mono text-slate-300">
                       <span className="font-bold flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-sky-400" />
-                        เครื่องบินว่างในโรงเก็บที่สามารถเพิ่มเข้ามาได้ ({availableIdlePlanes.length} ลำ):
+                        {isTh ? `เครื่องบินว่างในโรงเก็บที่สามารถเพิ่มเข้ามาได้ (${availableIdlePlanes.length} ลำ):` : `Available in hangar to deploy (${availableIdlePlanes.length} aircraft):`}
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">
-                        (พิสัยบิน ≥ {editingDistance.toLocaleString()} km)
+                        ({isTh ? 'พิสัยบิน' : 'Range'} ≥ {editingDistance.toLocaleString()} {kmUnit})
                       </span>
                     </div>
 
@@ -736,16 +749,16 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                                     {model.model}
                                   </div>
                                   <div className="text-[10px] font-mono text-slate-300 flex items-center gap-2 flex-wrap">
-                                    <span>+{model.capacity} ที่นั่ง</span>
+                                    <span>+{model.capacity} {isTh ? 'ที่นั่ง' : 'seats'}</span>
                                     <span>•</span>
-                                    <span>พิสัยบิน: <strong className="text-sky-300">{model.rangeKm.toLocaleString()} km</strong></span>
+                                    <span>{isTh ? 'พิสัยบิน' : 'Range'}: <strong className="text-sky-300">{model.rangeKm.toLocaleString()} {kmUnit}</strong></span>
                                     <span>•</span>
-                                    <span>สภาพ: <strong className="text-emerald-400">{cond}%</strong></span>
+                                    <span>{isTh ? 'สภาพ' : 'Condition'}: <strong className="text-emerald-400">{cond}%</strong></span>
                                   </div>
                                   <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5 flex-wrap">
-                                    <span>ระยะทางบิน: <strong className="text-white">{editingDistance.toLocaleString()} km</strong></span>
+                                    <span>{t.routes.distanceLabel}: <strong className="text-white">{editingDistance.toLocaleString()} {kmUnit}</strong></span>
                                     <span className="text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-500/40">
-                                      ส่วนเกินพิสัย: +{(model.rangeKm - editingDistance).toLocaleString()} km
+                                      {t.routes.rangeSurplus}: +{(model.rangeKm - editingDistance).toLocaleString()} {kmUnit}
                                     </span>
                                   </div>
                                 </div>
@@ -755,10 +768,10 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                                 type="button"
                                 onClick={() => handleAddAircraftToRoute(plane.instanceId)}
                                 className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400 rounded-lg text-xs font-mono font-bold shadow transition cursor-pointer active:scale-95 shrink-0 flex items-center gap-1"
-                                title="เพิ่มเครื่องบินลำนี้เข้าไปบินร่วมในเส้นทาง"
+                                title={isTh ? 'เพิ่มเครื่องบินลำนี้เข้าไปบินร่วมในเส้นทาง' : 'Deploy this aircraft to this route'}
                               >
                                 <Plus className="w-3.5 h-3.5" />
-                                <span>เพิ่มเข้า</span>
+                                <span>{t.routes.deployPlane}</span>
                               </button>
                             </div>
                           );
@@ -768,7 +781,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 font-mono flex items-center gap-2">
                         <span className="text-sm">ℹ</span>
                         <span>
-                          ไม่มีเครื่องบินว่างในโรงเก็บที่พิสัยบินถึง {editingDistance.toLocaleString()} km (สั่งซื้อเพิ่มได้ที่ Aircraft Shop)
+                          {t.routes.noIdleCapablePlanes}
                         </span>
                       </div>
                     )}
@@ -781,12 +794,12 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
                       <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
                         <BarChart3 className="w-4 h-4 text-indigo-400" />
-                        <span>CAPACITY & PASSENGER UTILIZATION ANALYSIS:</span>
+                        <span>{isTh ? 'วิเคราะห์สัดส่วนที่นั่งและการรองรับผู้โดยสาร:' : 'CAPACITY & PASSENGER UTILIZATION ANALYSIS:'}</span>
                       </span>
                       <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
                         <ArrowRightLeft className="w-3 h-3 text-slate-500" />
                         <span>
-                          เดิม {originalCapacityPerFlight} ➔ ใหม่ {currentDepartureCapacity} ที่นั่ง/เที่ยว ({assignedInstances.length} ลำ)
+                          {isTh ? `เดิม ${originalCapacityPerFlight} ➔ ใหม่ ${currentDepartureCapacity} ที่นั่ง/เที่ยว (${assignedInstances.length} ลำ)` : `Prev ${originalCapacityPerFlight} ➔ New ${currentDepartureCapacity} seats/flight (${assignedInstances.length} planes)`}
                         </span>
                       </span>
                     </div>
@@ -797,21 +810,21 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
                         <div className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1 mb-1">
                           <span className="w-2 h-2 rounded-full bg-slate-500" />
-                          <span>สถิติเดิม (Baseline)</span>
+                          <span>{t.routes.baselineStats}</span>
                         </div>
                         <div className="font-bold text-slate-200 text-xs truncate">
                           {originalAssignedModels.map(m => m.model).join(', ')}
                         </div>
                         <div className="text-[10px] text-slate-300 mt-1 flex items-center justify-between">
-                          <span>ความจุเดิม:</span>
-                          <strong className="text-white">{originalCapacityPerFlight} ที่นั่ง/เที่ยว</strong>
+                          <span>{isTh ? 'ความจุเดิม:' : 'Prev Capacity:'}</span>
+                          <strong className="text-white">{originalCapacityPerFlight} {isTh ? 'ที่นั่ง' : 'seats'}</strong>
                         </div>
                         <div className="text-[10px] text-slate-300 flex items-center justify-between">
-                          <span>ผดส.เดิม:</span>
-                          <strong className="text-sky-300">{originalPaxPerFlight} คน/เที่ยว</strong>
+                          <span>{isTh ? 'ผดส.เดิม:' : 'Prev Pax:'}</span>
+                          <strong className="text-sky-300">{originalPaxPerFlight} {isTh ? 'คน/เที่ยว' : 'pax'}</strong>
                         </div>
                         <div className="text-[10px] text-slate-300 flex items-center justify-between pt-1 border-t border-slate-800/80 mt-1">
-                          <span>Prev LF:</span>
+                          <span>{isTh ? 'อัตราส่วนเดิม:' : 'Prev LF:'}</span>
                           <strong className="text-amber-300 font-bold">{originalLoadFactorPct}%</strong>
                         </div>
                       </div>
@@ -820,19 +833,19 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       <div className="bg-slate-900/90 p-2.5 rounded-xl border border-indigo-500/50 shadow">
                         <div className="text-[10px] text-indigo-300 uppercase font-bold flex items-center gap-1 mb-1">
                           <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-                          <span>เทียบฝูงบินใหม่</span>
+                          <span>{isTh ? 'เทียบฝูงบินใหม่' : 'New Fleet Baseline'}</span>
                         </div>
                         <div className="font-bold text-indigo-200 text-xs truncate">
                           {assignedModels.map(m => m.model).join(', ')}
                         </div>
                         <div className="text-[10px] text-slate-300 mt-1 flex items-center justify-between">
-                          <span>ความจุใหม่:</span>
-                          <strong className="text-white">{currentDepartureCapacity} ที่นั่ง/เที่ยว</strong>
+                          <span>{isTh ? 'ความจุใหม่:' : 'New Capacity:'}</span>
+                          <strong className="text-white">{currentDepartureCapacity} {isTh ? 'ที่นั่ง' : 'seats'}</strong>
                         </div>
                         <div className="text-[10px] text-slate-300 flex items-center justify-between">
-                          <span>ส่วนต่าง:</span>
+                          <span>{isTh ? 'ส่วนต่าง:' : 'Cap Diff:'}</span>
                           <strong className={capDiffTotal >= 0 ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
-                            {capDiffTotal >= 0 ? `+${capDiffTotal}` : capDiffTotal} ที่ ({capDiffPctTotal > 0 ? `+${capDiffPctTotal}%` : `${capDiffPctTotal}%`})
+                            {capDiffTotal >= 0 ? `+${capDiffTotal}` : capDiffTotal} {isTh ? 'ที่' : 'seats'} ({capDiffPctTotal > 0 ? `+${capDiffPctTotal}%` : `${capDiffPctTotal}%`})
                           </strong>
                         </div>
                         <div className="text-[10px] text-slate-300 flex items-center justify-between pt-1 border-t border-slate-800/80 mt-1">
@@ -855,22 +868,22 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                       <div className="bg-slate-900/90 p-2.5 rounded-xl border border-sky-500/50 shadow">
                         <div className="text-[10px] text-sky-300 uppercase font-bold flex items-center gap-1 mb-1">
                           <span className="w-2 h-2 rounded-full bg-sky-400" />
-                          <span>ประมาณการบินจริง</span>
+                          <span>{isTh ? 'ประมาณการบินจริง' : 'Projected Flight'}</span>
                         </div>
                         <div className="font-bold text-sky-200 text-xs truncate">
-                          ไตรมาสถัดไป
+                          {isTh ? 'ไตรมาสถัดไป' : 'Next Quarter'}
                         </div>
                         <div className="text-[10px] text-slate-300 mt-1 flex items-center justify-between">
-                          <span>ผดส.คาดการณ์:</span>
+                          <span>{isTh ? 'ผดส.คาดการณ์:' : 'Proj. Pax:'}</span>
                           <strong className="text-sky-300 font-bold">
                             {previewSimulation
                               ? Math.round(previewSimulation.stats.passengers / (editFrequency * 12)).toLocaleString()
                               : 0}{' '}
-                            คน/เที่ยว
+                            {isTh ? 'คน/เที่ยว' : 'pax/flt'}
                           </strong>
                         </div>
                         <div className="text-[10px] text-slate-300 flex items-center justify-between">
-                          <span>กำไรคาดการณ์:</span>
+                          <span>{isTh ? 'กำไรคาดการณ์:' : 'Proj. Profit:'}</span>
                           <strong
                             className={
                               previewSimulation && previewSimulation.stats.profitK >= 0
@@ -897,9 +910,9 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     {/* Visual Multi-Segment Bar */}
                     <div className="space-y-1.5 pt-1">
                       <div className="flex items-center justify-between text-[11px] text-slate-300">
-                        <span>แผนภาพสัดส่วนที่นั่ง (Visual Capacity Fill):</span>
+                        <span>{isTh ? 'แผนภาพสัดส่วนที่นั่ง:' : 'Visual Capacity Fill Ratio:'}</span>
                         <span className="text-slate-400 text-[10px]">
-                          100% = {currentDepartureCapacity} ที่นั่ง/เที่ยว
+                          100% = {currentDepartureCapacity} {isTh ? 'ที่นั่ง/เที่ยว' : 'seats/flight'}
                         </span>
                       </div>
 
@@ -909,7 +922,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                           className="bg-indigo-600 h-full flex items-center justify-center text-[10px] text-white font-black transition-all"
                           style={{ width: `${Math.min(100, baselineLoadFactorPct)}%` }}
                         >
-                          {baselineLoadFactorPct >= 18 && `ผู้โดยสารเดิม ${baselineLoadFactorPct}%`}
+                          {baselineLoadFactorPct >= 18 && (isTh ? `ผู้โดยสารเดิม ${baselineLoadFactorPct}%` : `Prev Pax ${baselineLoadFactorPct}%`)}
                         </div>
 
                         {/* Segment 2: Projected Growth from Market Demand */}
@@ -924,7 +937,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                             }}
                           >
                             {previewSimulation.stats.loadFactorPct - baselineLoadFactorPct >= 14 &&
-                              `+${previewSimulation.stats.loadFactorPct - baselineLoadFactorPct}% ตลาดโต`}
+                              (isTh ? `+${previewSimulation.stats.loadFactorPct - baselineLoadFactorPct}% ตลาดโต` : `+${previewSimulation.stats.loadFactorPct - baselineLoadFactorPct}% Market Growth`)}
                           </div>
                         )}
 
@@ -932,7 +945,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                         <div className="flex-1 bg-slate-900/60 flex items-center justify-end px-2 text-[10px] text-slate-500">
                           {100 - (previewSimulation ? previewSimulation.stats.loadFactorPct : baselineLoadFactorPct) > 10 && (
                             <span>
-                              ที่ว่างเหลือ{' '}
+                              {isTh ? 'ที่ว่างเหลือ ' : 'Empty Seats '}
                               {Math.max(
                                 0,
                                 currentDepartureCapacity -
@@ -940,7 +953,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                                     ? Math.round(previewSimulation.stats.passengers / (editFrequency * 12))
                                     : originalPaxPerFlight)
                               )}{' '}
-                              ที่นั่ง
+                              {isTh ? 'ที่นั่ง' : 'seats'}
                             </span>
                           )}
                         </div>
@@ -951,21 +964,21 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                         <div className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-sm bg-indigo-600 inline-block" />
                           <span>
-                            ผดส.เดิม: <strong>{baselineLoadFactorPct}%</strong> ({originalPaxPerFlight} คน)
+                            {isTh ? `ผดส.เดิม: ` : `Prev Pax: `}<strong>{baselineLoadFactorPct}%</strong> ({originalPaxPerFlight} {isTh ? 'คน' : 'pax'})
                           </span>
                         </div>
                         {previewSimulation && previewSimulation.stats.loadFactorPct > baselineLoadFactorPct && (
                           <div className="flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-sm bg-emerald-500 inline-block" />
                             <span>
-                              ดีมานด์เติมเพิ่ม: <strong className="text-emerald-400">+{previewSimulation.stats.loadFactorPct - baselineLoadFactorPct}%</strong>
+                              {isTh ? 'ดีมานด์เติบโต: ' : 'Demand Growth: '}<strong className="text-emerald-400">+{previewSimulation.stats.loadFactorPct - baselineLoadFactorPct}%</strong>
                             </span>
                           </div>
                         )}
                         <div className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-sm bg-slate-800 border border-slate-700 inline-block" />
                           <span>
-                            ที่ว่างสำรอง: {Math.max(0, 100 - (previewSimulation ? previewSimulation.stats.loadFactorPct : baselineLoadFactorPct))}%
+                            {isTh ? 'ที่ว่างสำรอง: ' : 'Empty Seats: '}{Math.max(0, 100 - (previewSimulation ? previewSimulation.stats.loadFactorPct : baselineLoadFactorPct))}%
                           </span>
                         </div>
                       </div>
@@ -983,10 +996,10 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono font-bold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
                       <Compass className="w-4 h-4 text-sky-400" />
-                      <span>FLIGHT FREQUENCY (เที่ยวบินต่อสัปดาห์):</span>
+                      <span>{t.routes.flightFrequencyTitle}</span>
                     </span>
                     <span className="text-xs font-mono text-emerald-400 font-bold">
-                      Slot Limit: Min({originSlotsFree} in {editingOrigin?.id}, {destSlotsFree} in {editingDest?.id}) = {slotLimit} flt/wk
+                      {isTh ? `ขีดจำกัดสล็อต: ${slotLimit} เที่ยว/สัปดาห์` : `Slot Limit: ${slotLimit} flt/wk`}
                     </span>
                   </div>
 
@@ -1006,7 +1019,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                           {editFrequency}
                         </span>
                         <span className="text-[10px] font-mono text-slate-400 block -mt-1">
-                          flights / week
+                          {flightsUnit}
                         </span>
                       </div>
 
@@ -1033,7 +1046,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                                 : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
                             }`}
                           >
-                            {qty === 7 ? '7x (Daily)' : qty === 14 ? '14x (Double)' : `${qty}x`}
+                            {qty === 7 ? (isTh ? '7 (ทุกวัน)' : '7x (Daily)') : qty === 14 ? (isTh ? '14 (วันละ 2)' : '14x (Double)') : `${qty}x`}
                           </button>
                         ))}
                       </div>
@@ -1041,18 +1054,18 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
 
                     <div className="text-xs font-mono text-slate-400 text-right">
                       <div>
-                        ความจุ/สัปดาห์:{' '}
+                        {isTh ? 'ความจุ/สัปดาห์: ' : 'Weekly Capacity: '}
                         <strong className="text-white">
                           {previewSimulation
                             ? Math.round(previewSimulation.stats.capacity / 12).toLocaleString()
                             : (editFrequency * currentDepartureCapacity).toLocaleString()}{' '}
-                          ที่นั่ง
+                          {isTh ? 'ที่นั่ง' : 'seats'}
                         </strong>
                       </div>
                       <div>
-                        รอบบิน/ไตรมาส:{' '}
+                        {isTh ? 'เที่ยวบิน/ไตรมาส: ' : 'Flights/Quarter: '}
                         <strong className="text-sky-300">
-                          {editFrequency * 12} flights ({assignedInstances.length} ลำ)
+                          {editFrequency * 12} {isTh ? `เที่ยว (${assignedInstances.length} ลำ)` : `flt (${assignedInstances.length} planes)`}
                         </strong>
                       </div>
                     </div>
@@ -1063,7 +1076,9 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     <div className="p-2 rounded-xl bg-indigo-950/40 border border-indigo-500/40 text-[11px] font-mono text-indigo-300 flex items-center gap-2">
                       <span className="text-sm">💡</span>
                       <span>
-                        สล็อตสนามบินรองรับได้ถึง <strong>{slotLimit} เที่ยว/สัปดาห์</strong>! เครื่องบิน 1 ลำบินได้ 7 เที่ยว หากต้องการบิน 8–{slotLimit} เที่ยว กรุณากด <strong>[+ เพิ่มเข้า]</strong> ทางซ้ายเพื่อเพิ่มเครื่องบิน
+                        {isTh
+                          ? `สล็อตสนามบินรองรับได้ถึง ${slotLimit} เที่ยว/สัปดาห์! เครื่องบิน 1 ลำบินได้ 7 เที่ยว หากต้องการบิน 8–${slotLimit} เที่ยว กรุณากด [+ เพิ่มเข้า] เพื่อเพิ่มเครื่องบิน`
+                          : `Airport slots support up to ${slotLimit} flights/week! 1 aircraft can operate 7 flights. Click [+ Deploy Plane] to add more planes for 8–${slotLimit} flights.`}
                       </span>
                     </div>
                   )}
@@ -1072,7 +1087,9 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     <div className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-[11px] font-mono text-emerald-300 flex items-center gap-2">
                       <span className="text-sm">⚡</span>
                       <span>
-                        <strong>โหมดออกบินคู่ (Dual-Aircraft):</strong> ออกบินพร้อมกันในรอบสัปดาห์ เพิ่มความจุเป็น <strong>{totalFleetSeats} ที่นั่ง/เที่ยว</strong> (+{(assignedInstances.length - 1) * 100}%)
+                        {isTh
+                          ? `โหมดออกบินคู่: บินร่วมในรอบสัปดาห์ เพิ่มความจุเป็น ${totalFleetSeats} ที่นั่ง/เที่ยว (+${(assignedInstances.length - 1) * 100}%)`
+                          : `Dual-Aircraft Mode: Flying in pair, boosting departure capacity to ${totalFleetSeats} seats/flight (+${(assignedInstances.length - 1) * 100}%)`}
                       </span>
                     </div>
                   )}
@@ -1083,12 +1100,12 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono font-bold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
                       <DollarSign className="w-4 h-4 text-sky-400" />
-                      <span>TICKET PRICING STRATEGY (ปรับราคาค่าตั๋วโดยสาร):</span>
+                      <span>{t.routes.pricingPolicy}</span>
                     </span>
                     <span className="text-xs font-mono text-amber-300 font-bold">
-                      Effective: ${editingEffectivePrice.toLocaleString()} / pax
+                      {isTh ? 'ราคาจริง: ' : 'Effective: '}${editingEffectivePrice.toLocaleString()} / pax
                       <span className="text-slate-400 ml-1 font-normal">
-                        (Base: ${editingBaseFare.toLocaleString()})
+                        ({isTh ? 'ราคาฐาน: ' : 'Base: '}${editingBaseFare.toLocaleString()})
                       </span>
                     </span>
                   </div>
@@ -1122,7 +1139,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                               : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
                           }`}
                         >
-                          {pct === 0 ? 'Normal (0%)' : pct > 0 ? `+${pct}%` : `${pct}%`}
+                          {pct === 0 ? (isTh ? 'มาตรฐาน (0%)' : 'Standard (0%)') : pct > 0 ? `+${pct}%` : `${pct}%`}
                         </button>
                       ))}
                     </div>
@@ -1130,14 +1147,14 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                     <div className="text-[10px] font-mono text-slate-400">
                       {editPriceModifier < 0 ? (
                         <span className="text-emerald-400">
-                          ✓ ตั๋วราคาประหยัดช่วยกระตุ้นดีมานด์ (+{Math.abs(editPriceModifier * 0.6).toFixed(0)}% pax elasticity)
+                          {isTh ? `✓ ตั๋วราคาประหยัดช่วยกระตุ้นดีมานด์ (+${Math.abs(editPriceModifier * 0.6).toFixed(0)}% ผู้โดยสาร)` : `✓ Budget fare stimulates demand (+${Math.abs(editPriceModifier * 0.6).toFixed(0)}% pax elasticity)`}
                         </span>
                       ) : editPriceModifier > 0 ? (
                         <span className="text-amber-400">
-                          ⚡ ตั๋วพรีเมียมเพิ่มรายได้ต่อที่นั่ง แต่อาจลดจำนวนผู้โดยสาร (-{(editPriceModifier * 0.7).toFixed(0)}% pax volume)
+                          {isTh ? `⚡ ตั๋วพรีเมียมเพิ่มรายได้ต่อที่นั่ง แต่อาจลดจำนวนผู้โดยสาร (-${(editPriceModifier * 0.7).toFixed(0)}% ผู้โดยสาร)` : `⚡ Premium fare yields higher per-seat revenue, but may reduce volume (-${(editPriceModifier * 0.7).toFixed(0)}% pax)`}
                         </span>
                       ) : (
-                        <span>ราคามาตรฐานระดับตลาดแข่งขัน IATA</span>
+                        <span>{isTh ? 'ราคามาตรฐานระดับตลาดแข่งขันสากล' : 'Standard competitive market fare'}</span>
                       )}
                     </div>
                   </div>
@@ -1148,10 +1165,10 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono font-bold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
                       <ShieldCheck className="w-4 h-4 text-sky-400" />
-                      <span>MAINTENANCE & SERVICE BUDGET (การบำรุงรักษาและการบริการ):</span>
+                      <span>{t.routes.maintenanceBudget}</span>
                     </span>
                     <span className="text-[10px] font-mono text-slate-400">
-                      ควบคุมต้นทุนและการสึกหรอ
+                      {isTh ? 'ควบคุมต้นทุนและการสึกหรอ' : 'Fleet wear & cost control'}
                     </span>
                   </div>
 
@@ -1169,14 +1186,14 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-mono font-bold text-xs text-amber-300 flex items-center gap-1">
                             <Coins className="w-3.5 h-3.5 text-amber-400" />
-                            <span>Budget</span>
+                            <span>{isTh ? 'ประหยัด' : 'Budget'}</span>
                           </span>
                           <span className="text-[9px] font-mono font-black px-1.5 py-0.2 rounded bg-amber-950 border border-amber-500/80 text-amber-200">
                             80%
                           </span>
                         </div>
                         <p className="text-[10px] text-slate-300 leading-tight">
-                          ประหยัดงบ 20% แต่อะไหล่สึกหรอเร็วขึ้น +35%
+                          {isTh ? 'ประหยัดงบ 20% แต่อะไหล่สึกหรอเร็วขึ้น +35%' : 'Save 20% budget, fleet wear increases +35%'}
                         </p>
                       </div>
                     </div>
@@ -1194,14 +1211,14 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-mono font-bold text-xs text-sky-300 flex items-center gap-1">
                             <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
-                            <span>Standard</span>
+                            <span>{isTh ? 'มาตรฐาน' : 'Standard'}</span>
                           </span>
                           <span className="text-[9px] font-mono font-black px-1.5 py-0.2 rounded bg-sky-950 border border-sky-500/80 text-sky-200">
                             100%
                           </span>
                         </div>
                         <p className="text-[10px] text-slate-300 leading-tight">
-                          มาตรฐานผู้ผลิต สมดุลต้นทุนและสภาพเครื่องบิน
+                          {isTh ? 'มาตรฐานผู้ผลิต สมดุลต้นทุนและสภาพเครื่องบิน' : 'Manufacturer standard, balanced wear and costs'}
                         </p>
                       </div>
                     </div>
@@ -1219,14 +1236,14 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-mono font-bold text-xs text-emerald-300 flex items-center gap-1">
                             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Rigorous</span>
+                            <span>{isTh ? 'พรีเมียม' : 'Rigorous'}</span>
                           </span>
                           <span className="text-[9px] font-mono font-black px-1.5 py-0.2 rounded bg-emerald-950 border border-emerald-500/80 text-emerald-200">
                             125%
                           </span>
                         </div>
                         <p className="text-[10px] text-slate-300 leading-tight">
-                          พรีเมียม ถนอมเครื่อง (-40% wear) และเพิ่มดีมานด์
+                          {isTh ? 'พรีเมียม ถนอมเครื่อง (-40% wear) และเพิ่มดีมานด์' : 'Premium care, preserves fleet (-40% wear), boosts demand'}
                         </p>
                       </div>
                     </div>
@@ -1237,39 +1254,39 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                 {previewSimulation && (
                   <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-sky-800/80 rounded-2xl p-3.5 space-y-2 font-mono shadow">
                     <div className="flex items-center justify-between text-xs text-sky-300 font-bold uppercase tracking-wider">
-                      <span>LIVE QUARTERLY PERFORMANCE PROJECTION (จำลองผลประกอบการไตรมาส):</span>
-                      <span className="text-slate-400 text-[10px]">Real-time Model</span>
+                      <span>{isTh ? 'ประมาณการผลประกอบการไตรมาส:' : 'LIVE QUARTERLY PERFORMANCE PROJECTION:'}</span>
+                      <span className="text-slate-400 text-[10px]">{isTh ? 'ประเมินแบบเรียลไทม์' : 'Real-time Model'}</span>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5 text-xs">
                       <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
-                        <span className="text-[9px] text-slate-400 block">EST. PASSENGERS:</span>
+                        <span className="text-[9px] text-slate-400 block">{isTh ? 'ผู้โดยสารคาดการณ์:' : 'EST. PASSENGERS:'}</span>
                         <strong className="text-xs text-sky-300 block truncate">
                           {previewSimulation.stats.passengers.toLocaleString()}
                         </strong>
                         <span className="text-[9px] text-emerald-400 font-bold block">
-                          {previewSimulation.stats.loadFactorPct}% LF
+                          {previewSimulation.stats.loadFactorPct}% {isTh ? 'อัตราบรรทุก' : 'LF'}
                         </span>
                       </div>
 
                       <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
-                        <span className="text-[9px] text-slate-400 block">GROSS REVENUE:</span>
+                        <span className="text-[9px] text-slate-400 block">{isTh ? 'รายรับคาดการณ์:' : 'GROSS REVENUE:'}</span>
                         <strong className="text-xs text-emerald-400 block truncate">
                           +${previewSimulation.stats.revenueK.toLocaleString()}K
                         </strong>
-                        <span className="text-[9px] text-slate-500 block">Quarterly Gross</span>
+                        <span className="text-[9px] text-slate-500 block">{isTh ? 'ต่อไตรมาส' : 'Quarterly Gross'}</span>
                       </div>
 
                       <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
-                        <span className="text-[9px] text-slate-400 block">OPERATING EXPENSES:</span>
+                        <span className="text-[9px] text-slate-400 block">{isTh ? 'ค่าใช้จ่ายคาดการณ์:' : 'OPERATING EXPENSES:'}</span>
                         <strong className="text-xs text-rose-400 block truncate">
                           -${previewSimulation.stats.expensesK.toLocaleString()}K
                         </strong>
-                        <span className="text-[9px] text-slate-500 block">Fuel, Maint, Airport</span>
+                        <span className="text-[9px] text-slate-500 block">{isTh ? 'น้ำมัน, ซ่อม, สนามบิน' : 'Fuel, Maint, Airport'}</span>
                       </div>
 
                       <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
-                        <span className="text-[9px] text-slate-400 block">NET PROFIT / QTR:</span>
+                        <span className="text-[9px] text-slate-400 block">{isTh ? 'กำไรสุทธิต่อไตรมาส:' : 'NET PROFIT / QTR:'}</span>
                         <strong
                           className={`text-xs font-black block truncate ${
                             previewSimulation.stats.profitK >= 0 ? 'text-emerald-400' : 'text-rose-400'
@@ -1280,7 +1297,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                             : `-$${Math.abs(previewSimulation.stats.profitK).toLocaleString()}K`}
                         </strong>
                         <span className="text-[9px] text-slate-500 block">
-                          {previewSimulation.stats.profitK >= 0 ? 'Profitable' : 'Deficit Warning'}
+                          {previewSimulation.stats.profitK >= 0 ? (isTh ? 'มีกำไร' : 'Profitable') : (isTh ? 'ขาดทุน' : 'Deficit Warning')}
                         </span>
                       </div>
                     </div>
@@ -1299,10 +1316,10 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                   setRouteToClose(r);
                 }}
                 className="px-4 py-2 bg-rose-950/60 hover:bg-rose-900/80 border border-rose-600/70 hover:border-rose-500 text-rose-300 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 active:scale-95"
-                title="ยกเลิกเส้นทางบินนี้และนำเครื่องบินกลับเข้าโรงเก็บ"
+                title={isTh ? 'ยกเลิกเส้นทางบินนี้และนำเครื่องบินกลับเข้าโรงเก็บ' : 'Decommission route and return aircraft to hangar'}
               >
                 <Trash2 className="w-4 h-4 text-rose-400" />
-                <span>Abandon Route (ยกเลิกเส้นทาง)</span>
+                <span>{t.routes.abandonRoute}</span>
               </button>
 
               <div className="flex items-center gap-3">
@@ -1312,7 +1329,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                   className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer active:scale-95"
                   data-testid="modal-close-footer-btn"
                 >
-                  Cancel (ยกเลิก)
+                  {t.common.cancel}
                 </button>
 
                 <button
@@ -1321,7 +1338,7 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                   className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-xl transition-all active:scale-95 border border-emerald-400 cursor-pointer flex items-center gap-2"
                 >
                   <CheckCircle2 className="w-4 h-4 text-emerald-200" />
-                  <span>Save & Apply Modifications (บันทึกการเปลี่ยนแปลง)</span>
+                  <span>{t.routes.saveChangesBtn}</span>
                 </button>
               </div>
             </div>
@@ -1335,22 +1352,40 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
           <div className="bg-slate-900 border-2 border-rose-600 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden text-slate-100 flex flex-col">
             <div className="bg-rose-950/80 px-5 py-3.5 border-b border-rose-800 flex items-center gap-3">
               <AlertTriangle className="w-6 h-6 text-rose-400" />
-              <h4 className="font-bold text-white font-mono text-base">Confirm Route Decommission</h4>
+              <h4 className="font-bold text-white font-mono text-base">{t.routes.closeConfirmTitle}</h4>
             </div>
             <div className="p-5 text-sm font-mono text-slate-300 space-y-2">
               <p>
-                Are you sure you want to permanently close the route between{' '}
-                <strong className="text-white">
-                  {cityMap.get(routeToClose.originCityId)?.name}
-                </strong>{' '}
-                and{' '}
-                <strong className="text-white">
-                  {cityMap.get(routeToClose.destCityId)?.name}
-                </strong>
-                ?
+                {isTh ? (
+                  <>
+                    คุณแน่ใจหรือไม่ว่าต้องการยกเลิกเส้นทางบินระหว่าง{' '}
+                    <strong className="text-white">
+                      {cityMap.get(routeToClose.originCityId)?.name}
+                    </strong>{' '}
+                    และ{' '}
+                    <strong className="text-white">
+                      {cityMap.get(routeToClose.destCityId)?.name}
+                    </strong>
+                    ?
+                  </>
+                ) : (
+                  <>
+                    Are you sure you want to permanently close the route between{' '}
+                    <strong className="text-white">
+                      {cityMap.get(routeToClose.originCityId)?.name}
+                    </strong>{' '}
+                    and{' '}
+                    <strong className="text-white">
+                      {cityMap.get(routeToClose.destCityId)?.name}
+                    </strong>
+                    ?
+                  </>
+                )}
               </p>
               <p className="text-xs text-slate-400">
-                All assigned airframes will be safely unassigned and returned to your fleet hangar.
+                {isTh
+                  ? 'เครื่องบินที่ประจำการทั้งหมดจะถูกส่งกลับคืนสู่โรงเก็บฝูงบินของคุณ'
+                  : 'All assigned airframes will be safely unassigned and returned to your fleet hangar.'}
               </p>
             </div>
             <div className="bg-slate-950 px-5 py-3 border-t border-slate-800 flex items-center justify-end gap-3 font-mono text-xs font-bold">
@@ -1358,13 +1393,13 @@ export const ManageRoutesModal: React.FC<ManageRoutesModalProps> = ({
                 onClick={() => setRouteToClose(null)}
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition cursor-pointer"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleConfirmClose}
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl transition cursor-pointer shadow-lg"
               >
-                Confirm Close
+                {t.common.confirm}
               </button>
             </div>
           </div>

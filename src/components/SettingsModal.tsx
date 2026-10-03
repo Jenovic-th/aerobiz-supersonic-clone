@@ -13,8 +13,10 @@ import {
   Monitor,
   CheckCircle2,
   Sliders,
+  Globe,
 } from 'lucide-react';
 import { bgmPlayer } from '../utils/lofiBgm';
+import { useI18n, Language } from '../utils/i18n';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -28,10 +30,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onSettingsChanged,
 }) => {
   useEscapeKey(onClose, isOpen);
+  const { lang, setLanguage, t } = useI18n();
   const [settings, setSettings] = useState<GameSettings>(() => loadSettings());
   const [savedFeedback, setSavedFeedback] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleLanguageChange = (newLang: Language) => {
+    playSound.click();
+    const updated = { ...settings, language: newLang };
+    setSettings(updated);
+    saveSettings(updated);
+    setLanguage(newLang);
+    if (onSettingsChanged) onSettingsChanged(updated);
+  };
 
   const handleToggle = (key: keyof GameSettings) => {
     playSound.click();
@@ -87,9 +99,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-black tracking-wide text-white uppercase font-mono">
-                Game Settings
+                {t.settings.title}
               </h2>
-              <p className="text-xs text-slate-400">การตั้งค่าระบบและสภาพแวดล้อมจำลอง</p>
+              <p className="text-xs text-slate-400">
+                {lang === 'th' ? 'การตั้งค่าระบบและสภาพแวดล้อมจำลอง' : 'System configuration & simulation options'}
+              </p>
             </div>
           </div>
           <button
@@ -99,14 +113,59 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }}
             data-testid="modal-close-header-btn"
             className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
-            title="Close (Esc)"
+            title={`${t.common.close} (Esc)`}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
+        <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
+          {/* 0. Language Selection Card */}
+          <div className="p-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl">
+            <div className="flex items-center gap-3 mb-2.5">
+              <div className="p-2.5 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-400/40 shadow">
+                <Globe className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="font-bold text-sm text-white">
+                  {t.settings.languageTitle}
+                </div>
+                <div className="text-xs text-slate-400">
+                  {t.settings.languageDesc}
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => handleLanguageChange('th')}
+                data-testid="settings-lang-th"
+                className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                  lang === 'th'
+                    ? 'bg-sky-600/30 border-sky-400 text-sky-200 ring-2 ring-sky-400/30 shadow-lg font-black'
+                    : 'bg-slate-900/60 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                }`}
+              >
+                <span className="text-base">🇹🇭</span>
+                <span>ภาษาไทย</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLanguageChange('en')}
+                data-testid="settings-lang-en"
+                className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                  lang === 'en'
+                    ? 'bg-sky-600/30 border-sky-400 text-sky-200 ring-2 ring-sky-400/30 shadow-lg font-black'
+                    : 'bg-slate-900/60 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                }`}
+              >
+                <span className="text-base">🇬🇧</span>
+                <span>English</span>
+              </button>
+            </div>
+          </div>
+
           {/* 1. Lo-Fi Ambient Background Music (BGM) Toggle */}
           <div className="flex items-center justify-between p-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl">
             <div className="flex items-center gap-3">
@@ -115,13 +174,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
               <div>
                 <div className="font-bold text-sm text-white flex items-center gap-2">
-                  <span>Background Music (ดนตรีประกอบ BGM)</span>
+                  <span>{t.settings.bgmTitle}</span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/50 font-bold">
-                    {bgmPlayer.getIsCustomTrack() ? 'Custom MP3 Track' : 'Executive Lounge (100 BPM)'}
+                    {bgmPlayer.getIsCustomTrack() ? (lang === 'th' ? 'ไฟล์เพลงส่วนตัว' : 'Custom MP3') : (lang === 'th' ? 'ดนตรีเลานจ์ 100 BPM' : 'Executive Lounge 100 BPM')}
                   </span>
                 </div>
                 <div className="text-xs text-slate-400">
-                  ดนตรีเรโทรแจ๊สป๊อปสไตล์ Super Famicom ยุค 90 (Executive Lounge 100 BPM)
+                  {t.settings.bgmDesc}
                 </div>
               </div>
             </div>
@@ -146,7 +205,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-300 font-bold flex items-center gap-1.5">
                   <Headphones className="w-3.5 h-3.5 text-purple-400" />
-                  <span>BGM Volume Level (ระดับเสียงดนตรีคลอ)</span>
+                  <span>{t.settings.bgmVolume}</span>
                 </span>
                 <span className="font-mono text-purple-400 font-bold">{settings.bgmVolume}%</span>
               </div>
@@ -159,7 +218,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className="w-full accent-purple-400 cursor-pointer"
               />
               <div className="text-[11px] text-slate-400 flex items-center justify-between pt-0.5">
-                <span>💡 รองรับไฟล์เพลงส่วนตัว: วางไฟล์ <code className="text-amber-300 font-mono">lofi.mp3</code> ใน <code className="text-sky-300 font-mono">public/audio/bgm/</code></span>
+                <span>{lang === 'th' ? '💡 รองรับไฟล์เพลงส่วนตัว: วางไฟล์ lofi.mp3 ใน public/audio/bgm/' : '💡 Custom BGM supported: Place lofi.mp3 in public/audio/bgm/'}</span>
               </div>
             </div>
           )}
@@ -173,8 +232,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <VolumeX className="w-5 h-5 text-slate-500" />
               )}
               <div>
-                <div className="font-bold text-sm text-white">Sound Effects (เสียงเอฟเฟกต์)</div>
-                <div className="text-xs text-slate-400">เสียงปุ่มกด, เรดาร์, เที่ยวบิน และเสียงยืนยัน</div>
+                <div className="font-bold text-sm text-white">{t.settings.sfxTitle}</div>
+                <div className="text-xs text-slate-400">{t.settings.sfxDesc}</div>
               </div>
             </div>
             <button
@@ -195,7 +254,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {settings.sfxEnabled && (
             <div className="p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-2xl space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-300 font-bold">SFX Volume Level</span>
+                <span className="text-slate-300 font-bold">{t.settings.sfxVolume}</span>
                 <span className="font-mono text-sky-400 font-bold">{settings.sfxVolume}%</span>
               </div>
               <input
@@ -211,19 +270,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onClick={handleTestSound}
                   className="px-2.5 py-1 text-[11px] font-bold bg-slate-700 hover:bg-slate-600 text-sky-300 rounded-lg border border-slate-600 cursor-pointer transition active:scale-95"
                 >
-                  {savedFeedback ? '♪ Playing SFX...' : '🔊 Test Sound'}
+                  {savedFeedback ? (lang === 'th' ? '♪ กำลังเล่น...' : '♪ Playing...') : t.settings.testSfx}
                 </button>
               </div>
             </div>
           )}
 
-          {/* 2. Auto-Save Toggle */}
+          {/* 3. Auto-Save Toggle */}
           <div className="flex items-center justify-between p-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl">
             <div className="flex items-center gap-3">
               <Save className="w-5 h-5 text-emerald-400" />
               <div>
-                <div className="font-bold text-sm text-white">Quarterly Auto-Save</div>
-                <div className="text-xs text-slate-400">บันทึกเกมอัตโนมัติทุกสิ้นไตรมาส (End Quarter)</div>
+                <div className="font-bold text-sm text-white">{t.settings.autoSaveTitle}</div>
+                <div className="text-xs text-slate-400">{t.settings.autoSaveDesc}</div>
               </div>
             </div>
             <button
@@ -240,13 +299,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
           </div>
 
-          {/* 3. Fast Animation Toggle */}
+          {/* 4. Fast Animation Toggle */}
           <div className="flex items-center justify-between p-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl">
             <div className="flex items-center gap-3">
               <Zap className="w-5 h-5 text-amber-400" />
               <div>
-                <div className="font-bold text-sm text-white">Fast Simulation Pace</div>
-                <div className="text-xs text-slate-400">เร่งความเร็วแอนิเมชันเที่ยวบินและการประมวลผล</div>
+                <div className="font-bold text-sm text-white">{t.settings.fastAnimationTitle}</div>
+                <div className="text-xs text-slate-400">{t.settings.fastAnimationDesc}</div>
               </div>
             </div>
             <button
@@ -263,13 +322,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
           </div>
 
-          {/* 4. CRT Retro Monitor Shader Effect Toggle */}
+          {/* 5. CRT Retro Monitor Shader Effect Toggle */}
           <div className="flex items-center justify-between p-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl">
             <div className="flex items-center gap-3">
               <Monitor className="w-5 h-5 text-purple-400" />
               <div>
-                <div className="font-bold text-sm text-white">Retro CRT Scanline Effect</div>
-                <div className="text-xs text-slate-400">ฟิลเตอร์จอหลอดแก้วเรโทรสไตล์ Koei 90s</div>
+                <div className="font-bold text-sm text-white">{t.settings.crtTitle}</div>
+                <div className="text-xs text-slate-400">{t.settings.crtDesc}</div>
               </div>
             </div>
             <button
@@ -290,7 +349,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Footer */}
         <div className="bg-slate-950 px-6 py-4 border-t border-slate-800 flex justify-between items-center shrink-0">
           <div className="text-xs text-slate-500 font-mono">
-            Settings auto-saved to LocalStorage
+            {lang === 'th' ? 'บันทึกการตั้งค่าลงในเครื่องโดยอัตโนมัติ' : 'Settings auto-saved to LocalStorage'}
           </div>
           <button
             onClick={() => {
@@ -301,7 +360,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             data-testid="modal-close-footer-btn"
           >
             <X className="w-4 h-4 text-slate-400" />
-            <span>Close (ปิดหน้าต่าง)</span>
+            <span>{t.common.close}</span>
           </button>
         </div>
       </div>

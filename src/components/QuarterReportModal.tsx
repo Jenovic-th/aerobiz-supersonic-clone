@@ -26,6 +26,7 @@ import {
 import { NegotiatorAvatar } from './NegotiatorAvatar';
 import { AIRCRAFTS, getAllAircraftModels } from '../data/aircrafts';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useI18n } from '../utils/i18n';
 
 interface QuarterReportModalProps {
   gameState: GameState;
@@ -35,7 +36,7 @@ interface QuarterReportModalProps {
   onOpenAircraftShop?: () => void;
 }
 
-const REGION_LABELS: Record<RegionId, { name: string; icon: string }> = {
+const REGION_LABELS_EN: Record<RegionId, { name: string; icon: string }> = {
   EAST_SOUTHEAST_ASIA: { name: 'East & Southeast Asia', icon: '⛩️' },
   EUROPE: { name: 'Europe', icon: '🏰' },
   NORTH_AMERICA: { name: 'North America', icon: '🗽' },
@@ -45,6 +46,16 @@ const REGION_LABELS: Record<RegionId, { name: string; icon: string }> = {
   OCEANIA: { name: 'Oceania & Pacific', icon: '🦘' },
 };
 
+const REGION_LABELS_TH: Record<RegionId, { name: string; icon: string }> = {
+  EAST_SOUTHEAST_ASIA: { name: 'เอเชียตะวันออกและเอเชียตะวันออกเฉียงใต้', icon: '⛩️' },
+  EUROPE: { name: 'ยุโรป', icon: '🏰' },
+  NORTH_AMERICA: { name: 'อเมริกาเหนือ', icon: '🗽' },
+  SOUTH_AMERICA: { name: 'อเมริกาใต้', icon: '🏖️' },
+  MIDDLE_EAST_SOUTH_ASIA: { name: 'ตะวันออกกลางและเอเชียใต้', icon: '🕌' },
+  AFRICA: { name: 'ทวีปแอฟริกา', icon: '🦁' },
+  OCEANIA: { name: 'โอเชียเนียและแปซิฟิก', icon: '🦘' },
+};
+
 export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
   gameState,
   playerAirline,
@@ -52,12 +63,16 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
   onContinueSandbox,
   onOpenAircraftShop,
 }) => {
+  const { t, lang } = useI18n();
+  const isTh = lang === 'th';
   useEscapeKey(onClose);
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'INSPECTOR' | 'NEWS'>('OVERVIEW');
   const [selectedAirlineId, setSelectedAirlineId] = useState<string>(playerAirline.id);
 
   const cityMap = new Map(CITIES.map((c) => [c.id, c]));
-  const quarterNames = ['Q1 (Jan-Mar)', 'Q2 (Apr-Jun)', 'Q3 (Jul-Sep)', 'Q4 (Oct-Dec)'];
+  const quarterNames = isTh
+    ? ['Q1 (ม.ค.-มี.ค.)', 'Q2 (เม.ย.-มิ.ย.)', 'Q3 (ก.ค.-ก.ย.)', 'Q4 (ต.ค.-ธ.ค.)']
+    : ['Q1 (Jan-Mar)', 'Q2 (Apr-Jun)', 'Q3 (Jul-Sep)', 'Q4 (Oct-Dec)'];
 
   // 1. Calculate Human Player Totals
   const playerRoutes = gameState.routes.filter((r) => r.airlineId === playerAirline.id);
@@ -106,15 +121,23 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
 
   const getUpcomingAircraftAdvisory = (plane: (typeof AIRCRAFTS)[0]): string => {
     if (plane.isSupersonic) {
-      return 'Prestige Supersonic Flagship. Engineered for high-yield executive corridors (e.g. NYC - LON, TYO - LAX). Blazing Mach 2+ cruising speed enables faster turnaround rotations and commands lucrative premium business passenger fares.';
+      return isTh
+        ? 'เครื่องบินความเร็วเหนือเสียงระดับเรือธง ออกแบบมาเพื่อเส้นทางธุรกิจที่มีผลตอบแทนสูง (เช่น NYC - LON, TYO - LAX) ความเร็วเหนือเสียงระดับ มัค 2+ ช่วยเพิ่มรอบการหมุนเวียนเที่ยวบินและทำราคาตั๋วชั้นธุรกิจระดับพรีเมียมได้สูง'
+        : 'Prestige Supersonic Flagship. Engineered for high-yield executive corridors (e.g. NYC - LON, TYO - LAX). Blazing Mach 2+ cruising speed enables faster turnaround rotations and commands lucrative premium business passenger fares.';
     }
     if (plane.rangeKm >= 10000 && plane.capacity >= 300) {
-      return 'Heavy Intercontinental Workhorse. Unlocks nonstop transoceanic trunk routes across the Pacific and Atlantic. Massive passenger capacity provides supreme economies of scale to dominate congested global megahubs.';
+      return isTh
+        ? 'เครื่องบินลำตัวกว้างพิสัยไกลพิเศษ สามารถบินข้ามมหาสมุทรแปซิฟิกและแอตแลนติกได้โดยไม่ต้องแวะพัก ความจุผู้โดยสารขนาดใหญ่ช่วยสร้างการประหยัดจากขนาดเพื่อครองตลาดฮับขนาดใหญ่ระดับโลก'
+        : 'Heavy Intercontinental Workhorse. Unlocks nonstop transoceanic trunk routes across the Pacific and Atlantic. Massive passenger capacity provides supreme economies of scale to dominate congested global megahubs.';
     }
     if (plane.rangeKm >= 6000) {
-      return 'Versatile Transcontinental Cruiser. Balanced operating costs and generous range make it the premier choice for linking major continental hubs and opening new intercontinental corridors.';
+      return isTh
+        ? 'เครื่องบินข้ามทวีปอเนกประสงค์ มีความสมดุลระหว่างต้นทุนการดำเนินงานและพิสัยการบินที่กว้างขวาง เหมาะสำหรับการเชื่อมโยงเมืองศูนย์กลางหลักของแต่ละทวีปและเปิดเส้นทางบินข้ามทวีปใหม่'
+        : 'Versatile Transcontinental Cruiser. Balanced operating costs and generous range make it the premier choice for linking major continental hubs and opening new intercontinental corridors.';
     }
-    return 'High-Frequency Regional Workhorse. Superior fuel economy and low capital expenditure make it ideal for rapid regional network expansion and high-density domestic shuttle routes.';
+    return isTh
+      ? 'เครื่องบินระดับภูมิภาคความถี่สูง โดดเด่นด้วยการประหยัดน้ำมันเชื้อเพลิงและต้นทุนการจัดซื้อที่ต่ำ เหมาะสำหรับการขยายเครือข่ายระดับภูมิภาคอย่างรวดเร็วและรองรับเส้นทางบินเชื่อมต่อภายในประเทศที่มีผู้โดยสารหนาแน่น'
+      : 'High-Frequency Regional Workhorse. Superior fuel economy and low capital expenditure make it ideal for rapid regional network expansion and high-density domestic shuttle routes.';
   };
 
   // 3. Inspect Selected Airline Data
@@ -183,26 +206,28 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg md:text-2xl font-black text-slate-100 flex items-center gap-2.5">
-                <span>Quarterly Board Meeting & Financial Review</span>
+                <span>{isTh ? 'สรุปผลประกอบการประจำไตรมาสและการประชุมบอร์ด' : 'Quarterly Board Meeting & Financial Review'}</span>
                 {gameState.gameMode === 'SANDBOX_INFINITE' ? (
                   <span className="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400">
-                    ♾️ SANDBOX
+                    ♾️ {isTh ? 'โหมดอิสระ' : 'SANDBOX'}
                   </span>
                 ) : (
                   <span className="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-400">
-                    🏆 CAMPAIGN
+                    🏆 {isTh ? 'แคมเปญ' : 'CAMPAIGN'}
                   </span>
                 )}
               </h2>
               <div className="text-xs sm:text-sm text-sky-300 font-bold mt-0.5">
-                {gameState.currentYear} {quarterNames[gameState.currentQuarter - 1]} Briefing • Turn {gameState.turnNumber}
+                {isTh
+                  ? `สรุปรายงาน ${gameState.currentYear} ${quarterNames[gameState.currentQuarter - 1]} • ไตรมาสที่ ${gameState.turnNumber}`
+                  : `${gameState.currentYear} ${quarterNames[gameState.currentQuarter - 1]} Briefing • Turn ${gameState.turnNumber}`}
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
-            title="Close (Esc)"
+            title={isTh ? 'ปิดหน้าต่าง (Esc)' : 'Close (Esc)'}
             data-testid="modal-close-header-btn"
           >
             <X className="w-6 h-6" />
@@ -221,7 +246,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
               }`}
             >
               <BarChart3 className="w-4 h-4 text-sky-400" />
-              <span>Global Overview (ภาพรวมสายการบิน)</span>
+              <span>{isTh ? 'ภาพรวมผลประกอบการ' : 'Global Overview'}</span>
             </button>
             <button
               onClick={() => setActiveTab('INSPECTOR')}
@@ -232,7 +257,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
               }`}
             >
               <Globe2 className="w-4 h-4 text-emerald-400" />
-              <span>Airlines & Continents (เจาะลึกรายทวีป)</span>
+              <span>{isTh ? 'วิเคราะห์สายการบินและรายทวีป' : 'Airlines & Continents'}</span>
             </button>
             <button
               onClick={() => setActiveTab('NEWS')}
@@ -243,7 +268,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
               }`}
             >
               <Newspaper className="w-4 h-4 text-amber-400" />
-              <span>Aviation Bulletin & Sales (ข่าว & ส่วนลด)</span>
+              <span>{isTh ? 'ข่าวสารและส่วนลดอากาศยาน' : 'Aviation Bulletin & Sales'}</span>
               {gameState.activeDiscountDeal && (
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping absolute top-2.5 right-2" />
               )}
@@ -251,9 +276,11 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
           </div>
 
           <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-900 border border-sky-500/50 shadow font-mono text-xs">
-            <span className="text-slate-400">Industry Rank:</span>
+            <span className="text-slate-400">{isTh ? 'อันดับอุตสาหกรรม:' : 'Industry Rank:'}</span>
             <span className="font-black text-amber-300">
-              {playerRank === 1 ? '🥇 1st' : playerRank === 2 ? '🥈 2nd' : playerRank === 3 ? '🥉 3rd' : '4th'}
+              {isTh
+                ? (playerRank === 1 ? '🥇 อันดับ 1' : playerRank === 2 ? '🥈 อันดับ 2' : playerRank === 3 ? '🥉 อันดับ 3' : 'อันดับ 4')
+                : (playerRank === 1 ? '🥇 1st' : playerRank === 2 ? '🥈 2nd' : playerRank === 3 ? '🥉 3rd' : '4th')}
             </span>
           </div>
         </div>
@@ -265,7 +292,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
             <div className="p-5 bg-gradient-to-br from-amber-950 via-slate-900 to-indigo-950 border-2 border-amber-400 rounded-3xl shadow-2xl text-center">
               <div className="text-4xl mb-2 animate-bounce">🏆</div>
               <h2 className="text-xl md:text-2xl font-black text-amber-300 font-mono tracking-wider">
-                20-YEAR CAMPAIGN COMPLETE!
+                {isTh ? 'สิ้นสุดภารกิจแคมเปญ 20 ปี!' : '20-YEAR CAMPAIGN COMPLETE!'}
               </h2>
               <p className="text-xs md:text-sm text-slate-200 mt-1.5 max-w-xl mx-auto leading-relaxed">
                 {gameState.victoryReason}
@@ -277,7 +304,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                     className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 via-sky-600 to-blue-700 hover:from-indigo-500 hover:to-sky-500 text-white rounded-xl font-black text-xs md:text-sm shadow-xl border-2 border-sky-400 cursor-pointer flex items-center gap-2"
                   >
                     <Infinity className="w-4 h-4 text-indigo-200" />
-                    <span>Continue Playing in Infinite Sandbox Mode</span>
+                    <span>{isTh ? 'เล่นต่อในโหมดอิสระไม่จำกัดเวลา' : 'Continue Playing in Infinite Sandbox Mode'}</span>
                   </button>
                 )}
               </div>
@@ -300,7 +327,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-black uppercase font-mono">
-                      WORLD BREAKING NEWS
+                      {isTh ? 'ข่าวด่วนระดับโลก' : 'WORLD BREAKING NEWS'}
                     </span>
                     <span className="font-black text-amber-200 text-sm">
                       {gameState.activeEvents[0].title}
@@ -315,7 +342,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 onClick={() => setActiveTab('NEWS')}
                 className="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 rounded-lg text-xs font-bold font-mono transition cursor-pointer shrink-0"
               >
-                View News Bulletin ➔
+                {isTh ? 'ดูข่าวสาร ➔' : 'View News Bulletin ➔'}
               </button>
             </div>
           )}
@@ -340,13 +367,17 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500 text-slate-950 font-black uppercase font-mono">
-                      UPCOMING EVENT IN {gameState.upcomingEvents[0].quartersUntil * 3} MONTHS
+                      {isTh
+                        ? `มหกรรมโลกในอีก ${gameState.upcomingEvents[0].quartersUntil * 3} เดือน`
+                        : `UPCOMING EVENT IN ${gameState.upcomingEvents[0].quartersUntil * 3} MONTHS`}
                     </span>
                     <span className="font-black text-indigo-200 text-sm">
                       {gameState.upcomingEvents[0].event.title}
                     </span>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400 font-mono font-bold">
-                      ดีมานด์คาดการณ์: +{gameState.upcomingEvents[0].estimatedDemandSurgePct}%
+                      {isTh
+                        ? `ดีมานด์คาดการณ์: +${gameState.upcomingEvents[0].estimatedDemandSurgePct}%`
+                        : `Projected Demand: +${gameState.upcomingEvents[0].estimatedDemandSurgePct}%`}
                     </span>
                   </div>
                   <div className="text-xs text-slate-300 mt-0.5 truncate max-w-xl">
@@ -358,7 +389,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 onClick={() => setActiveTab('NEWS')}
                 className="px-3 py-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-400/50 rounded-lg text-xs font-bold font-mono transition cursor-pointer shrink-0"
               >
-                View Event Calendar ➔
+                {isTh ? 'ดูปฏิทินมหกรรม ➔' : 'View Event Calendar ➔'}
               </button>
             </div>
           )}
@@ -370,10 +401,12 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 <span className="text-lg">🏗️</span>
                 <div>
                   <span className="font-bold text-emerald-300 uppercase font-mono text-[10px] mr-1.5">
-                    AIRPORT INFRASTRUCTURE ALERT:
+                    {isTh ? 'การพัฒนาโครงสร้างพื้นฐานสนามบิน:' : 'AIRPORT INFRASTRUCTURE ALERT:'}
                   </span>
                   <span className="text-slate-200">
-                    {gameState.airportExpansions.map((e) => `${e.cityName} (+${e.addedSlots})`).join(', ')} expanded runway capacity!
+                    {isTh
+                      ? `${gameState.airportExpansions.map((e) => `${e.cityName} (+${e.addedSlots})`).join(', ')} ขยายทางวิ่งสำเร็จ!`
+                      : `${gameState.airportExpansions.map((e) => `${e.cityName} (+${e.addedSlots})`).join(', ')} expanded runway capacity!`}
                   </span>
                 </div>
               </div>
@@ -381,7 +414,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 onClick={() => setActiveTab('NEWS')}
                 className="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 rounded-lg text-[11px] font-bold font-mono hover:bg-emerald-500/30 transition cursor-pointer shrink-0"
               >
-                Details ➔
+                {isTh ? 'ดูรายละเอียด ➔' : 'Details ➔'}
               </button>
             </div>
           )}
@@ -393,29 +426,53 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
             </div>
             <div>
               <div className="font-black text-sky-400 text-xs md:text-sm mb-1">
-                Executive Assistant to President:
+                {isTh ? 'เลขาธิการประจำตัวประธานบริหาร:' : 'Executive Assistant to President:'}
               </div>
               <p className="text-slate-100 text-xs md:text-sm leading-relaxed">
                 {totalProfitK >= 0 ? (
-                  <>
-                    "Excellent quarter, Chief Executive! Our commercial flight operations generated{' '}
-                    <span className="font-black text-emerald-400 font-mono text-sm md:text-base">
-                      +${totalProfitK.toLocaleString()}K
-                    </span>{' '}
-                    in net profit, carrying{' '}
-                    <span className="font-black text-sky-300 font-mono text-sm md:text-base">
-                      {totalPassengers.toLocaleString()}
-                    </span>{' '}
-                    passengers across our network."
-                  </>
+                  isTh ? (
+                    <>
+                      "ผลประกอบการยอดเยี่ยมครับท่านประธาน! สายการบินของเราทำกำไรสุทธิ{' '}
+                      <span className="font-black text-emerald-400 font-mono text-sm md:text-base">
+                        +${totalProfitK.toLocaleString()}K
+                      </span>{' '}
+                      และขนส่งผู้โดยสาร{' '}
+                      <span className="font-black text-sky-300 font-mono text-sm md:text-base">
+                        {totalPassengers.toLocaleString()}
+                      </span>{' '}
+                      คนทั่วเครือข่ายการบินของเรา"
+                    </>
+                  ) : (
+                    <>
+                      "Excellent quarter, Chief Executive! Our commercial flight operations generated{' '}
+                      <span className="font-black text-emerald-400 font-mono text-sm md:text-base">
+                        +${totalProfitK.toLocaleString()}K
+                      </span>{' '}
+                      in net profit, carrying{' '}
+                      <span className="font-black text-sky-300 font-mono text-sm md:text-base">
+                        {totalPassengers.toLocaleString()}
+                      </span>{' '}
+                      passengers across our network."
+                    </>
+                  )
                 ) : (
-                  <>
-                    "Attention, CEO! Our quarterly operations ended with a loss of{' '}
-                    <span className="font-black text-rose-400 font-mono text-sm md:text-base">
-                      -${Math.abs(totalProfitK).toLocaleString()}K
-                    </span>
-                    . We should review unprofitable routes, adjust fares, or retire fuel-heavy aircraft."
-                  </>
+                  isTh ? (
+                    <>
+                      "ระวังครับท่านประธาน! ไตรมาสนี้ผลการดำเนินงานขาดทุนสุทธิ{' '}
+                      <span className="font-black text-rose-400 font-mono text-sm md:text-base">
+                        -${Math.abs(totalProfitK).toLocaleString()}K
+                      </span>
+                      เราควรพิจารณาปรับเส้นทางบิน ค่าโดยสาร หรือปลดเครื่องบินที่สิ้นเปลืองน้ำมัน"
+                    </>
+                  ) : (
+                    <>
+                      "Attention, CEO! Our quarterly operations ended with a loss of{' '}
+                      <span className="font-black text-rose-400 font-mono text-sm md:text-base">
+                        -${Math.abs(totalProfitK).toLocaleString()}K
+                      </span>
+                      . We should review unprofitable routes, adjust fares, or retire fuel-heavy aircraft."
+                    </>
+                  )
                 )}
               </p>
             </div>
@@ -437,19 +494,21 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-400 uppercase tracking-wide">
-                          📢 1-Year Advance Notice ({gameState.currentYear + 1})
+                          {isTh ? `📢 แจ้งเตือนล่วงหน้า 1 ปี (${gameState.currentYear + 1})` : `📢 1-Year Advance Notice (${gameState.currentYear + 1})`}
                         </span>
                         <span className="text-[11px] text-slate-400 font-mono hidden md:inline">
-                          Aerospace Confidential Intelligence
+                          {isTh ? 'ข้อมูลลับอุตสาหกรรมการบิน' : 'Aerospace Confidential Intelligence'}
                         </span>
                       </div>
                       <div className="text-white font-black text-sm md:text-base mt-0.5">
-                        {gameState.upcomingAircraft.map((p) => p.model).join(', ')} entering commercial airline service next year!
+                        {isTh
+                          ? `${gameState.upcomingAircraft.map((p) => p.model).join(', ')} จะเริ่มเข้าประจำการเชิงพาณิชย์ในปีหน้า!`
+                          : `${gameState.upcomingAircraft.map((p) => p.model).join(', ')} entering commercial airline service next year!`}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 text-cyan-400 font-black text-xs md:text-sm shrink-0 font-mono bg-cyan-950/80 px-3.5 py-1.5 rounded-xl border border-cyan-500/40 group-hover:bg-cyan-900/60 transition self-end sm:self-auto">
-                    <span>Inspect Blueprint Schematics</span>
+                    <span>{isTh ? 'ดูแบบแปลนพิมพ์เขียว' : 'Inspect Blueprint Schematics'}</span>
                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition" />
                   </div>
                 </div>
@@ -468,19 +527,21 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono bg-amber-500/20 text-amber-300 border border-amber-400 uppercase tracking-wide">
-                          ⚠️ 1-Year Advance Notice: Factory Line Retirement ({gameState.currentYear + 1})
+                          {isTh ? `⚠️ แจ้งเตือนล่วงหน้า 1 ปี: ยุติสายการผลิต (${gameState.currentYear + 1})` : `⚠️ 1-Year Advance Notice: Factory Line Retirement (${gameState.currentYear + 1})`}
                         </span>
                         <span className="text-[11px] text-amber-200/80 font-mono hidden md:inline">
-                          Assembly Line Shutdown
+                          {isTh ? 'ปิดสายการประกอบ' : 'Assembly Line Shutdown'}
                         </span>
                       </div>
                       <div className="text-white font-black text-sm md:text-base mt-0.5">
-                        {gameState.retiringAircraft.map((p) => p.model).join(', ')} ceasing factory production at end of next year!
+                        {isTh
+                          ? `${gameState.retiringAircraft.map((p) => p.model).join(', ')} จะยุติสายการผลิตในโรงงานเมื่อสิ้นปีหน้า!`
+                          : `${gameState.retiringAircraft.map((p) => p.model).join(', ')} ceasing factory production at end of next year!`}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 text-amber-300 font-black text-xs md:text-sm shrink-0 font-mono bg-amber-950/80 px-3.5 py-1.5 rounded-xl border border-amber-500/40 group-hover:bg-amber-900/60 transition self-end sm:self-auto">
-                    <span>Inspect Retirement Briefing</span>
+                    <span>{isTh ? 'ดูรายละเอียดการปลดประจำการ' : 'Inspect Retirement Briefing'}</span>
                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition" />
                   </div>
                 </div>
@@ -499,19 +560,21 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-400 uppercase tracking-wide">
-                          ✈️ Factory Order Handover & Delivery Report
+                          {isTh ? '✈️ รายงานการส่งมอบเครื่องบินจากโรงงาน' : '✈️ Factory Order Handover & Delivery Report'}
                         </span>
                         <span className="text-[11px] text-slate-400 font-mono hidden md:inline">
-                          Aerospace Manufacturing Log
+                          {isTh ? 'บันทึกการผลิตอากาศยาน' : 'Aerospace Manufacturing Log'}
                         </span>
                       </div>
                       <div className="text-white font-black text-sm md:text-base mt-0.5">
-                        {gameState.aircraftDeliveries.length} factory order{gameState.aircraftDeliveries.length > 1 ? 's' : ''} processed: {gameState.aircraftDeliveries.map(d => `${d.quantity}x ${d.modelName} (${d.status})`).join(', ')}
+                        {isTh
+                          ? `ส่งมอบเครื่องบินจากโรงงาน ${gameState.aircraftDeliveries.length} คำสั่งซื้อ: ${gameState.aircraftDeliveries.map(d => `${d.quantity}x ${d.modelName} (${d.status === 'DELIVERED' ? 'ส่งมอบแล้ว' : 'ล่าช้า'})`).join(', ')}`
+                          : `${gameState.aircraftDeliveries.length} factory order${gameState.aircraftDeliveries.length > 1 ? 's' : ''} processed: ${gameState.aircraftDeliveries.map(d => `${d.quantity}x ${d.modelName} (${d.status})`).join(', ')}`}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 text-emerald-400 font-black text-xs md:text-sm shrink-0 font-mono bg-emerald-950/80 px-3.5 py-1.5 rounded-xl border border-emerald-500/40 group-hover:bg-emerald-900/60 transition self-end sm:self-auto">
-                    <span>Inspect Delivery Notices</span>
+                    <span>{isTh ? 'ดูการส่งมอบ' : 'Inspect Delivery Notices'}</span>
                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition" />
                   </div>
                 </div>
@@ -530,18 +593,22 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                       </div>
                       <div>
                         <div className="font-black text-rose-300 text-xs md:text-sm font-mono flex items-center gap-2">
-                          <span>⚠️ OPERATIONAL FLIGHT DISRUPTIONS DETECTED</span>
+                          <span>{isTh ? '⚠️ ตรวจพบเหตุขัดข้องในการบิน' : '⚠️ OPERATIONAL FLIGHT DISRUPTIONS DETECTED'}</span>
                           <span className="text-[10px] px-2 py-0.2 rounded bg-rose-500/30 text-rose-200 border border-rose-400">
-                            {gameState.routeIncidents.filter((i) => i.airlineId === playerAirline.id).length} Your Route(s) Impacted
+                            {isTh
+                              ? `กระทบเส้นทางของคุณ ${gameState.routeIncidents.filter((i) => i.airlineId === playerAirline.id).length} เส้นทาง`
+                              : `${gameState.routeIncidents.filter((i) => i.airlineId === playerAirline.id).length} Your Route(s) Impacted`}
                           </span>
                         </div>
                         <div className="text-[11px] text-slate-300 line-clamp-1 font-sans">
-                          Severe seasonal weather or aging airframe mechanical issues grounded scheduled flights and incurred emergency passenger/repair costs.
+                          {isTh
+                            ? 'สภาพอากาศแปรปรวนตามฤดูกาลหรือเครื่องบินเก่าขัดข้อง ทำให้เที่ยวบินถูกยกเลิกและมีค่าใช้จ่ายฉุกเฉิน'
+                            : 'Severe seasonal weather or aging airframe mechanical issues grounded scheduled flights and incurred emergency passenger/repair costs.'}
                         </div>
                       </div>
                     </div>
                     <div className="text-rose-300 font-mono font-bold text-xs shrink-0 flex items-center gap-1 group-hover:translate-x-0.5 transition">
-                      <span>View Log</span>
+                      <span>{isTh ? 'ดูบันทึก' : 'View Log'}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </div>
                   </div>
@@ -560,9 +627,13 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                     <div>
                       <div className="font-black text-amber-300 text-xs md:text-sm font-mono flex items-center gap-2">
                         <span>
-                          {gameState.activeDiscountDeal.specificModelId
-                            ? `🔥 ${gameState.activeDiscountDeal.discountPct}% OFF CLEARANCE: ${gameState.activeDiscountDeal.modelName || gameState.activeDiscountDeal.specificModelId}`
-                            : `🔥 ${gameState.activeDiscountDeal.discountPct}% OFF FACTORY PROMOTION: ${gameState.activeDiscountDeal.manufacturer.toUpperCase()}`}
+                          {isTh
+                            ? (gameState.activeDiscountDeal.specificModelId
+                                ? `🔥 ลดล้างสต็อก ${gameState.activeDiscountDeal.discountPct}%: ${gameState.activeDiscountDeal.modelName || gameState.activeDiscountDeal.specificModelId}`
+                                : `🔥 ส่วนลดพิเศษจากโรงงาน ${gameState.activeDiscountDeal.discountPct}%: ${gameState.activeDiscountDeal.manufacturer.toUpperCase()}`)
+                            : (gameState.activeDiscountDeal.specificModelId
+                                ? `🔥 ${gameState.activeDiscountDeal.discountPct}% OFF CLEARANCE: ${gameState.activeDiscountDeal.modelName || gameState.activeDiscountDeal.specificModelId}`
+                                : `🔥 ${gameState.activeDiscountDeal.discountPct}% OFF FACTORY PROMOTION: ${gameState.activeDiscountDeal.manufacturer.toUpperCase()}`)}
                         </span>
                       </div>
                       <div className="text-[11px] text-amber-100/80 line-clamp-1">
@@ -571,7 +642,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                     </div>
                   </div>
                   <div className="text-amber-300 font-mono font-bold text-xs shrink-0 flex items-center gap-1 group-hover:translate-x-0.5 transition">
-                    <span>View Deal</span>
+                    <span>{isTh ? 'ดูข้อเสนอ' : 'View Deal'}</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </div>
                 </div>
@@ -586,25 +657,27 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                     </div>
                     <div>
                       <h3 className="text-sm md:text-base font-black text-white uppercase tracking-wider font-mono">
-                        Quarterly Multi-Airline Financial & Traffic Benchmark
+                        {isTh ? 'เปรียบเทียบผลการดำเนินงานและยอดผู้โดยสารรายไตรมาส' : 'Quarterly Multi-Airline Financial & Traffic Benchmark'}
                       </h3>
                       <div className="text-[11px] text-slate-400 font-mono">
-                        Comparative Analysis: Operating Cost vs Gross Revenue & Passenger Volume
+                        {isTh
+                          ? 'การวิเคราะห์เปรียบเทียบ: ค่าใช้จ่ายดำเนินงาน รายได้รวม และจำนวนผู้โดยสาร'
+                          : 'Comparative Analysis: Operating Cost vs Gross Revenue & Passenger Volume'}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 text-[11px] font-mono">
                     <div className="flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-                      <span className="text-slate-300">Expenses</span>
+                      <span className="text-slate-300">{isTh ? 'ค่าใช้จ่าย' : 'Expenses'}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                      <span className="text-slate-300">Revenue</span>
+                      <span className="text-slate-300">{isTh ? 'รายรับ' : 'Revenue'}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-full bg-sky-400" />
-                      <span className="text-slate-300">Traffic</span>
+                      <span className="text-slate-300">{isTh ? 'ผู้โดยสาร' : 'Traffic'}</span>
                     </div>
                   </div>
                 </div>
@@ -664,12 +737,14 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                                 </span>
                                 {isPlayer && (
                                   <span className="px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 text-[9px] font-mono font-black border border-sky-400">
-                                    YOU
+                                    {isTh ? 'คุณ' : 'YOU'}
                                   </span>
                                 )}
                               </div>
                               <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                                HQ: {hqCity?.name || st.homeCityId} • {connectedCitiesCount} Hubs
+                                {isTh
+                                  ? `ศูนย์กลาง: ${hqCity?.name || st.homeCityId} • เชื่อมต่อ ${connectedCitiesCount} เมือง`
+                                  : `HQ: ${hqCity?.name || st.homeCityId} • ${connectedCitiesCount} Hubs`}
                               </div>
                             </div>
                           </div>
@@ -679,7 +754,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                         <div className="flex-1 w-full min-w-0 space-y-1.5 font-mono">
                           {/* Operating Expenses Bar */}
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-rose-400 font-bold w-8 shrink-0 text-right">COST</span>
+                            <span className="text-[10px] text-rose-400 font-bold w-8 shrink-0 text-right">{isTh ? 'จ่าย' : 'COST'}</span>
                             <div className="flex-1 bg-slate-950 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-800/80">
                               <div
                                 className="bg-gradient-to-r from-rose-600 via-rose-500 to-red-500 h-full rounded-full transition-all duration-500 shadow-sm"
@@ -693,7 +768,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
 
                           {/* Gross Revenue Bar */}
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-emerald-400 font-bold w-8 shrink-0 text-right">REV</span>
+                            <span className="text-[10px] text-emerald-400 font-bold w-8 shrink-0 text-right">{isTh ? 'รับ' : 'REV'}</span>
                             <div className="flex-1 bg-slate-950 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-800/80">
                               <div
                                 className="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 h-full rounded-full transition-all duration-500 shadow-sm"
@@ -717,14 +792,14 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                               />
                             </div>
                             <span className="text-[10px] text-sky-300 font-semibold w-20 text-right">
-                              {st.quarterPassengers.toLocaleString()} pax
+                              {st.quarterPassengers.toLocaleString()} {isTh ? 'คน' : 'pax'}
                             </span>
                           </div>
                         </div>
 
                         {/* Right: Modern Net Profit Badge */}
                         <div className="w-full lg:w-40 text-right shrink-0 flex lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-1 font-mono">
-                          <span className="text-[10px] text-slate-400">NET RESULT</span>
+                          <span className="text-[10px] text-slate-400">{isTh ? 'กำไรสุทธิ' : 'NET RESULT'}</span>
                           <div
                             className={`px-3 py-1 rounded-xl border text-right ${
                               st.quarterProfitK >= 0
@@ -738,7 +813,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                                 : `-$${Math.abs(st.quarterProfitK).toLocaleString()}K`}
                             </span>
                             <span className="text-[9px] opacity-80 block">
-                              {st.quarterProfitK >= 0 ? `Margin: +${marginPct}%` : 'Operating Deficit'}
+                              {st.quarterProfitK >= 0 ? (isTh ? `อัตรากำไร: +${marginPct}%` : `Margin: +${marginPct}%`) : (isTh ? 'ขาดทุนดำเนินงาน' : 'Operating Deficit')}
                             </span>
                           </div>
                         </div>
@@ -754,11 +829,11 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                   <div className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-amber-400" />
                     <h3 className="font-black text-white text-sm md:text-base font-mono">
-                      Global Airline Standings & Valuation
+                      {isTh ? 'ตารางจัดอันดับมูลค่าสายการบินทั่วโลก' : 'Global Airline Standings & Valuation'}
                     </h3>
                   </div>
                   <span className="text-xs text-slate-400 font-mono">
-                    Valuation = Cash + 70% Fleet + Subsidiaries
+                    {isTh ? 'มูลค่าประเมิน = เงินสด + 70% มูลค่าฝูงบิน + ธุรกิจในเครือ' : 'Valuation = Cash + 70% Fleet + Subsidiaries'}
                   </span>
                 </div>
 
@@ -766,27 +841,22 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                   <table className="w-full text-left text-xs md:text-sm">
                     <thead>
                       <tr className="border-b border-slate-800 text-slate-400 font-mono text-[11px] uppercase">
-                        <th className="py-2 px-2.5">Rank</th>
-                        <th className="py-2 px-2.5">Airline & CEO</th>
-                        <th className="py-2 px-2.5">HQ Hub</th>
-                        <th className="py-2 px-2.5 text-right">Empire Valuation</th>
-                        <th className="py-2 px-2.5 text-right">Quarter Profit</th>
-                        <th className="py-2 px-2.5 text-right">Passengers</th>
-                        <th className="py-2 px-2.5 text-center">Routes/Fleet</th>
+                        <th className="py-2 px-2.5">{isTh ? 'อันดับ' : 'Rank'}</th>
+                        <th className="py-2 px-2.5">{isTh ? 'สายการบินและผู้บริหาร' : 'Airline & CEO'}</th>
+                        <th className="py-2 px-2.5">{isTh ? 'ศูนย์กลางหลัก' : 'HQ Hub'}</th>
+                        <th className="py-2 px-2.5 text-right">{isTh ? 'มูลค่ากิจการ' : 'Empire Valuation'}</th>
+                        <th className="py-2 px-2.5 text-right">{isTh ? 'กำไรประจำไตรมาส' : 'Quarter Profit'}</th>
+                        <th className="py-2 px-2.5 text-right">{isTh ? 'ผู้โดยสาร' : 'Passengers'}</th>
+                        <th className="py-2 px-2.5 text-center">{isTh ? 'เส้นทาง/ฝูงบิน' : 'Routes/Fleet'}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/80">
                       {standings.map((st) => {
                         const isPlayer = st.isHuman;
                         const hqCity = cityMap.get(st.homeCityId);
-                        const rankMedal =
-                          st.rank === 1
-                            ? '🥇 1st'
-                            : st.rank === 2
-                            ? '🥈 2nd'
-                            : st.rank === 3
-                            ? '🥉 3rd'
-                            : '🎖️ 4th';
+                        const rankMedal = isTh
+                          ? (st.rank === 1 ? '🥇 อันดับ 1' : st.rank === 2 ? '🥈 อันดับ 2' : st.rank === 3 ? '🥉 อันดับ 3' : '🎖️ อันดับ 4')
+                          : (st.rank === 1 ? '🥇 1st' : st.rank === 2 ? '🥈 2nd' : st.rank === 3 ? '🥉 3rd' : '🎖️ 4th');
 
                         return (
                           <tr
@@ -828,12 +898,12 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                                     <span>{st.airlineName}</span>
                                     {isPlayer && (
                                       <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-400 font-black">
-                                        YOU
+                                        {isTh ? 'คุณ' : 'YOU'}
                                       </span>
                                     )}
                                   </div>
                                   <div className="text-[10px] text-slate-400 font-mono truncate max-w-[140px]">
-                                    CEO: {st.ceoName || 'Unknown'}
+                                    {isTh ? `ผู้บริหาร: ${st.ceoName || 'ไม่ระบุ'}` : `CEO: ${st.ceoName || 'Unknown'}`}
                                   </div>
                                 </div>
                               </div>
@@ -853,7 +923,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                                 ${st.totalValuationK.toLocaleString()}K
                               </span>
                               <span className="text-[10px] text-slate-400 block font-sans">
-                                Cash: ${st.cashK.toLocaleString()}K
+                                {isTh ? `เงินสด: $${st.cashK.toLocaleString()}K` : `Cash: $${st.cashK.toLocaleString()}K`}
                               </span>
                             </td>
 
@@ -873,12 +943,14 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                               <span className="text-slate-200 font-bold text-xs">
                                 {st.quarterPassengers.toLocaleString()}
                               </span>
-                              <span className="text-[10px] text-slate-500 block font-sans">pax/qtr</span>
+                              <span className="text-[10px] text-slate-500 block font-sans">{isTh ? 'คน/ไตรมาส' : 'pax/qtr'}</span>
                             </td>
 
                             <td className="py-2 px-2.5 text-center whitespace-nowrap font-mono">
                               <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300 text-[10px]">
-                                {st.activeRoutesCount} routes • {st.fleetCount} planes
+                                {isTh
+                                  ? `${st.activeRoutesCount} เส้นทาง • ${st.fleetCount} ลำ`
+                                  : `${st.activeRoutesCount} routes • ${st.fleetCount} planes`}
                               </span>
                             </td>
                           </tr>
@@ -892,25 +964,25 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
               {/* FINANCIAL BALANCE SHEET SUMMARY (HUMAN PLAYER) */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-800/90 p-4 rounded-2xl border-2 border-slate-700 text-center shadow">
                 <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700">
-                  <div className="text-[11px] text-slate-400 mb-0.5">Flight Revenue</div>
+                  <div className="text-[11px] text-slate-400 mb-0.5">{isTh ? 'รายรับจากเที่ยวบิน' : 'Flight Revenue'}</div>
                   <div className="font-black text-emerald-400 font-mono text-sm md:text-base">
                     +${totalRevenueK.toLocaleString()}K
                   </div>
                 </div>
                 <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700">
-                  <div className="text-[11px] text-slate-400 mb-0.5">Operating Cost</div>
+                  <div className="text-[11px] text-slate-400 mb-0.5">{isTh ? 'ค่าใช้จ่ายดำเนินงาน' : 'Operating Cost'}</div>
                   <div className="font-black text-rose-400 font-mono text-sm md:text-base">
                     -${totalExpensesK.toLocaleString()}K
                   </div>
                 </div>
                 <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700">
-                  <div className="text-[11px] text-slate-400 mb-0.5">Ventures Dividend</div>
+                  <div className="text-[11px] text-slate-400 mb-0.5">{isTh ? 'เงินปันผลธุรกิจเสริม' : 'Ventures Dividend'}</div>
                   <div className="font-black text-indigo-300 font-mono text-sm md:text-base">
                     +${totalDividendsK.toLocaleString()}K
                   </div>
                 </div>
                 <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700">
-                  <div className="text-[11px] text-slate-400 mb-0.5">Net Profit</div>
+                  <div className="text-[11px] text-slate-400 mb-0.5">{isTh ? 'กำไรสุทธิรวม' : 'Net Profit'}</div>
                   <div
                     className={`font-black font-mono text-base md:text-lg ${
                       totalProfitK >= 0 ? 'text-emerald-300' : 'text-rose-400'
@@ -930,14 +1002,14 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                     <div className="bg-emerald-950/40 border border-emerald-500/60 p-3.5 rounded-xl shadow">
                       <div className="flex items-center gap-2 font-black text-emerald-300 text-xs mb-1">
                         <Award className="w-4 h-4 text-emerald-400" />
-                        <span>Best Performing Route</span>
+                        <span>{isTh ? 'เส้นทางที่ทำกำไรสูงสุด' : 'Best Performing Route'}</span>
                       </div>
                       <div className="text-white font-bold text-sm">
                         {cityMap.get(bestRoute.originCityId)?.name} ➔{' '}
                         {cityMap.get(bestRoute.destCityId)?.name}
                       </div>
                       <div className="text-xs text-slate-300 mt-1 font-mono">
-                        Pax: {bestRoute.lastQuarterStats.passengers.toLocaleString()} | Profit:{' '}
+                        {isTh ? 'ผู้โดยสาร:' : 'Pax:'} {bestRoute.lastQuarterStats.passengers.toLocaleString()} | {isTh ? 'กำไร:' : 'Profit:'}{' '}
                         <span className="font-black text-emerald-400">
                           +${bestRoute.lastQuarterStats.profitK.toLocaleString()}K
                         </span>
@@ -949,14 +1021,14 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                     <div className="bg-rose-950/40 border border-rose-500/60 p-3.5 rounded-xl shadow">
                       <div className="flex items-center gap-2 font-black text-rose-300 text-xs mb-1">
                         <TrendingDown className="w-4 h-4 text-rose-400" />
-                        <span>Lowest Margin Route</span>
+                        <span>{isTh ? 'เส้นทางที่ขาดทุน / กำไรต่ำสุด' : 'Lowest Margin Route'}</span>
                       </div>
                       <div className="text-white font-bold text-sm">
                         {cityMap.get(worstRoute.originCityId)?.name} ➔{' '}
                         {cityMap.get(worstRoute.destCityId)?.name}
                       </div>
                       <div className="text-xs text-slate-300 mt-1 font-mono">
-                        Pax: {worstRoute.lastQuarterStats.passengers.toLocaleString()} | Result:{' '}
+                        {isTh ? 'ผู้โดยสาร:' : 'Pax:'} {worstRoute.lastQuarterStats.passengers.toLocaleString()} | {isTh ? 'ผลประกอบการ:' : 'Result:'}{' '}
                         <span
                           className={`font-black ${
                             worstRoute.lastQuarterStats.profitK >= 0 ? 'text-emerald-400' : 'text-rose-400'
@@ -997,7 +1069,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                       <span>{a.name}</span>
                       {isPlayer && (
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 font-bold border border-sky-400">
-                          YOU
+                          {isTh ? 'คุณ' : 'YOU'}
                         </span>
                       )}
                     </button>
@@ -1021,11 +1093,11 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                     <h3 className="text-base md:text-lg font-black text-white flex items-center gap-2">
                       <span>{inspectedAirline.name}</span>
                       <span className="text-xs font-mono text-slate-400">
-                        (HQ: {cityMap.get(inspectedAirline.homeCityId)?.name})
+                        ({isTh ? 'สำนักงานใหญ่' : 'HQ'}: {cityMap.get(inspectedAirline.homeCityId)?.name})
                       </span>
                     </h3>
                     <div className="text-xs text-slate-300 font-mono">
-                      <span>CEO: {inspectedAirline.ceoName || 'Unknown'}</span>
+                      <span>{isTh ? `ผู้บริหาร: ${inspectedAirline.ceoName || 'ไม่ระบุ'}` : `CEO: ${inspectedAirline.ceoName || 'Unknown'}`}</span>
                       {inspectedAirline.personality && (
                         <span className="ml-2 px-2 py-0.5 rounded bg-slate-800 text-amber-300 border border-slate-700 text-[10px]">
                           {inspectedAirline.personality}
@@ -1037,21 +1109,21 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
 
                 <div className="flex items-center gap-4 text-right font-mono text-xs">
                   <div>
-                    <span className="text-slate-400 block text-[10px]">CASH RESERVES</span>
+                    <span className="text-slate-400 block text-[10px]">{isTh ? 'เงินสดสำรอง' : 'CASH RESERVES'}</span>
                     <span className="text-emerald-400 font-bold text-sm">
                       ${inspectedAirline.cashK.toLocaleString()}K
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[10px]">FLEET SIZE</span>
+                    <span className="text-slate-400 block text-[10px]">{isTh ? 'ขนาดฝูงบิน' : 'FLEET SIZE'}</span>
                     <span className="text-sky-300 font-bold text-sm">
-                      {inspectedAirline.fleet.length} Aircraft
+                      {inspectedAirline.fleet.length} {isTh ? 'ลำ' : 'Aircraft'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[10px]">ACTIVE ROUTES</span>
+                    <span className="text-slate-400 block text-[10px]">{isTh ? 'เส้นทางบินที่เปิด' : 'ACTIVE ROUTES'}</span>
                     <span className="text-amber-300 font-bold text-sm">
-                      {inspectedRoutes.length} Corridors
+                      {inspectedRoutes.length} {isTh ? 'เส้นทาง' : 'Corridors'}
                     </span>
                   </div>
                 </div>
@@ -1062,21 +1134,23 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
                   <h4 className="font-black text-white text-sm md:text-base font-mono flex items-center gap-2">
                     <Globe2 className="w-4 h-4 text-sky-400" />
-                    <span>Continental Network Breakdown (ผลประกอบการแยกตามทวีป):</span>
+                    <span>{isTh ? 'ผลประกอบการแยกตามทวีป:' : 'Continental Network Breakdown:'}</span>
                   </h4>
                   <span className="text-xs text-slate-400 font-mono">
-                    {continentStats.length} Operating Continent(s)
+                    {continentStats.length} {isTh ? 'ทวีปที่มีเส้นทางบิน' : 'Operating Continent(s)'}
                   </span>
                 </div>
 
                 {continentStats.length === 0 ? (
                   <div className="p-8 text-center text-slate-400 font-mono bg-slate-950/60 rounded-xl border border-slate-800">
-                    No active commercial routes recorded in any continent this quarter.
+                    {isTh
+                      ? 'ไม่มีเส้นทางบินพาณิชย์ที่เปิดทำการในทวีปใดเลยในไตรมาสนี้'
+                      : 'No active commercial routes recorded in any continent this quarter.'}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {continentStats.map((stat) => {
-                      const regInfo = REGION_LABELS[stat.region] || { name: stat.region, icon: '🌐' };
+                      const regInfo = (isTh ? REGION_LABELS_TH[stat.region] : REGION_LABELS_EN[stat.region]) || { name: stat.region, icon: '🌐' };
                       return (
                         <div
                           key={stat.region}
@@ -1088,25 +1162,25 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                               <span className="font-black text-white text-sm font-sans">{regInfo.name}</span>
                             </div>
                             <span className="text-xs text-sky-400 font-bold">
-                              {stat.cities.size} Cities • {stat.routes.length} Routes
+                              {stat.cities.size} {isTh ? 'เมือง' : 'Cities'} • {stat.routes.length} {isTh ? 'เส้นทาง' : 'Routes'}
                             </span>
                           </div>
 
                           <div className="grid grid-cols-3 gap-2 text-center text-xs">
                             <div className="bg-slate-900 p-2 rounded-lg">
-                              <span className="text-[10px] text-slate-400 block">Passengers</span>
+                              <span className="text-[10px] text-slate-400 block">{isTh ? 'ผู้โดยสาร' : 'Passengers'}</span>
                               <span className="font-bold text-slate-200">
                                 {stat.pax.toLocaleString()}
                               </span>
                             </div>
                             <div className="bg-slate-900 p-2 rounded-lg">
-                              <span className="text-[10px] text-slate-400 block">Revenue</span>
+                              <span className="text-[10px] text-slate-400 block">{isTh ? 'รายรับ' : 'Revenue'}</span>
                               <span className="font-bold text-emerald-400">
                                 +${stat.revenueK.toLocaleString()}K
                               </span>
                             </div>
                             <div className="bg-slate-900 p-2 rounded-lg">
-                              <span className="text-[10px] text-slate-400 block">Net Profit</span>
+                              <span className="text-[10px] text-slate-400 block">{isTh ? 'กำไรสุทธิ' : 'Net Profit'}</span>
                               <span
                                 className={`font-bold ${
                                   stat.profitK >= 0 ? 'text-emerald-300' : 'text-rose-400'
@@ -1129,7 +1203,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
               <div className="space-y-2 bg-slate-950/90 border border-slate-800 p-4 rounded-xl">
                 <h4 className="font-black text-sky-300 text-xs md:text-sm font-mono uppercase flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-sky-400" />
-                  <span>Strategic Operations & Decisions Recorded This Quarter:</span>
+                  <span>{isTh ? 'การดำเนินงานและมติเชิงกลยุทธ์ในไตรมาสนี้:' : 'Strategic Operations & Decisions Recorded This Quarter:'}</span>
                 </h4>
                 {inspectedAirline.aiActionLog && inspectedAirline.aiActionLog.length > 0 ? (
                   <ul className="space-y-1.5 text-xs font-mono text-slate-200">
@@ -1149,7 +1223,9 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                   </ul>
                 ) : (
                   <div className="text-xs text-slate-400 font-mono py-2">
-                    Standard route operations maintained throughout the quarter without major fleet alterations.
+                    {isTh
+                      ? 'รักษาการบินตามเส้นทางปกติโดยไม่มีการปรับเปลี่ยนฝูงบินสำคัญในไตรมาสนี้'
+                      : 'Standard route operations maintained throughout the quarter without major fleet alterations.'}
                   </div>
                 )}
               </div>
@@ -1170,16 +1246,22 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono bg-amber-500/30 text-amber-200 border border-amber-400 uppercase">
-                            {gameState.activeDiscountDeal.specificModelId ? 'AIRFRAME CLEARANCE' : 'FACTORY REBATE'}
+                            {gameState.activeDiscountDeal.specificModelId 
+                              ? (isTh ? 'ลดล้างสต็อกเครื่องบิน' : 'AIRFRAME CLEARANCE')
+                              : (isTh ? 'เงินคืนจากโรงงาน' : 'FACTORY REBATE')}
                           </span>
                           <span className="text-xs text-amber-300 font-mono font-bold">
-                            // LIMITED TIME OFFER (1 QUARTER ONLY)
+                            {isTh ? '// ข้อเสนอจำกัดเวลา (เฉพาะไตรมาสนี้เท่านั้น)' : '// LIMITED TIME OFFER (1 QUARTER ONLY)'}
                           </span>
                         </div>
                         <h3 className="font-black text-amber-300 text-base md:text-lg font-mono mt-0.5">
                           {gameState.activeDiscountDeal.specificModelId
-                            ? `🔥 ${gameState.activeDiscountDeal.discountPct}% OFF CLEARANCE ON ${gameState.activeDiscountDeal.modelName || gameState.activeDiscountDeal.specificModelId}!`
-                            : `🔥 SPECIAL PROMOTION: ${gameState.activeDiscountDeal.discountPct}% OFF ${gameState.activeDiscountDeal.manufacturer.toUpperCase()} AIRCRAFT!`}
+                            ? (isTh
+                                ? `🔥 ลดราคาพิเศษ ${gameState.activeDiscountDeal.discountPct}% สำหรับรุ่น ${gameState.activeDiscountDeal.modelName || gameState.activeDiscountDeal.specificModelId}!`
+                                : `🔥 ${gameState.activeDiscountDeal.discountPct}% OFF CLEARANCE ON ${gameState.activeDiscountDeal.modelName || gameState.activeDiscountDeal.specificModelId}!`)
+                            : (isTh
+                                ? `🔥 แคมเปญพิเศษ: ลดราคา ${gameState.activeDiscountDeal.discountPct}% สำหรับเครื่องบินค่าย ${gameState.activeDiscountDeal.manufacturer.toUpperCase()}!`
+                                : `🔥 SPECIAL PROMOTION: ${gameState.activeDiscountDeal.discountPct}% OFF ${gameState.activeDiscountDeal.manufacturer.toUpperCase()} AIRCRAFT!`)}
                         </h3>
                         <p className="text-xs text-amber-100 font-sans mt-0.5">
                           {gameState.activeDiscountDeal.reason}
@@ -1196,12 +1278,14 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                         className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs md:text-sm rounded-xl shadow-xl flex items-center gap-2 cursor-pointer transition active:scale-95"
                       >
                         <ShoppingCart className="w-4 h-4" />
-                        <span>Procure Discounted Aircraft</span>
+                        <span>{isTh ? 'สั่งซื้อเครื่องบินราคาพิเศษ' : 'Procure Discounted Aircraft'}</span>
                       </button>
                     )}
                   </div>
                   <div className="text-xs text-amber-200/90 font-mono">
-                    All global airlines are eligible for this promotional discount during the current quarter. AI competitors with available funds are actively placing orders!
+                    {isTh
+                      ? 'สายการบินทุกแห่งได้รับสิทธิ์ลดราคานี้ในไตรมาสปัจจุบัน สายการบินคู่แข่งที่มีเงินทุนพร้อมกำลังเร่งสั่งซื้อ!'
+                      : 'All global airlines are eligible for this promotional discount during the current quarter. AI competitors with available funds are actively placing orders!'}
                   </div>
                 </div>
               )}
@@ -1217,19 +1301,19 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-400 uppercase tracking-wider">
-                            GLOBAL HORIZON RADAR
+                            {isTh ? 'เรดาร์มหกรรมระดับโลก' : 'GLOBAL HORIZON RADAR'}
                           </span>
                           <span className="text-xs text-indigo-300 font-mono font-bold">
-                            // 3 - 12 MONTHS ADVANCE NOTICE
+                            {isTh ? '// แจ้งเตือนล่วงหน้า 3 - 12 เดือน' : '// 3 - 12 MONTHS ADVANCE NOTICE'}
                           </span>
                         </div>
                         <h3 className="font-black text-white text-base md:text-lg font-mono mt-0.5">
-                          🔮 มหกรรมโลกและการแข่งขันกีฬาสำคัญที่กำลังจะมาถึง (Upcoming World Spectacles)
+                          {isTh ? '🔮 มหกรรมโลกและการแข่งขันกีฬาสำคัญที่กำลังจะมาถึง' : '🔮 Upcoming World Spectacles & Major Events'}
                         </h3>
                       </div>
                     </div>
                     <span className="text-xs font-mono text-indigo-300 bg-indigo-950/80 px-3 py-1 rounded-lg border border-indigo-500/50">
-                      Forecast Range: 1 - 4 Quarters Ahead
+                      {isTh ? 'ระยะพยากรณ์: 1 - 4 ไตรมาสข้างหน้า' : 'Forecast Range: 1 - 4 Quarters Ahead'}
                     </span>
                   </div>
 
@@ -1262,7 +1346,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                               <div>
                                 <h4 className="font-black text-white text-sm sm:text-base">{ev.title}</h4>
                                 <div className="text-[11px] text-indigo-300 font-mono">
-                                  Host: <strong className="text-white">{affectedCities || 'Global / Multi-region'}</strong>
+                                  {isTh ? 'เจ้าภาพ:' : 'Host:'} <strong className="text-white">{affectedCities || (isTh ? 'ทั่วโลก / หลายภูมิภาค' : 'Global / Multi-region')}</strong>
                                 </div>
                               </div>
                             </div>
@@ -1275,16 +1359,18 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                                   : 'bg-indigo-950 text-indigo-300 border-indigo-500'
                               }`}
                             >
-                              {item.quartersUntil === 1 ? '🔥 อีก 3 เดือน (Q ถัดไป!)' : `อีก ${monthsAway} เดือน (${item.quartersUntil} ไตรมาส)`}
+                              {item.quartersUntil === 1 
+                                ? (isTh ? '🔥 อีก 3 เดือน (Q ถัดไป!)' : '🔥 In 3 Months (Next Q!)') 
+                                : (isTh ? `อีก ${monthsAway} เดือน (${item.quartersUntil} ไตรมาส)` : `In ${monthsAway} Months (${item.quartersUntil} Qtrs)`)}
                             </span>
                           </div>
                           <p className="text-xs text-slate-300 leading-relaxed">{ev.description}</p>
                           <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-800 flex-wrap gap-1">
                             <span className="text-emerald-400 font-mono font-bold">
-                              📈 คาดการณ์ผู้โดยสาร: +{item.estimatedDemandSurgePct}%
+                              📈 {isTh ? 'คาดการณ์ผู้โดยสาร:' : 'Projected Demand:'} +{item.estimatedDemandSurgePct}%
                             </span>
                             <span className="text-[11px] text-slate-400">
-                              💡 กลยุทธ์: จองสล็อตสนามบินและเตรียมจัดฝูงบินล่วงหน้า
+                              💡 {isTh ? 'กลยุทธ์: จองสล็อตสนามบินและเตรียมจัดฝูงบินล่วงหน้า' : 'Strategy: Secure airport slots & prepare fleet capacity ahead'}
                             </span>
                           </div>
                         </div>
@@ -1305,20 +1391,20 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono bg-amber-500/20 text-amber-300 border border-amber-400 uppercase tracking-wider">
-                            AEROSPACE FACTORY NOTICE
+                            {isTh ? 'ประกาศจากโรงงานอากาศยาน' : 'AEROSPACE FACTORY NOTICE'}
                           </span>
                           <span className="text-xs text-amber-300 font-mono font-bold">
-                            // 1-YEAR NOTICE: ASSEMBLY LINE SHUTDOWN
+                            {isTh ? '// แจ้งล่วงหน้า 1 ปี: ยุติสายการผลิต' : '// 1-YEAR NOTICE: ASSEMBLY LINE SHUTDOWN'}
                           </span>
                         </div>
                         <h3 className="font-black text-white text-base md:text-lg font-mono mt-0.5">
-                          Aircraft Models Ceasing Factory Production After Year {gameState.currentYear + 1}
+                          {isTh ? `รุ่นเครื่องบินที่จะยุติการผลิตหลังปี ค.ศ. ${gameState.currentYear + 1}` : `Aircraft Models Ceasing Factory Production After Year ${gameState.currentYear + 1}`}
                         </h3>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono text-amber-300 bg-amber-950/80 px-3 py-1 rounded-lg border border-amber-500/50">
-                        Final Deliveries: Year {gameState.currentYear + 1}
+                        {isTh ? `ส่งมอบล็อตสุดท้าย: ปี ค.ศ. ${gameState.currentYear + 1}` : `Final Deliveries: Year ${gameState.currentYear + 1}`}
                       </span>
                       {onOpenAircraftShop && (
                         <button
@@ -1329,7 +1415,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                           className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow flex items-center gap-1.5 cursor-pointer transition active:scale-95 font-mono"
                         >
                           <ShoppingCart className="w-3.5 h-3.5" />
-                          <span>Procure Final Airframes</span>
+                          <span>{isTh ? 'สั่งซื้อล็อตสุดท้าย' : 'Procure Final Airframes'}</span>
                         </button>
                       )}
                     </div>
@@ -1346,29 +1432,31 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                             <div className="font-black text-white text-base md:text-lg flex items-center gap-2">
                               <span>{plane.model}</span>
                               <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500">
-                                FINAL RUN
+                                {isTh ? 'ล็อตสุดท้าย' : 'FINAL RUN'}
                               </span>
                             </div>
                             <div className="text-xs text-amber-300 font-mono mt-0.5">
-                              {plane.manufacturer} • Lifespan: {plane.introYear} – {plane.retireYear} ({plane.retireYear ? plane.retireYear - plane.introYear : 0} Years in Production)
+                              {isTh
+                                ? `${plane.manufacturer} • ระยะเวลาผลิต: ค.ศ. ${plane.introYear} – ${plane.retireYear} (${plane.retireYear ? plane.retireYear - plane.introYear : 0} ปีในสายการผลิต)`
+                                : `${plane.manufacturer} • Lifespan: ${plane.introYear} – ${plane.retireYear} (${plane.retireYear ? plane.retireYear - plane.introYear : 0} Years in Production)`}
                             </div>
                           </div>
                           <span className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-400 font-black shrink-0">
-                            RETIRES {plane.retireYear}
+                            {isTh ? `ยุติผลิตปี ${plane.retireYear}` : `RETIRES ${plane.retireYear}`}
                           </span>
                         </div>
 
                         <div className="grid grid-cols-3 gap-2 text-xs font-mono relative z-10">
                           <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block">CAPACITY</span>
-                            <span className="font-black text-white text-sm">{plane.capacity} Pax</span>
+                            <span className="text-[10px] text-slate-400 block">{isTh ? 'ความจุ' : 'CAPACITY'}</span>
+                            <span className="font-black text-white text-sm">{plane.capacity} {isTh ? 'ที่นั่ง' : 'Pax'}</span>
                           </div>
                           <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block">MAX RANGE</span>
-                            <span className="font-black text-sky-300 text-sm">{plane.rangeKm.toLocaleString()} km</span>
+                            <span className="text-[10px] text-slate-400 block">{isTh ? 'พิสัยบินสูงสุด' : 'MAX RANGE'}</span>
+                            <span className="font-black text-sky-300 text-sm">{plane.rangeKm.toLocaleString()} {isTh ? 'กม.' : 'km'}</span>
                           </div>
                           <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block">CATALOG PRICE</span>
+                            <span className="text-[10px] text-slate-400 block">{isTh ? 'ราคาแคตตาล็อก' : 'CATALOG PRICE'}</span>
                             <span className="font-black text-emerald-400 text-sm">${plane.priceK.toLocaleString()}K</span>
                           </div>
                         </div>
@@ -1376,10 +1464,12 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                         <div className="bg-amber-950/40 border border-amber-500/40 p-3 rounded-xl relative z-10">
                           <div className="font-black text-amber-300 text-xs flex items-center gap-1.5 mb-1">
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                            <span>Fleet Manager Strategic Advisory:</span>
+                            <span>{isTh ? 'คำแนะนำเชิงกลยุทธ์ฝ่ายบริหารฝูงบิน:' : 'Fleet Manager Strategic Advisory:'}</span>
                           </div>
                           <p className="text-xs text-slate-200 leading-relaxed font-sans">
-                            Tooling and assembly lines for the {plane.model} will permanently decommission after {plane.retireYear}. In-service airframes remain fully operational and spare parts will continue to be supplied. However, as airframes age past 15-20 years, maintenance costs rise significantly (+35% to +110%) and mechanical failure probabilities increase. Order final factory-fresh airframes now or prepare fleet renewal plans.
+                            {isTh
+                              ? `สายการผลิตและเครื่องมือประกอบของ ${plane.model} จะปลดประจำการอย่างถาวรหลังปี ค.ศ. ${plane.retireYear} เครื่องบินที่ประจำการอยู่ยังคงบินได้ปกติและมีอะไหล่รองรับ อย่างไรก็ตาม เมื่อเครื่องบินมีอายุเกิน 15-20 ปี ค่าซ่อมบำรุงจะสูงขึ้นอย่างมาก (+35% ถึง +110%) และความเสี่ยงขัดข้องจะเพิ่มขึ้น แนะนำให้สั่งซื้อเครื่องบินล็อตสุดท้ายจากโรงงานตอนนี้ หรือวางแผนจัดหาเครื่องบินรุ่นใหม่มาทดแทนล่วงหน้า`
+                              : `Tooling and assembly lines for the ${plane.model} will permanently decommission after ${plane.retireYear}. In-service airframes remain fully operational and spare parts will continue to be supplied. However, as airframes age past 15-20 years, maintenance costs rise significantly (+35% to +110%) and mechanical failure probabilities increase. Order final factory-fresh airframes now or prepare fleet renewal plans.`}
                           </p>
                         </div>
                       </div>
@@ -1393,7 +1483,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 <div className="p-4 bg-gradient-to-r from-slate-950 via-rose-950/40 to-slate-950 border-2 border-rose-500/70 rounded-2xl shadow-xl space-y-2">
                   <div className="flex items-center gap-2 text-rose-300 font-black text-sm md:text-base font-mono">
                     <AlertTriangle className="w-5 h-5 text-rose-400" />
-                    <span>🏁 FACTORY PRODUCTION CEASED // AIRCRAFT MODELS PERMANENTLY RETIRED</span>
+                    <span>{isTh ? '🏁 ยุติสายการผลิตอย่างเป็นทางการ // เครื่องบินปลดระวางจากแคตตาล็อก' : '🏁 FACTORY PRODUCTION CEASED // AIRCRAFT MODELS PERMANENTLY RETIRED'}</span>
                   </div>
                   <div className="space-y-2">
                     {gameState.retiredAircraft.map((plane) => (
@@ -1406,11 +1496,13 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                             {plane.model} ({plane.manufacturer})
                           </div>
                           <div className="text-slate-400 text-[11px] mt-0.5">
-                            Production concluded ({plane.introYear} – {plane.retireYear}). Airframe removed from commercial catalog. Existing fleet units continue normal flight operations.
+                            {isTh
+                              ? `ยุติสายการผลิตแล้ว (ค.ศ. ${plane.introYear} – ${plane.retireYear}) นำออกจากแคตตาล็อกจำหน่าย เครื่องบินที่ใช้งานอยู่ยังสามารถทำการบินได้ตามปกติ`
+                              : `Production concluded (${plane.introYear} – ${plane.retireYear}). Airframe removed from commercial catalog. Existing fleet units continue normal flight operations.`}
                           </div>
                         </div>
                         <span className="px-2.5 py-1 rounded bg-rose-950 text-rose-300 border border-rose-700/60 font-black text-[10px] shrink-0">
-                          OFFICIALLY RETIRED
+                          {isTh ? 'ปลดระวางแล้ว' : 'OFFICIALLY RETIRED'}
                         </span>
                       </div>
                     ))}
@@ -1429,19 +1521,19 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-400 uppercase tracking-wider">
-                            CONFIDENTIAL INTELLIGENCE
+                            {isTh ? 'รายงานข่าวกรองการบิน' : 'CONFIDENTIAL INTELLIGENCE'}
                           </span>
                           <span className="text-xs text-cyan-300 font-mono font-bold">
-                            // 1-YEAR ADVANCE ROLLOUT NOTICE
+                            {isTh ? '// แจ้งล่วงหน้า 1 ปี: เปิดตัวเครื่องบินรุ่นใหม่' : '// 1-YEAR ADVANCE ROLLOUT NOTICE'}
                           </span>
                         </div>
                         <h3 className="font-black text-white text-base md:text-lg font-mono mt-0.5">
-                          New Commercial Aircraft Entering Service Next Year ({gameState.currentYear + 1})
+                          {isTh ? `เครื่องบินพาณิชย์รุ่นใหม่ที่จะเข้าประจำการในปีหน้า (ค.ศ. ${gameState.currentYear + 1})` : `New Commercial Aircraft Entering Service Next Year (${gameState.currentYear + 1})`}
                         </h3>
                       </div>
                     </div>
                     <span className="text-xs font-mono text-cyan-300 bg-cyan-950/80 px-3 py-1 rounded-lg border border-cyan-500/50">
-                      Maiden Delivery: Year {gameState.currentYear + 1}
+                      {isTh ? `เริ่มส่งมอบ: ปี ค.ศ. ${gameState.currentYear + 1}` : `Maiden Delivery: Year ${gameState.currentYear + 1}`}
                     </span>
                   </div>
 
@@ -1463,7 +1555,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                               <span>{plane.model}</span>
                               {plane.isSupersonic && (
                                 <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500 animate-pulse">
-                                  ⚡ SUPERSONIC
+                                  ⚡ {isTh ? 'ความเร็วเหนือเสียง' : 'SUPERSONIC'}
                                 </span>
                               )}
                             </div>
@@ -1471,57 +1563,67 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                               <span>{plane.manufacturer}</span>
                               <span>•</span>
                               <span>
-                                {plane.originBloc === 'WEST' ? 'Western Alliance (WEST)' : plane.originBloc === 'EAST' ? 'Eastern Bloc (EAST)' : 'International Consortium'}
+                                {plane.originBloc === 'WEST'
+                                  ? (isTh ? 'กลุ่มประเทศตะวันตก' : 'Western Alliance (WEST)')
+                                  : plane.originBloc === 'EAST'
+                                  ? (isTh ? 'กลุ่มประเทศตะวันออก' : 'Eastern Bloc (EAST)')
+                                  : (isTh ? 'กลุ่มพันธมิตรนานาชาติ' : 'International Consortium')}
                               </span>
                             </div>
                           </div>
                           <span className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-400 font-black shrink-0">
-                            LAUNCH {plane.introYear}
+                            {isTh ? `เปิดตัวปี ${plane.introYear}` : `LAUNCH ${plane.introYear}`}
                           </span>
                         </div>
 
                         {/* Key Technical Specifications Grid */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono relative z-10">
                           <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block">CAPACITY</span>
-                            <span className="font-black text-white text-sm">{plane.capacity} Seats</span>
-                            <span className="text-[9px] text-slate-500 block truncate">{plane.cabinAisle || 'Standard'}</span>
+                            <span className="text-[10px] text-slate-400 block">{isTh ? 'ความจุ' : 'CAPACITY'}</span>
+                            <span className="font-black text-white text-sm">{plane.capacity} {isTh ? 'ที่นั่ง' : 'Seats'}</span>
+                            <span className="text-[9px] text-slate-500 block truncate">{plane.cabinAisle || (isTh ? 'มาตรฐาน' : 'Standard')}</span>
                           </div>
                           <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block">MAX RANGE</span>
-                            <span className="font-black text-sky-300 text-sm">{plane.rangeKm.toLocaleString()} km</span>
+                            <span className="text-[10px] text-slate-400 block">{isTh ? 'พิสัยบินสูงสุด' : 'MAX RANGE'}</span>
+                            <span className="font-black text-sky-300 text-sm">{plane.rangeKm.toLocaleString()} {isTh ? 'กม.' : 'km'}</span>
                             <span className="text-[9px] text-slate-500 block">
-                              {plane.rangeKm >= 9000 ? 'Intercontinental' : plane.rangeKm >= 5000 ? 'Transcontinental' : 'Regional'}
+                              {plane.rangeKm >= 9000
+                                ? (isTh ? 'เส้นทางข้ามทวีป' : 'Intercontinental')
+                                : plane.rangeKm >= 5000
+                                ? (isTh ? 'เส้นทางข้ามภูมิภาค' : 'Transcontinental')
+                                : (isTh ? 'เส้นทางภูมิภาค' : 'Regional')}
                             </span>
                           </div>
                           <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block">CRUISE SPEED</span>
-                            <span className="font-black text-amber-300 text-sm">{plane.speedKmh} km/h</span>
+                            <span className="text-[10px] text-slate-400 block">{isTh ? 'ความเร็วเดินทาง' : 'CRUISE SPEED'}</span>
+                            <span className="font-black text-amber-300 text-sm">{plane.speedKmh} กม./ชม.</span>
                             <span className="text-[9px] text-slate-500 block">Mach {(plane.speedKmh / 1060).toFixed(2)}</span>
                           </div>
                           <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block">PROJECTED PRICE</span>
+                            <span className="text-[10px] text-slate-400 block">{isTh ? 'ราคาคาดการณ์' : 'PROJECTED PRICE'}</span>
                             <span className="font-black text-emerald-400 text-sm">${plane.priceK.toLocaleString()}K</span>
-                            <span className="text-[9px] text-slate-500 block">First Delivery</span>
+                            <span className="text-[9px] text-slate-500 block">{isTh ? 'ล็อตแรก' : 'First Delivery'}</span>
                           </div>
                           <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block">FUEL CONSUMPTION</span>
+                            <span className="text-[10px] text-slate-400 block">{isTh ? 'สิ้นเปลืองเชื้อเพลิง' : 'FUEL CONSUMPTION'}</span>
                             <span className="font-black text-slate-200 text-sm">{plane.fuelBurnPerKm} L/km</span>
-                            <span className="text-[9px] text-slate-500 block">Cruise Burn</span>
+                            <span className="text-[9px] text-slate-500 block">{isTh ? 'ขณะบินเดินทาง' : 'Cruise Burn'}</span>
                           </div>
                           <div className="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block">MAINTENANCE</span>
+                            <span className="text-[10px] text-slate-400 block">{isTh ? 'ค่าซ่อมบำรุง' : 'MAINTENANCE'}</span>
                             <span className="font-black text-slate-200 text-sm">${plane.maintCostPerHour}/hr</span>
-                            <span className="text-[9px] text-slate-500 block">Operating Tier</span>
+                            <span className="text-[9px] text-slate-500 block">{isTh ? 'ระดับปฏิบัติการ' : 'Operating Tier'}</span>
                           </div>
                         </div>
 
                         {/* Powerplant & Airframe details */}
                         <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800 text-[11px] font-mono text-slate-300 relative z-10">
-                          <div className="text-[10px] text-slate-400 uppercase">Engine & Airframe Specifications:</div>
+                          <div className="text-[10px] text-slate-400 uppercase">{isTh ? 'ข้อมูลจำเพาะเครื่องยนต์และโครงสร้าง:' : 'Engine & Airframe Specifications:'}</div>
                           <div className="text-slate-200 font-semibold mt-0.5">{plane.engineType}</div>
                           <div className="text-slate-400 text-[10px] mt-0.5">
-                            Wingspan: {plane.wingspanM}m • Length: {plane.lengthM}m • MTOW: {plane.mtowTon}t
+                            {isTh
+                              ? `ความกว้างปีก: ${plane.wingspanM} ม. • ความยาว: ${plane.lengthM} ม. • น้ำหนักวิ่งขึ้นสูงสุด: ${plane.mtowTon} ตัน`
+                              : `Wingspan: ${plane.wingspanM}m • Length: ${plane.lengthM}m • MTOW: ${plane.mtowTon}t`}
                           </div>
                         </div>
 
@@ -1529,13 +1631,15 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                         <div className="bg-cyan-950/40 border border-cyan-500/40 p-3 rounded-xl relative z-10">
                           <div className="font-black text-cyan-300 text-xs flex items-center gap-1.5 mb-1">
                             <Award className="w-3.5 h-3.5 text-cyan-400" />
-                            <span>Chief Aeronautical Strategist Advisory:</span>
+                            <span>{isTh ? 'คำแนะนำจากหัวหน้าฝ่ายวางแผนยุทธศาสตร์การบิน:' : 'Chief Aeronautical Strategist Advisory:'}</span>
                           </div>
                           <p className="text-xs text-slate-200 leading-relaxed font-sans">
                             {getUpcomingAircraftAdvisory(plane)}
                           </p>
                           <div className="mt-1.5 text-[10px] font-mono text-amber-300/90 italic">
-                            💡 Strategic Recommendation: Reserve company cash flow this fiscal year to order delivery slots in Q1 {plane.introYear}.
+                            💡 {isTh
+                              ? `ข้อเสนอแนะเชิงกลยุทธ์: สำรองกระแสเงินสดของบริษัทในปีนี้ เพื่อจองคิวรับมอบใน Q1 ปี ค.ศ. ${plane.introYear}`
+                              : `Strategic Recommendation: Reserve company cash flow this fiscal year to order delivery slots in Q1 ${plane.introYear}.`}
                           </div>
                         </div>
                       </div>
@@ -1549,7 +1653,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 <div className="p-4 bg-sky-950/80 border-2 border-sky-400 rounded-2xl shadow-xl space-y-2">
                   <div className="flex items-center gap-2 text-sky-300 font-black text-sm md:text-base font-mono">
                     <Plane className="w-5 h-5 text-sky-400 animate-pulse" />
-                    <span>🚀 COMMERCIAL LAUNCH // NEW AIRCRAFT NOW AVAILABLE FOR PURCHASE!</span>
+                    <span>{isTh ? '🚀 เปิดตัวเชิงพาณิชย์ // เครื่องบินรุ่นใหม่พร้อมให้สั่งซื้อแล้ว!' : '🚀 COMMERCIAL LAUNCH // NEW AIRCRAFT NOW AVAILABLE FOR PURCHASE!'}</span>
                   </div>
                   <div className="space-y-2">
                     {gameState.newlyIntroducedAircraft.map((plane) => (
@@ -1562,16 +1666,18 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                             <span>{plane.model}</span>
                             {plane.isSupersonic && (
                               <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500 font-black">
-                                SUPERSONIC
+                                {isTh ? 'ความเร็วเหนือเสียง' : 'SUPERSONIC'}
                               </span>
                             )}
                           </div>
                           <div className="text-xs text-slate-300 font-mono mt-0.5">
-                            {plane.manufacturer} • {plane.capacity} Seats • Max Range: {plane.rangeKm.toLocaleString()} km
+                            {isTh
+                              ? `${plane.manufacturer} • ${plane.capacity} ที่นั่ง • พิสัยบิน: ${plane.rangeKm.toLocaleString()} กม.`
+                              : `${plane.manufacturer} • ${plane.capacity} Seats • Max Range: ${plane.rangeKm.toLocaleString()} km`}
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <span className="text-[10px] text-slate-400 block font-mono">Market Price:</span>
+                          <span className="text-[10px] text-slate-400 block font-mono">{isTh ? 'ราคาตลาด:' : 'Market Price:'}</span>
                           <span className="font-black font-mono text-emerald-400 text-sm md:text-base">
                             ${plane.priceK.toLocaleString()}K
                           </span>
@@ -1592,19 +1698,23 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                       </div>
                       <div>
                         <h3 className="font-black text-white text-xs md:text-sm uppercase tracking-wider">
-                          Quarterly Flight Disruptions & Incident Log ({gameState.routeIncidents.length} Events)
+                          {isTh
+                            ? `บันทึกเหตุขัดข้องและเที่ยวบินล่าช้าประจำไตรมาส (${gameState.routeIncidents.length} เหตุการณ์)`
+                            : `Quarterly Flight Disruptions & Incident Log (${gameState.routeIncidents.length} Events)`}
                         </h3>
                         <p className="text-[11px] text-slate-400 font-sans">
-                          Severe seasonal weather, mechanical faults on aging planes, and traffic delays reduced scheduled flights and incurred emergency expenditures.
+                          {isTh
+                            ? 'สภาพอากาศรุนแรงตามฤดูกาล, อาการล้าของเครื่องบินเก่า และความล่าช้าของการจราจรทางอากาศส่งผลกระทบต่อเที่ยวบินและมีค่าใช้จ่ายฉุกเฉิน'
+                            : 'Severe seasonal weather, mechanical faults on aging planes, and traffic delays reduced scheduled flights and incurred emergency expenditures.'}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-xs">
                       <span className="flex items-center gap-1 text-sky-400">
-                        <span>⛈️ Seasonal Weather</span>
+                        <span>⛈️ {isTh ? 'สภาพอากาศตามฤดูกาล' : 'Seasonal Weather'}</span>
                       </span>
                       <span className="flex items-center gap-1 text-amber-400">
-                        <span>⚙️ Mechanical Fault</span>
+                        <span>⚙️ {isTh ? 'เครื่องยนต์/อุปกรณ์ขัดข้อง' : 'Mechanical Fault'}</span>
                       </span>
                     </div>
                   </div>
@@ -1620,10 +1730,10 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                           : '📡';
                       const typeLabel =
                         item.incident.type === 'WEATHER'
-                          ? 'Severe Seasonal Weather'
+                          ? (isTh ? 'สภาพอากาศรุนแรงตามฤดูกาล' : 'Severe Seasonal Weather')
                           : item.incident.type === 'MECHANICAL'
-                          ? 'Mechanical Fault / Fatigue'
-                          : 'Air Traffic Delay';
+                          ? (isTh ? 'เครื่องจักรชำรุด / โครงสร้างล้า' : 'Mechanical Fault / Fatigue')
+                          : (isTh ? 'ความล่าช้าจราจรทางอากาศ' : 'Air Traffic Delay');
 
                       return (
                         <div
@@ -1645,7 +1755,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                                 <span className="font-bold text-white text-xs">{item.airlineName}</span>
                                 {isPlayer && (
                                   <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 text-[9px] font-black border border-rose-500">
-                                    YOUR ROUTE
+                                    {isTh ? 'เส้นทางของคุณ' : 'YOUR ROUTE'}
                                   </span>
                                 )}
                                 <span className="text-slate-400 text-xs">•</span>
@@ -1665,10 +1775,10 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
 
                           <div className="shrink-0 text-right font-mono bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-800">
                             <div className="text-rose-400 font-bold text-xs">
-                              -{item.incident.lostFlights} Flights Grounded
+                              {isTh ? `-${item.incident.lostFlights} เที่ยวบินงดบิน` : `-${item.incident.lostFlights} Flights Grounded`}
                             </div>
                             <div className="text-[10px] text-slate-400 mt-0.5">
-                              Emergency: -${item.incident.emergencyCostK.toLocaleString()}K
+                              {isTh ? `ค่าใช้จ่ายฉุกเฉิน: -$${item.incident.emergencyCostK.toLocaleString()}K` : `Emergency: -$${item.incident.emergencyCostK.toLocaleString()}K`}
                             </div>
                           </div>
                         </div>
@@ -1683,7 +1793,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 <div className="space-y-3 bg-gradient-to-r from-emerald-950/70 via-slate-900 to-teal-950/70 border-2 border-emerald-500/80 p-4 md:p-5 rounded-2xl shadow-xl">
                   <h3 className="font-black text-emerald-300 text-xs md:text-sm flex items-center gap-2 font-mono uppercase">
                     <Handshake className="w-4 h-4 text-emerald-400" />
-                    <span>Diplomatic Treaties & Envoy Results This Quarter ({gameState.diplomaticReports.length}):</span>
+                    <span>{isTh ? `ผลการเจรจาการทูตและพันธสัญญาไตรมาสนี้ (${gameState.diplomaticReports.length}):` : `Diplomatic Treaties & Envoy Results This Quarter (${gameState.diplomaticReports.length}):`}</span>
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {gameState.diplomaticReports.map((report) => (
@@ -1698,7 +1808,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                               {report.negotiatorName}
                             </span>
                             <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500">
-                              RATIFIED
+                              {isTh ? 'ให้สัตยาบันแล้ว' : 'RATIFIED'}
                             </span>
                           </div>
                           <div className="text-xs text-sky-300 font-bold mt-0.5">
@@ -1719,7 +1829,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 <div className="space-y-3 bg-gradient-to-r from-sky-950/70 via-slate-900 to-indigo-950/70 border-2 border-sky-500/80 p-4 md:p-5 rounded-2xl shadow-xl">
                   <h3 className="font-black text-sky-300 text-xs md:text-sm flex items-center gap-2 font-mono uppercase">
                     <Plane className="w-4 h-4 text-sky-400" />
-                    <span>Commercial Aircraft Factory Deliveries ({gameState.aircraftDeliveries.length}):</span>
+                    <span>{isTh ? `การส่งมอบเครื่องบินจากโรงงานผลิต (${gameState.aircraftDeliveries.length}):` : `Commercial Aircraft Factory Deliveries (${gameState.aircraftDeliveries.length}):`}</span>
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {gameState.aircraftDeliveries.map((delivery, dIdx) => {
@@ -1754,7 +1864,9 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                                     : 'bg-amber-500/20 text-amber-300 border-amber-500 animate-pulse'
                                 }`}
                               >
-                                {isDelivered ? 'DELIVERED' : 'DELAYED (+1Q)'}
+                                {isDelivered 
+                                  ? (isTh ? 'ส่งมอบสำเร็จ' : 'DELIVERED')
+                                  : (isTh ? 'ล่าช้า (+1Q)' : 'DELAYED (+1Q)')}
                               </span>
                             </div>
                             <div className="text-[11px] font-mono text-sky-300 mt-0.5">
@@ -1776,7 +1888,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 <div className="space-y-3">
                   <h3 className="font-black text-slate-100 text-sm md:text-base flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-amber-400" />
-                    <span>Global Events, Wars & Aviation Crises:</span>
+                    <span>{isTh ? 'เหตุการณ์สำคัญระดับโลก, สงคราม และวิกฤตการณ์การบิน:' : 'Global Events, Wars & Aviation Crises:'}</span>
                   </h3>
                   {gameState.activeEvents.map((ev) => {
                     const isDemandPositive = (ev.demandMultiplier || 1) >= 1;
@@ -1819,17 +1931,17 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                                 }`}
                               >
                                 {isDemandPositive
-                                  ? `Passenger Demand: +${demandDeltaPct}%`
-                                  : `Passenger Demand: ${demandDeltaPct}%`}
+                                  ? (isTh ? `ความต้องการเดินทาง: +${demandDeltaPct}%` : `Passenger Demand: +${demandDeltaPct}%`)
+                                  : (isTh ? `ความต้องการเดินทาง: ${demandDeltaPct}%` : `Passenger Demand: ${demandDeltaPct}%`)}
                               </span>
                             )}
                             {isFuelSpike && (
                               <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/30 text-amber-200 border border-amber-400 font-black">
-                                🛢️ Jet Fuel: +{fuelDeltaPct}%
+                                🛢️ {isTh ? `น้ำมันอากาศยาน: +${fuelDeltaPct}%` : `Jet Fuel: +${fuelDeltaPct}%`}
                               </span>
                             )}
                             <span className="text-xs px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-slate-300">
-                              Duration: {ev.durationQuarters}Q
+                              {isTh ? 'ระยะเวลา:' : 'Duration:'} {ev.durationQuarters}{isTh ? ' ไตรมาส' : 'Q'}
                             </span>
                           </div>
                         </div>
@@ -1851,10 +1963,14 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                     </div>
                     <div>
                       <h3 className="font-black text-white text-xs md:text-sm uppercase tracking-wider font-mono">
-                        🏗️ Global Airport Infrastructure & Runway Expansions ({gameState.airportExpansions.length} Hubs)
+                        {isTh
+                          ? `🏗️ การขยายโครงสร้างพื้นฐานและทางวิ่งสนามบินทั่วโลก (${gameState.airportExpansions.length} แห่ง)`
+                          : `🏗️ Global Airport Infrastructure & Runway Expansions (${gameState.airportExpansions.length} Hubs)`}
                       </h3>
                       <p className="text-[11px] text-slate-300 font-sans">
-                        Civil aviation authorities have completed major terminal, concourse, and runway expansion projects to relieve slot congestion!
+                        {isTh
+                          ? 'สำนักงานการบินพลเรือนได้ดำเนินการขยายอาคารผู้โดยสาร หลุมจอด และทางวิ่งเสร็จสิ้นเพื่อลดความแออัดของสล็อตบิน!'
+                          : 'Civil aviation authorities have completed major terminal, concourse, and runway expansion projects to relieve slot congestion!'}
                       </p>
                     </div>
                   </div>
@@ -1878,10 +1994,10 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                         </div>
                         <div className="text-right shrink-0">
                           <span className="text-xs font-black font-mono text-emerald-400 block bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-500">
-                            +{exp.addedSlots} SLOTS
+                            +{exp.addedSlots} {isTh ? 'สล็อต' : 'SLOTS'}
                           </span>
                           <span className="text-[10px] text-slate-400 font-mono block mt-1">
-                            New Cap: {exp.newTotalSlots}
+                            {isTh ? 'ความจุใหม่:' : 'New Cap:'} {exp.newTotalSlots}
                           </span>
                         </div>
                       </div>
@@ -1895,7 +2011,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 <div className="space-y-3 bg-rose-950/50 border-2 border-rose-500/80 p-4 md:p-5 rounded-2xl shadow-xl">
                   <h3 className="font-black text-rose-300 text-xs md:text-sm flex items-center gap-2 font-mono uppercase">
                     <AlertCircle className="w-4 h-4 text-rose-400" />
-                    <span>Aviation Fleet Terminations & Deficit Route Closures ({gameState.lastQuarterClosedRoutes.length}):</span>
+                    <span>{isTh ? `การยุติเที่ยวบินและยกเลิกเส้นทางที่ขาดทุน (${gameState.lastQuarterClosedRoutes.length}):` : `Aviation Fleet Terminations & Deficit Route Closures (${gameState.lastQuarterClosedRoutes.length}):`}</span>
                   </h3>
                   <div className="space-y-2">
                     {gameState.lastQuarterClosedRoutes.map((cr, idx) => (
@@ -1906,12 +2022,12 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                         <div className="flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cr.airlineColor }} />
                           <span className="font-bold text-white">{cr.airlineName}</span>
-                          <span className="text-slate-400">terminated</span>
+                          <span className="text-slate-400">{isTh ? 'ยกเลิกเส้นทาง' : 'terminated'}</span>
                           <span className="text-amber-300 font-bold">
                             {cityMap.get(cr.originCityId)?.name} ➔ {cityMap.get(cr.destCityId)?.name}
                           </span>
                         </div>
-                        <span className="text-rose-400 font-bold">Cut Loss: -${cr.lossK.toLocaleString()}K</span>
+                        <span className="text-rose-400 font-bold">{isTh ? 'ตัดขาดทุน:' : 'Cut Loss:'} -${cr.lossK.toLocaleString()}K</span>
                       </div>
                     ))}
                   </div>
@@ -1923,9 +2039,9 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                   <div className="flex items-center gap-2 text-sky-400 font-bold text-xs md:text-sm">
                     <Plane className="w-4 h-4" />
-                    <span>Aerospace Horizon Watch // Upcoming Model Timeline</span>
+                    <span>{isTh ? 'แนวโน้มเทคโนโลยีอากาศยาน // กำหนดการเปิดตัวเครื่องบินในอนาคต' : 'Aerospace Horizon Watch // Upcoming Model Timeline'}</span>
                   </div>
-                  <span className="text-[11px] text-slate-500">Global R&D Intelligence</span>
+                  <span className="text-[11px] text-slate-500">{isTh ? 'ข่าวกรองฝ่ายวิจัยและพัฒนาสากล' : 'Global R&D Intelligence'}</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   {getAllAircraftModels(gameState.currentYear + 15)
@@ -1938,12 +2054,12 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                           <div className="flex justify-between items-center text-white font-black gap-2">
                             <span className="truncate">{m.model}</span>
                             <span className="text-amber-300 text-[10px] shrink-0 font-bold px-1.5 py-0.5 rounded bg-amber-950/80 border border-amber-500/50">
-                              {diff === 1 ? 'Next Year' : `in ${diff} yrs`} ({m.introYear})
+                              {diff === 1 ? (isTh ? 'ปีหน้า' : 'Next Year') : (isTh ? `อีก ${diff} ปี` : `in ${diff} yrs`)} ({m.introYear})
                             </span>
                           </div>
                           <div className="text-[11px] text-slate-300 mt-1 flex items-center justify-between">
-                            <span>{m.manufacturer} • {m.capacity} Seats</span>
-                            <span className="text-emerald-400 font-bold">{m.rangeKm.toLocaleString()} km</span>
+                            <span>{m.manufacturer} • {m.capacity} {isTh ? 'ที่นั่ง' : 'Seats'}</span>
+                            <span className="text-emerald-400 font-bold">{m.rangeKm.toLocaleString()} {isTh ? 'กม.' : 'km'}</span>
                           </div>
                         </div>
                       );
@@ -1951,7 +2067,9 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-800/80 text-[11px] text-slate-400">
                   <span className="italic">
-                    💡 Tip: Review the R&D Roadmap in Aircraft Market to plan fleet transitions before older models retire.
+                    💡 {isTh
+                      ? 'ข้อแนะนำ: ตรวจสอบแผนงาน R&D ในตลาดเครื่องบิน เพื่อวางแผนการเปลี่ยนผ่านฝูงบินล่วงหน้าก่อนที่เครื่องบินรุ่นเก่าจะปลดระวาง'
+                      : 'Tip: Review the R&D Roadmap in Aircraft Market to plan fleet transitions before older models retire.'}
                   </span>
                   {onOpenAircraftShop && (
                     <button
@@ -1961,7 +2079,7 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
                       }}
                       className="px-3 py-1 bg-purple-900/60 hover:bg-purple-800 text-purple-200 border border-purple-500/60 rounded-lg font-bold text-xs font-mono transition cursor-pointer self-start sm:self-auto shrink-0"
                     >
-                      Open Aircraft R&D Roadmap ➔
+                      {isTh ? 'เปิดแผนงาน R&D เครื่องบิน ➔' : 'Open Aircraft R&D Roadmap ➔'}
                     </button>
                   )}
                 </div>
@@ -1978,13 +2096,13 @@ export const QuarterReportModal: React.FC<QuarterReportModalProps> = ({
             data-testid="modal-close-footer-btn"
           >
             <X className="w-4 h-4 text-slate-400" />
-            <span>Close (ปิดหน้าต่าง)</span>
+            <span>{t.common.close}</span>
           </button>
           <button
             onClick={onClose}
             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-black text-xs md:text-sm shadow-xl transition-all active:scale-95 border-2 border-sky-400 cursor-pointer"
           >
-            <span>Confirm & Enter Next Quarter</span>
+            <span>{isTh ? 'ยืนยันและเริ่มไตรมาสถัดไป' : 'Confirm & Enter Next Quarter'}</span>
             <ChevronRight className="w-4 h-4 text-sky-200" />
           </button>
         </div>

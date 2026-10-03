@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Airline, NegotiatorMission, City, GameState, AirportExpansionNotice, OngoingAirportExpansion } from '../types/game';
 import { CITIES, REGIONS } from '../data/cities';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useI18n } from '../utils/i18n';
 import {
   calculateNegotiationQuarters,
   calculateNegotiationCostK,
@@ -28,6 +29,9 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
   gameState,
 }) => {
   useEscapeKey(onClose);
+  const { t, lang } = useI18n();
+  const isTh = lang === 'th';
+
   const initialCity = initialCityId ? CITIES.find((c) => c.id === initialCityId) : null;
   const [selectedRegion, setSelectedRegion] = useState<string>(
     initialCity ? initialCity.region : 'ALL'
@@ -79,6 +83,16 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
     onDispatchNegotiator(selectedNegId, mission);
   };
 
+  const regionTranslations: Record<string, string> = {
+    EAST_SOUTHEAST_ASIA: 'เอเชียตะวันออกและเอเชียตะวันออกเฉียงใต้',
+    EUROPE: 'ยุโรป',
+    NORTH_AMERICA: 'อเมริกาเหนือ',
+    SOUTH_AMERICA: 'อเมริกาใต้',
+    MIDDLE_EAST_SOUTH_ASIA: 'ตะวันออกกลางและเอเชียใต้',
+    AFRICA: 'แอฟริกา',
+    OCEANIA: 'โอเชียเนียและแปซิฟิก',
+  };
+
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-5">
       <div className="bg-slate-900 border-2 border-slate-600 rounded-3xl shadow-2xl w-full max-w-6xl xl:max-w-7xl overflow-hidden flex flex-col max-h-[94vh]">
@@ -90,17 +104,19 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg md:text-xl font-black text-slate-100">
-                Diplomatic Slot Treaties & Bilateral Affairs
+                {t.slots.title}
               </h2>
-              <div className="text-xs text-emerald-300">
-                Available Field Delegates: {availableNegotiators.length} of 4 Available
+              <div className="text-xs text-emerald-300 font-mono">
+                {isTh
+                  ? `ตัวแทนพร้อมปฏิบัติงาน: ${availableNegotiators.length} จาก 4 ท่าน`
+                  : `Available Field Delegates: ${availableNegotiators.length} of 4 Available`}
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
-            title="Close (Esc)"
+            title={`${t.common.close} (Esc)`}
             data-testid="modal-close-header-btn"
           >
             <X className="w-6 h-6" />
@@ -110,7 +126,9 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
         {/* Delegate Selection Bar */}
         <div className="px-6 py-3 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between flex-wrap gap-3 shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-bold uppercase">Assign Envoy:</span>
+            <span className="text-xs text-slate-400 font-bold uppercase font-mono">
+              {isTh ? 'เลือกตัวแทนเจรจา:' : 'Assign Envoy:'}
+            </span>
             <div className="flex items-center gap-2">
               {fieldNegotiators.map((neg) => {
                 const isSelected = selectedNegId === neg.id;
@@ -141,14 +159,14 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
             </div>
           </div>
 
-          <div className="text-xs text-slate-400">
-            Treasury: <strong className="text-emerald-400 font-mono">${playerAirline.cashK.toLocaleString()}K</strong>
+          <div className="text-xs text-slate-400 font-mono">
+            {t.financials.currentCash}: <strong className="text-emerald-400 font-mono">${playerAirline.cashK.toLocaleString()}K</strong>
           </div>
         </div>
 
         {/* Region Filter */}
         <div className="flex items-center gap-2 p-3 bg-slate-950 border-b border-slate-800 overflow-x-auto text-xs shrink-0">
-          <span className="text-slate-400 font-bold px-2 whitespace-nowrap">Filter:</span>
+          <span className="text-slate-400 font-bold px-2 whitespace-nowrap">{t.common.filter}:</span>
           <button
             onClick={() => setSelectedRegion('ALL')}
             className={`px-3 py-1.5 rounded-xl font-bold cursor-pointer transition ${
@@ -157,7 +175,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                 : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
-            All Regions
+            {t.slots.allRegions}
           </button>
           {REGIONS.map((r) => (
             <button
@@ -169,7 +187,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                   : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
               }`}
             >
-              {r.name}
+              {isTh ? (regionTranslations[r.id] || r.name) : r.name}
             </button>
           ))}
         </div>
@@ -244,12 +262,12 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                         </span>
                         {isHome && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500 font-bold">
-                            HQ
+                            {isTh ? 'สำนักงานใหญ่' : 'HQ'}
                           </span>
                         )}
                         {isHub && !isHome && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500 font-bold">
-                            HUB
+                            {isTh ? 'ศูนย์การบินฮับ' : 'HUB'}
                           </span>
                         )}
                       </div>
@@ -259,47 +277,47 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                         {ongoingExpansion && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500 font-bold flex items-center gap-1 animate-pulse">
                             <Hammer className="w-3 h-3" />
-                            <span>+{ongoingExpansion.addedSlots} in {ongoingExpansion.quartersRemaining}Q ({ongoingExpansion.quartersRemaining * 3}mo)</span>
+                            <span>{isTh ? `+${ongoingExpansion.addedSlots} สล็อตใน ${ongoingExpansion.quartersRemaining} ไตรมาส` : `+${ongoingExpansion.addedSlots} in ${ongoingExpansion.quartersRemaining}Q`}</span>
                           </span>
                         )}
                         {recentExpansion && !ongoingExpansion && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500 font-bold">
-                            🏗️ +{recentExpansion.addedSlots} Expanded
+                            🏗️ +{recentExpansion.addedSlots} {isTh ? 'ขยายแล้ว' : 'Expanded'}
                           </span>
                         )}
                         {limits.isAntiMonopolyActive && !isAirportFull && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500 font-bold flex items-center gap-1">
                             <Scale className="w-3 h-3" />
-                            <span>Fair-Share: Max {limits.maxRequestableSlots}</span>
+                            <span>{isTh ? `โควตาสูงสุด: ${limits.maxRequestableSlots}` : `Fair-Share: Max ${limits.maxRequestableSlots}`}</span>
                           </span>
                         )}
                         {isCongested && !isAirportFull && !ongoingExpansion && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500 font-bold">
-                            ⚠️ Congested ({remainingFreeSlots} left)
+                            ⚠️ {isTh ? `หนาแน่น (เหลือ ${remainingFreeSlots})` : `Congested (${remainingFreeSlots} left)`}
                           </span>
                         )}
                         {isAirportFull && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500 font-bold">
-                            ⛔ Airport Full
+                            ⛔ {isTh ? 'สนามบินเต็ม' : 'Airport Full'}
                           </span>
                         )}
                       </div>
                     </div>
 
                     {/* Subtitle / Country */}
-                    <div className="text-xs text-slate-300 mt-1 flex items-center gap-2 flex-wrap">
+                    <div className="text-xs text-slate-300 mt-1 flex items-center gap-2 flex-wrap font-mono">
                       <span>{city.country}</span>
                       <span>•</span>
                       <span>
-                        Owned: <strong className="text-emerald-400 font-mono text-sm">{currentSlots}</strong>
+                        {isTh ? 'ถือครอง:' : 'Owned:'} <strong className="text-emerald-400 font-mono text-sm">{currentSlots}</strong>
                       </span>
                       <span>•</span>
                       <span>
-                        Capacity:{' '}
+                        {isTh ? 'ความจุสนามบิน:' : 'Capacity:'}{' '}
                         <strong className="text-sky-300 font-mono">
                           {totalAllocated} / {totalAirportCap}
                         </strong>{' '}
-                        <span className="text-[11px] text-slate-400">({remainingFreeSlots} free)</span>
+                        <span className="text-[11px] text-slate-400">({remainingFreeSlots} {isTh ? 'ว่าง' : 'free'})</span>
                       </span>
                     </div>
 
@@ -333,7 +351,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                     <div className="bg-slate-900/80 rounded-xl p-2.5 border border-slate-700/60 space-y-2 mt-1">
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400 font-bold uppercase font-mono text-[10px]">
-                          Requested Slots:
+                          {isTh ? 'สล็อตที่ต้องการขอ:' : 'Requested Slots:'}
                         </span>
                         <div className="flex items-center gap-2">
                           <button
@@ -397,7 +415,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                                   : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
                               }`}
                             >
-                              {isMax ? `Max (${preset})` : `+${preset}`}
+                              {isMax ? (isTh ? `สูงสุด (${preset})` : `Max (${preset})`) : `+${preset}`}
                             </button>
                           );
                         })}
@@ -406,10 +424,10 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                       {/* Cost & Quarters readout */}
                       <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800">
                         <span className="text-amber-300 font-mono">
-                          ⏱️ {quarters} Quarter{quarters > 1 ? 's' : ''} ({quarters * 3} mo)
+                          ⏱️ {quarters} {isTh ? `ไตรมาส (${quarters * 3} เดือน)` : `Quarter${quarters > 1 ? 's' : ''} (${quarters * 3} mo)`}
                         </span>
                         <span className="text-emerald-400 font-mono font-bold">
-                          Cost: ${costK.toLocaleString()}K
+                          {isTh ? 'ค่าเจรจา: ' : 'Cost: '}${costK.toLocaleString()}K
                         </span>
                       </div>
                     </div>
@@ -422,7 +440,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                       isHub ? (
                         <div className="px-2.5 py-1 bg-sky-950/80 border border-sky-400 text-sky-300 rounded-lg text-xs font-bold flex items-center gap-1 shadow">
                           <span>🌐</span>
-                          <span>Hub Active (+18%)</span>
+                          <span>{isTh ? 'ฮับเปิดใช้งานอยู่ (+18%)' : 'Hub Active (+18%)'}</span>
                         </div>
                       ) : (() => {
                         const hasInboundRoute = (gameState?.routes || []).some(
@@ -432,20 +450,20 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                         const canCharter = hasInboundRoute && hasEnoughSlots && canAffordHub;
 
                         const tooltipMsg = !hasInboundRoute
-                          ? `Requires an active flight route connecting to ${city.name} before chartering a Regional Hub`
+                          ? (isTh ? `ต้องมีเส้นทางบินเชื่อมต่อกับ ${city.name} ก่อนเปิดฮับภูมิภาค` : `Requires an active flight route connecting to ${city.name} before chartering a Regional Hub`)
                           : !hasEnoughSlots
-                          ? `Requires at least 10 slots (currently ${currentSlots}/10)`
+                          ? (isTh ? `ต้องการอย่างน้อย 10 สล็อต (ปัจจุบัน ${currentSlots}/10)` : `Requires at least 10 slots (currently ${currentSlots}/10)`)
                           : !canAffordHub
-                          ? `Requires $15,000K (currently have $${playerAirline.cashK.toLocaleString()}K)`
-                          : 'Charter Regional Hub ($15M • +15 Bonus Slots & Unlock Spoke Routes across this continent)';
+                          ? (isTh ? `ต้องการเงิน $15,000K (ปัจจุบันมี $${playerAirline.cashK.toLocaleString()}K)` : `Requires $15,000K (currently have $${playerAirline.cashK.toLocaleString()}K)`)
+                          : (isTh ? 'ก่อตั้งศูนย์การบินฮับภูมิภาค ($15M • +15 สล็อตโบนัส)' : 'Charter Regional Hub ($15M • +15 Bonus Slots & Unlock Spoke Routes across this continent)');
 
                         const buttonLabel = !hasInboundRoute
-                          ? 'Hub: Need Route'
+                          ? (isTh ? 'ฮับ: ต้องมีเส้นทางบินก่อน' : 'Hub: Need Route')
                           : !hasEnoughSlots
-                          ? `Hub: ${currentSlots}/10 Slots`
+                          ? (isTh ? `ฮับ: ต้องการ 10 สล็อต (${currentSlots}/10)` : `Hub: ${currentSlots}/10 Slots`)
                           : !canAffordHub
-                          ? 'Hub: Need $15M'
-                          : 'Charter Hub ($15M • +15 Slots)';
+                          ? (isTh ? 'ฮับ: ต้องการ $15M' : 'Hub: Need $15M')
+                          : (isTh ? 'ก่อตั้งฮับ ($15M • +15 สล็อต)' : 'Charter Hub ($15M • +15 Slots)');
 
                         return (
                           <button
@@ -471,7 +489,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                         <div className="px-3 py-1.5 rounded-xl bg-amber-950/80 border border-amber-500 text-amber-300 text-xs font-bold flex items-center gap-1.5 animate-pulse">
                           <Clock className="w-3.5 h-3.5" />
                           <span>
-                            {activeMission.currentMission?.quartersRemaining}Q Left ({activeMission.name.split(' ')[0]})
+                            {isTh ? `เหลืออีก ${activeMission.currentMission?.quartersRemaining} ไตรมาส (${activeMission.name.split(' ')[0]})` : `${activeMission.currentMission?.quartersRemaining}Q Left (${activeMission.name.split(' ')[0]})`}
                           </span>
                         </div>
                       ) : (
@@ -487,10 +505,10 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
                           <Clock className="w-3.5 h-3.5" />
                           <span>
                             {isAirportFull
-                              ? 'Airport Full'
+                              ? (isTh ? 'สนามบินเต็ม' : 'Airport Full')
                               : isMaxed
-                              ? 'Max Slots'
-                              : `Dispatch Envoy (${chosenSlots} Slots • $${costK.toLocaleString()}K)`}
+                              ? (isTh ? 'สล็อตเต็มโควตา' : 'Max Slots')
+                              : (isTh ? `ส่งตัวแทนเจรจา (${chosenSlots} สล็อต • $${costK.toLocaleString()}K)` : `Dispatch Envoy (${chosenSlots} Slots • $${costK.toLocaleString()}K)`)}
                           </span>
                         </button>
                       )}
@@ -505,7 +523,8 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
         {/* Standardized Modal Footer */}
         <div className="bg-slate-950 px-6 py-3.5 border-t border-slate-800 flex justify-between items-center text-xs font-mono shrink-0">
           <div className="text-slate-400">
-            Available Envoys: <strong className="text-emerald-400 font-bold">{availableNegotiators.length} Free</strong>
+            {isTh ? 'ตัวแทนพร้อมเจรจา: ' : 'Available Envoys: '}
+            <strong className="text-emerald-400 font-bold">{availableNegotiators.length} {isTh ? 'ท่าน' : 'Free'}</strong>
           </div>
           <button
             onClick={onClose}
@@ -513,7 +532,7 @@ export const SlotNegotiationModal: React.FC<SlotNegotiationModalProps> = ({
             data-testid="modal-close-footer-btn"
           >
             <X className="w-4 h-4 text-slate-400" />
-            <span>Close (ปิดหน้าต่าง)</span>
+            <span>{t.common.close}</span>
           </button>
         </div>
       </div>

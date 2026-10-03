@@ -2,6 +2,7 @@ import React from 'react';
 import { GameState, Airline } from '../types/game';
 import { Trophy, AlertOctagon, Globe2, Plane, DollarSign, Users, Award, RotateCcw, ArrowRight, X } from 'lucide-react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useI18n } from '../utils/i18n';
 
 interface VictoryDefeatModalProps {
   gameState: GameState;
@@ -19,6 +20,9 @@ export const VictoryDefeatModal: React.FC<VictoryDefeatModalProps> = ({
   onRestartGame,
 }) => {
   useEscapeKey(onClose);
+  const { t, lang } = useI18n();
+  const isTh = lang === 'th';
+
   const isBankruptcy = gameState.victoryType === 'BANKRUPTCY';
   const isRivalWinner = gameState.victoryType === 'RIVAL_VICTORY';
 
@@ -74,19 +78,22 @@ export const VictoryDefeatModal: React.FC<VictoryDefeatModalProps> = ({
             <div>
               <h2 className="text-xl sm:text-2xl font-black font-mono tracking-wide text-white uppercase">
                 {isHumanWinner
-                  ? 'WORLD AIRLINE CHAMPION (ชัยชนะอันยิ่งใหญ่)'
+                  ? (isTh ? 'แชมป์สายการบินระดับโลก' : 'WORLD AIRLINE CHAMPION')
                   : isBankruptcy
-                  ? 'CORPORATE INSOLVENCY & BANKRUPTCY (ประกาศล้มละลาย)'
-                  : 'RIVAL DOMINATION (คู่แข่งครองน่านฟ้า)'}
+                  ? (isTh ? 'ประกาศภาวะล้มละลายทางการเงิน' : 'CORPORATE INSOLVENCY & BANKRUPTCY')
+                  : (isTh ? 'คู่แข่งบรรลุเป้าหมายครองตลาดโลก' : 'RIVAL AIRLINE DOMINATION')}
               </h2>
               <p className="text-xs sm:text-sm font-mono opacity-80 mt-0.5">
-                {gameState.currentYear} • Quarter {gameState.currentQuarter} • Turn {gameState.turnNumber}/80
+                {isTh
+                  ? `ปี ${gameState.currentYear} • ไตรมาส ${gameState.currentQuarter} • เทิร์นที่ ${gameState.turnNumber}/80`
+                  : `${gameState.currentYear} • Quarter ${gameState.currentQuarter} • Turn ${gameState.turnNumber}/80`}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
+            title={`${t.common.close} (Esc)`}
           >
             <X className="w-5 h-5" />
           </button>
@@ -106,11 +113,16 @@ export const VictoryDefeatModal: React.FC<VictoryDefeatModalProps> = ({
           >
             <div className="text-sm sm:text-base leading-relaxed font-bold">
               {isBankruptcy
-                ? gameState.defeatReason || 'Your airline suffered continuous financial deficit and was forced into insolvency.'
+                ? (isTh
+                    ? (gameState.defeatReason || 'สายการบินของคุณขาดทุนต่อเนื่องจนเงินสดสำรองหมดลงและเข้าสู่ภาวะล้มละลาย')
+                    : (gameState.defeatReason || 'Your airline suffered continuous financial deficit and was forced into insolvency.'))
                 : isRivalWinner
-                ? 'A rival airline reached global dominance before your airline could complete the network.'
-                : gameState.victoryReason ||
-                  'Congratulations CEO! You have satisfied all conditions of the Koei Aerobiz Supersonic World Championship!'}
+                ? (isTh
+                    ? 'สายการบินคู่แข่งได้สร้างเครือข่ายครอบคลุมและสร้างกำไรสูงสุดก่อนที่คุณจะทำสำเร็จ'
+                    : 'A rival airline reached global dominance before your airline could complete the network.')
+                : (isTh
+                    ? (gameState.victoryReason || 'ขอแสดงความยินดีด้วยท่านประธาน! คุณบรรลุเป้าหมายการครองน่านฟ้าโลก Aerobiz Supersonic แล้ว!')
+                    : (gameState.victoryReason || 'Congratulations CEO! You have satisfied all conditions of the Koei Aerobiz Supersonic World Championship!'))}
             </div>
           </div>
 
@@ -119,34 +131,34 @@ export const VictoryDefeatModal: React.FC<VictoryDefeatModalProps> = ({
             <div className="bg-slate-950 border border-rose-900/60 rounded-2xl p-5 space-y-3 font-mono">
               <div className="text-xs uppercase tracking-wider text-rose-400 font-bold flex items-center gap-2">
                 <AlertOctagon className="w-4 h-4 text-rose-500" />
-                <span>BANKRUPTCY & FINANCIAL INSOLVENCY AUDIT (การตรวจสอบสถานะหนี้สิน):</span>
+                <span>{isTh ? 'การตรวจสอบสถานะหนี้สินและล้มละลาย:' : 'BANKRUPTCY & FINANCIAL INSOLVENCY AUDIT:'}</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
                 <div className="p-3.5 rounded-xl border bg-rose-950/40 border-rose-600/60 text-rose-200 flex flex-col justify-between">
-                  <div className="text-xs text-rose-400 font-bold">1. LOSS STREAK</div>
+                  <div className="text-xs text-rose-400 font-bold">{isTh ? '1. ขาดทุนต่อเนื่อง' : '1. LOSS STREAK'}</div>
                   <div className="text-lg font-black mt-1">
-                    {playerAirline.consecutiveLossQuarters || 4} Quarters
+                    {playerAirline.consecutiveLossQuarters || 4} {isTh ? 'ไตรมาส' : 'Quarters'}
                   </div>
                   <div className="text-[11px] mt-1 opacity-80 text-rose-300">
-                    ✕ 4 Quarters Deficit Limit Exceeded
+                    {isTh ? '✕ ขาดทุนเกินเกณฑ์สูงสุด 4 ไตรมาส' : '✕ 4 Quarters Deficit Limit Exceeded'}
                   </div>
                 </div>
                 <div className="p-3.5 rounded-xl border bg-rose-950/40 border-rose-600/60 text-rose-200 flex flex-col justify-between">
-                  <div className="text-xs text-rose-400 font-bold">2. CASH DEFICIT</div>
+                  <div className="text-xs text-rose-400 font-bold">{isTh ? '2. ขาดดุลเงินสด' : '2. CASH DEFICIT'}</div>
                   <div className="text-lg font-black mt-1">
                     ${playerAirline.cashK.toLocaleString()}K
                   </div>
                   <div className="text-[11px] mt-1 opacity-80 text-rose-300">
-                    ✕ Treasury Insolvent / Negative
+                    {isTh ? '✕ เงินสดสำรองติดลบ' : '✕ Treasury Insolvent / Negative'}
                   </div>
                 </div>
                 <div className="p-3.5 rounded-xl border bg-rose-950/40 border-rose-600/60 text-rose-200 flex flex-col justify-between">
-                  <div className="text-xs text-rose-400 font-bold">3. CHAPTER 11 STATUS</div>
+                  <div className="text-xs text-rose-400 font-bold">{isTh ? '3. คำสั่งทางกฎหมาย' : '3. LEGAL STATUS'}</div>
                   <div className="text-lg font-black mt-1 text-rose-400">
-                    LIQUIDATION
+                    {isTh ? 'พิทักษ์ทรัพย์' : 'LIQUIDATION'}
                   </div>
                   <div className="text-[11px] mt-1 opacity-80 text-rose-300">
-                    Assets Foreclosed by Creditors
+                    {isTh ? 'สินทรัพย์ถูกยึดเพื่อชำระหนี้' : 'Assets Foreclosed by Creditors'}
                   </div>
                 </div>
               </div>
@@ -156,7 +168,7 @@ export const VictoryDefeatModal: React.FC<VictoryDefeatModalProps> = ({
             <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-3 font-mono">
               <div className="text-xs uppercase tracking-wider text-slate-400 font-bold flex items-center gap-2">
                 <Award className="w-4 h-4 text-sky-400" />
-                <span>KOEI AEROBIZ SUPERSONIC VICTORY BENCHMARKS (เกณฑ์การตัดสินแชมป์โลก):</span>
+                <span>{isTh ? 'เกณฑ์การตัดสินแชมป์โลก (3 เสาหลัก):' : 'KOEI AEROBIZ SUPERSONIC VICTORY BENCHMARKS:'}</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
@@ -168,12 +180,12 @@ export const VictoryDefeatModal: React.FC<VictoryDefeatModalProps> = ({
                       : 'bg-slate-900 border-slate-800 text-slate-300'
                   }`}
                 >
-                  <div className="text-xs text-slate-400 font-bold">1. REGIONAL HUBS</div>
+                  <div className="text-xs text-slate-400 font-bold">{isTh ? '1. ศูนย์การบินภูมิภาค' : '1. REGIONAL HUBS'}</div>
                   <div className="text-lg font-black mt-1">
-                    {Math.min(7, playerAirline.hubCityIds.length + 1)} / 7 Regions
+                    {Math.min(7, playerAirline.hubCityIds.length + 1)} / 7 {isTh ? 'ทวีป' : 'Regions'}
                   </div>
                   <div className="text-[11px] mt-1 opacity-80">
-                    {playerAirline.hubCityIds.length >= 6 ? '✓ Complete (ครบ 7 ทวีป)' : 'Requires all 7 world regions'}
+                    {playerAirline.hubCityIds.length >= 6 ? (isTh ? '✓ ครบทั้ง 7 ทวีป' : '✓ Complete (7 Continents)') : (isTh ? 'ต้องมีฮับครบ 7 ทวีป' : 'Requires all 7 world regions')}
                   </div>
                 </div>
 
@@ -185,12 +197,12 @@ export const VictoryDefeatModal: React.FC<VictoryDefeatModalProps> = ({
                       : 'bg-slate-900 border-slate-800 text-slate-300'
                   }`}
                 >
-                  <div className="text-xs text-slate-400 font-bold">2. MARKET LEADERSHIP</div>
+                  <div className="text-xs text-slate-400 font-bold">{isTh ? '2. ผู้นำส่วนแบ่งตลาด' : '2. MARKET LEADERSHIP'}</div>
                   <div className="text-lg font-black mt-1">
-                    {gameState.victoryDetails?.leadingRegionsCount || 0} / 5 Regions
+                    {gameState.victoryDetails?.leadingRegionsCount || 0} / 5 {isTh ? 'ทวีป' : 'Regions'}
                   </div>
                   <div className="text-[11px] mt-1 opacity-80">
-                    #1 in passenger market share
+                    {isTh ? 'อันดับ 1 ด้านผู้โดยสารในภูมิภาค' : '#1 in passenger market share'}
                   </div>
                 </div>
 
@@ -202,13 +214,13 @@ export const VictoryDefeatModal: React.FC<VictoryDefeatModalProps> = ({
                       : 'bg-rose-950/40 border-rose-500/60 text-rose-200'
                   }`}
                 >
-                  <div className="text-xs text-slate-400 font-bold">3. PROFITABLE EMPIRE</div>
+                  <div className="text-xs text-slate-400 font-bold">{isTh ? '3. ผลกำไรที่มั่นคง' : '3. PROFITABLE EMPIRE'}</div>
                   <div className="text-lg font-black mt-1">
                     {(humanStanding?.quarterProfitK || 0) >= 0 ? '+' : ''}$
                     {(humanStanding?.quarterProfitK || 0).toLocaleString()}K
                   </div>
                   <div className="text-[11px] mt-1 opacity-80">
-                    {(humanStanding?.quarterProfitK || 0) > 0 ? '✓ Profitable Net Margin' : 'Deficit / Red Alert'}
+                    {(humanStanding?.quarterProfitK || 0) > 0 ? (isTh ? '✓ มีกำไรสุทธิ' : '✓ Profitable Net Margin') : (isTh ? 'ขาดทุนสุทธิ' : 'Deficit / Red Alert')}
                   </div>
                 </div>
               </div>
@@ -218,32 +230,32 @@ export const VictoryDefeatModal: React.FC<VictoryDefeatModalProps> = ({
           {/* Standing Overview Card */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 font-mono text-xs space-y-2">
             <div className="font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
-              <span>FINAL EMPIRE AUDIT ({winnerAirline.name}):</span>
+              <span>{isTh ? `สรุปภาพรวมสายการบิน (${winnerAirline.name}):` : `FINAL EMPIRE AUDIT (${winnerAirline.name}):`}</span>
               <span className="text-emerald-400 font-black">
-                Valuation: ${(humanStanding?.totalValuationK ?? (playerAirline.cashK + playerAirline.fleet.length * 25000)).toLocaleString()}K
+                {isTh ? 'มูลค่าประเมิน: ' : 'Valuation: '}${(humanStanding?.totalValuationK ?? (playerAirline.cashK + playerAirline.fleet.length * 25000)).toLocaleString()}K
               </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-slate-300">
               <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                <span className="text-slate-500 block text-[10px]">CASH RESERVES</span>
+                <span className="text-slate-500 block text-[10px]">{isTh ? 'เงินสดสำรอง' : 'CASH RESERVES'}</span>
                 <span className="font-black text-white text-sm">
                   ${playerAirline.cashK.toLocaleString()}K
                 </span>
               </div>
               <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                <span className="text-slate-500 block text-[10px]">TOTAL FLEET</span>
-                <span className="font-black text-sky-400 text-sm">{playerAirline.fleet.length} Aircraft</span>
+                <span className="text-slate-500 block text-[10px]">{isTh ? 'ฝูงบินรวม' : 'TOTAL FLEET'}</span>
+                <span className="font-black text-sky-400 text-sm">{playerAirline.fleet.length} {isTh ? 'ลำ' : 'Aircraft'}</span>
               </div>
               <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                <span className="text-slate-500 block text-[10px]">ACTIVE ROUTES</span>
+                <span className="text-slate-500 block text-[10px]">{isTh ? 'เส้นทางเปิดบิน' : 'ACTIVE ROUTES'}</span>
                 <span className="font-black text-amber-400 text-sm">
-                  {gameState.routes.filter((r) => r.airlineId === playerAirline.id).length} Routes
+                  {gameState.routes.filter((r) => r.airlineId === playerAirline.id).length} {isTh ? 'เส้นทาง' : 'Routes'}
                 </span>
               </div>
               <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                <span className="text-slate-500 block text-[10px]">SUBSIDIARIES</span>
+                <span className="text-slate-500 block text-[10px]">{isTh ? 'ธุรกิจเสริม' : 'SUBSIDIARIES'}</span>
                 <span className="font-black text-purple-400 text-sm">
-                  {playerAirline.businesses.length} Ventures
+                  {playerAirline.businesses.length} {isTh ? 'แห่ง' : 'Ventures'}
                 </span>
               </div>
             </div>
@@ -257,7 +269,7 @@ export const VictoryDefeatModal: React.FC<VictoryDefeatModalProps> = ({
             className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold font-mono flex items-center gap-2 transition cursor-pointer border border-slate-700"
           >
             <RotateCcw className="w-4 h-4 text-amber-400" />
-            <span>Start New Game (เริ่มเกมใหม่)</span>
+            <span>{isTh ? 'เริ่มเกมใหม่' : 'Start New Game'}</span>
           </button>
 
           <div className="flex items-center gap-3">
@@ -265,14 +277,14 @@ export const VictoryDefeatModal: React.FC<VictoryDefeatModalProps> = ({
               onClick={onClose}
               className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold font-mono transition cursor-pointer border border-slate-700"
             >
-              Review Board (ตรวจดูผลงาน)
+              {isTh ? 'ตรวจดูผลงาน' : 'Review Board'}
             </button>
 
             <button
               onClick={onContinueSandbox}
               className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs sm:text-sm font-black font-mono flex items-center gap-2 transition cursor-pointer shadow-lg border border-emerald-400 active:scale-95"
             >
-              <span>Continue in Sandbox Mode (เล่นต่อแบบอิสระ)</span>
+              <span>{isTh ? 'เล่นต่อในโหมดอิสระ' : 'Continue in Sandbox Mode'}</span>
               <ArrowRight className="w-4 h-4 text-emerald-200" />
             </button>
           </div>

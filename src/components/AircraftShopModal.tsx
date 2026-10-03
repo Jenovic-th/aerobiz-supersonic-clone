@@ -6,6 +6,7 @@ import { calculateDistance } from '../simulation/engine';
 import { X, ShoppingCart, Plane, CheckCircle2, AlertCircle, Sparkles, Filter, Flame, Tag, AlertTriangle, Wrench, Compass, Plus, Minus, Receipt, Clock, Building2, Calendar, Eye } from 'lucide-react';
 import { AircraftBlueprintViewer } from './AircraftBlueprintViewer';
 import { getAircraftPhotoInfo } from '../data/aircraftVisuals';
+import { useI18n } from '../utils/i18n';
 
 interface AircraftShopModalProps {
   playerAirline: Airline;
@@ -27,6 +28,8 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
   currentQuarter = 1,
   activeDiscountDeal,
 }) => {
+  const { t, lang } = useI18n();
+  const isTh = lang === 'th';
   const [activeTab, setActiveTab] = useState<'DEPOT' | 'FLEET' | 'PENDING' | 'TIMELINE'>('DEPOT');
   const [filterMfg, setFilterMfg] = useState<string>('ALL');
   const [timelineFilter, setTimelineFilter] = useState<'ALL' | 'ACTIVE' | 'UPCOMING' | 'RETIRED'>('ALL');
@@ -265,10 +268,10 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg md:text-xl font-black text-white tracking-wide font-mono flex items-center gap-2">
-                COMMERCIAL AIRCRAFT MARKET & FLEET HANGAR
+                {t.market.marketHeaderTitle}
               </h2>
               <div className="text-xs text-sky-300/80 font-mono">
-                Aerospace Showroom & Commercial Fleet Procurement • Year {currentYear}
+                {t.market.marketHeaderSubtitle.replace('{year}', currentYear.toString())}
               </div>
             </div>
           </div>
@@ -276,7 +279,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
           <div className="flex items-center gap-4">
             {/* Airline Available Cash Balance */}
             <div className="bg-slate-950/90 border-2 border-emerald-500/80 px-4 py-1.5 rounded-xl shadow-lg text-right">
-              <span className="text-[10px] text-slate-400 font-mono block">YOUR AVAILABLE CASH:</span>
+              <span className="text-[10px] text-slate-400 font-mono block">{t.market.availableCash}</span>
               <span className="text-base md:text-lg font-black font-mono text-emerald-400">
                 ${playerAirline.cashK.toLocaleString()}K
               </span>
@@ -289,7 +292,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               data-testid="modal-close-header-btn"
             >
               <X className="w-5 h-5 text-rose-400" />
-              <span className="text-xs font-mono font-bold hidden sm:inline">CLOSE [ESC]</span>
+              <span className="text-xs font-mono font-bold hidden sm:inline">{t.market.escClose}</span>
             </button>
           </div>
         </div>
@@ -306,7 +309,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               }`}
             >
               <Sparkles className="w-4 h-4 text-sky-400" />
-              <span>Catalog ({availableModels.length} Models)</span>
+              <span>{isTh ? `แคตตาล็อก (${availableModels.length} รุ่น)` : `Catalog (${availableModels.length} Models)`}</span>
             </button>
             <button
               onClick={() => setActiveTab('PENDING')}
@@ -318,7 +321,9 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
             >
               <Clock className="w-4 h-4 text-amber-400" />
               <span>
-                Factory Order Book ({pendingOrders.reduce((sum, o) => sum + o.quantity, 0)} on Order)
+                {isTh
+                  ? `รายการรอส่งมอบ (${pendingOrders.reduce((sum, o) => sum + o.quantity, 0)} ลำ)`
+                  : `Factory Order Book (${pendingOrders.reduce((sum, o) => sum + o.quantity, 0)} on Order)`}
               </span>
             </button>
             <button
@@ -330,7 +335,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               }`}
             >
               <Plane className="w-4 h-4 text-sky-400" />
-              <span>Fleet Hangar ({playerAirline.fleet.length} Owned)</span>
+              <span>{isTh ? `โรงเก็บฝูงบิน (${playerAirline.fleet.length} ลำ)` : `Fleet Hangar (${playerAirline.fleet.length} Owned)`}</span>
             </button>
             <button
               onClick={() => setActiveTab('TIMELINE')}
@@ -341,20 +346,20 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               }`}
             >
               <Calendar className="w-4 h-4 text-purple-400" />
-              <span>R&D Roadmap ({allAircraftCatalog.length} Models)</span>
+              <span>{isTh ? `แผนพัฒนา R&D (${allAircraftCatalog.length} รุ่น)` : `R&D Roadmap (${allAircraftCatalog.length} Models)`}</span>
             </button>
           </div>
 
           {/* Quick Stats Pill */}
           <div className="hidden md:flex items-center gap-2 text-xs font-mono text-sky-300">
-            <span>ACTIVE: {playerAirline.fleet.filter((f) => f.assignedRouteId).length}</span>
+            <span>{t.market.activeHeader} {playerAirline.fleet.filter((f) => f.assignedRouteId).length}</span>
             <span>•</span>
-            <span>HANGAR: {playerAirline.fleet.filter((f) => !f.assignedRouteId).length}</span>
+            <span>{t.market.hangarHeader} {playerAirline.fleet.filter((f) => !f.assignedRouteId).length}</span>
             {pendingOrders.length > 0 && (
               <>
                 <span>•</span>
                 <span className="text-amber-300 font-bold">
-                  PENDING DELIVERY: {pendingOrders.reduce((sum, o) => sum + o.quantity, 0)}
+                  {t.market.pendingDeliveryHeader} {pendingOrders.reduce((sum, o) => sum + o.quantity, 0)}
                 </span>
               </>
             )}
@@ -371,14 +376,14 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-sky-400 font-mono font-bold text-xs">
                     <Building2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                    <span>MANUFACTURER SHOWROOM:</span>
+                    <span>{t.market.mfgShowroom}</span>
                   </div>
                   {filterMfg !== 'ALL' && (
                     <button
                       onClick={() => setFilterMfg('ALL')}
                       className="text-[10px] text-sky-400 hover:text-white underline cursor-pointer font-mono"
                     >
-                      Show All ({availableModels.length})
+                      {isTh ? `แสดงทั้งหมด (${availableModels.length})` : `Show All (${availableModels.length})`}
                     </button>
                   )}
                 </div>
@@ -395,7 +400,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                     }`}
                   >
                     <span>🌐</span>
-                    <span>All Models</span>
+                    <span>{t.market.allModels}</span>
                     <span
                       className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                         filterMfg === 'ALL'
@@ -456,7 +461,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                       }`}
                     >
                       <Sparkles className="w-3 h-3 text-purple-300 shrink-0" />
-                      <span>Supersonic</span>
+                      <span>{t.market.supersonic}</span>
                       <span
                         className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                           filterMfg === 'SUPERSONIC'
@@ -480,8 +485,8 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                         <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse shrink-0" />
                         <span className="truncate">
                           {activeDiscountDeal.specificModelId
-                            ? `CLEARANCE: ${activeDiscountDeal.discountPct}% OFF ${activeDiscountDeal.modelName || activeDiscountDeal.specificModelId}`
-                            : `${activeDiscountDeal.discountPct}% REBATE: ${activeDiscountDeal.manufacturer.toUpperCase()}`}
+                            ? `${isTh ? 'โปรโมชันพิเศษ' : 'CLEARANCE'}: ${activeDiscountDeal.discountPct}% OFF ${activeDiscountDeal.modelName || activeDiscountDeal.specificModelId}`
+                            : `${activeDiscountDeal.discountPct}% ${isTh ? 'ส่วนลดจากโรงงาน' : 'REBATE'}: ${activeDiscountDeal.manufacturer.toUpperCase()}`}
                         </span>
                       </div>
                       <div className="text-[10px] text-slate-300 font-sans truncate mt-0.5">
@@ -496,7 +501,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                           : 'bg-amber-900/60 border-amber-500/60 text-amber-200 hover:bg-amber-800'
                       }`}
                     >
-                      {filterMfg === 'DISCOUNT' ? 'ACTIVE' : 'FILTER'}
+                      {filterMfg === 'DISCOUNT' ? (isTh ? 'ใช้งานอยู่' : 'ACTIVE') : (isTh ? 'กรอง' : 'FILTER')}
                     </button>
                   </div>
                 </div>
@@ -507,14 +512,14 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] font-mono font-bold text-sky-300 flex items-center gap-1.5">
                     <Compass className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                    <span>Filter for Route from {homeCity.name}:</span>
+                    <span>{t.market.routeRangeFilter.replace('{hub}', homeCity.name)}</span>
                   </span>
                   {targetDestId !== 'ALL' && (
                     <button
                       onClick={() => setTargetDestId('ALL')}
                       className="text-[10px] text-sky-400 hover:text-white underline cursor-pointer font-mono"
                     >
-                      Clear Filter
+                      {t.market.clearFilter}
                     </button>
                   )}
                 </div>
@@ -523,22 +528,22 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                   onChange={(e) => setTargetDestId(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 font-mono focus:border-sky-400 focus:outline-none cursor-pointer"
                 >
-                  <option value="ALL">Show All Models (No Route Range Filter)</option>
+                  <option value="ALL">{t.market.allAirportsOption}</option>
                   {CITIES.filter((c) => c.id !== homeCity.id)
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((city) => {
                       const dist = calculateDistance(homeCity.lat, homeCity.lon, city.lat, city.lon);
                       return (
                         <option key={city.id} value={city.id}>
-                          To {city.name} ({city.country}) • {dist.toLocaleString()} km
+                          {t.market.toCityOption.replace('{city}', city.name).replace('{country}', city.country).replace('{dist}', dist.toLocaleString())}
                         </option>
                       );
                     })}
                 </select>
                 {targetCityObj && (
                   <div className="mt-1 flex items-center justify-between text-[10px] font-mono text-emerald-400">
-                    <span>Route: {homeCity.name} ➔ {targetCityObj.name}</span>
-                    <span className="font-bold">Required Range: ≥ {targetDistance.toLocaleString()} km</span>
+                    <span>{isTh ? 'เส้นทาง:' : 'Route:'} {homeCity.name} ➔ {targetCityObj.name}</span>
+                    <span className="font-bold">{t.market.requiredRange.replace('{dist}', targetDistance.toLocaleString())}</span>
                   </div>
                 )}
               </div>
@@ -548,11 +553,11 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 {filteredModels.length === 0 ? (
                   <div className="p-6 text-center text-slate-400 bg-slate-900/50 rounded-xl border border-dashed border-slate-700 space-y-2.5">
                     <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto" />
-                    <div className="font-bold text-slate-200 text-sm font-mono">No Capable Aircraft Found</div>
+                    <div className="font-bold text-slate-200 text-sm font-mono">{t.market.noCapablePlanes}</div>
                     <p className="text-xs text-slate-400 leading-relaxed">
                       {targetCityObj
-                        ? `No aircraft in this category can reach ${targetCityObj.name} (${targetDistance.toLocaleString()} km).`
-                        : 'No aircraft match the current manufacturer filter.'}
+                        ? t.market.noCapablePlanesDesc.replace('{city}', targetCityObj.name).replace('{dist}', targetDistance.toLocaleString())
+                        : (isTh ? 'ไม่มีเครื่องบินที่ตรงตามตัวกรองผู้ผลิตที่เลือก' : 'No aircraft match the current manufacturer filter.')}
                     </p>
                     <button
                       onClick={() => {
@@ -561,7 +566,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                       }}
                       className="mt-2 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-mono font-bold transition cursor-pointer shadow"
                     >
-                      Reset Range & Manufacturer Filters
+                      {t.market.resetFilters}
                     </button>
                   </div>
                 ) : (
@@ -611,19 +616,19 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                                 {isRetiringThisYear && (
                                   <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-600/30 text-rose-300 border border-rose-500 flex items-center gap-0.5 animate-pulse">
                                     <AlertTriangle className="w-2.5 h-2.5" />
-                                    <span>FINAL YEAR</span>
+                                    <span>{isTh ? `ผลิตปีสุดท้าย (${model.retireYear})` : `FINAL YEAR (${model.retireYear})`}</span>
                                   </span>
                                 )}
                                 {!isRetiringThisYear && isRetiringNextYear && (
                                   <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500 flex items-center gap-0.5">
                                     <AlertTriangle className="w-2.5 h-2.5" />
-                                    <span>RETIRES {model.retireYear}</span>
+                                    <span>{isTh ? `หยุดผลิต ${model.retireYear}` : `RETIRES ${model.retireYear}`}</span>
                                   </span>
                                 )}
                                 {priceInfo.hasDiscount && (
                                   <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/50 flex items-center gap-0.5">
                                     <Flame className="w-2.5 h-2.5" />
-                                    <span>{priceInfo.discountPct}% OFF</span>
+                                    <span>{isTh ? `ลด ${priceInfo.discountPct}%` : `${priceInfo.discountPct}% OFF`}</span>
                                   </span>
                                 )}
                               </div>
@@ -631,8 +636,8 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                                 <span>{getMfgMeta(model.manufacturer).flag}</span>
                                 <span>{model.manufacturer}</span>
                                 <span>•</span>
-                                <span>Intro {model.introYear}</span>
-                                {model.retireYear && <span>• End {model.retireYear}</span>}
+                                <span>{isTh ? `เปิดตัว ${model.introYear}` : `Intro ${model.introYear}`}</span>
+                                {model.retireYear && <span>• {isTh ? `สิ้นสุด ${model.retireYear}` : `End ${model.retireYear}`}</span>}
                               </div>
                             </div>
 
@@ -653,18 +658,18 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                               )}
                               {owned > 0 && (
                                 <span className="text-[10px] font-mono font-bold text-sky-400 block mt-0.5">
-                                  Owned: {owned}
+                                  {isTh ? `ครอบครอง: ${owned} ลำ` : `Owned: ${owned}`}
                                 </span>
                               )}
                             </div>
                           </div>
 
                           <div className="mt-2 flex items-center gap-2 text-[11px] font-mono text-slate-300 border-t border-slate-800/80 pt-1.5">
-                            <span>{model.capacity} Seats</span>
+                            <span>{model.capacity} {isTh ? 'ที่นั่ง' : 'Seats'}</span>
                             <span className="text-slate-600">•</span>
-                            <span className="text-emerald-400 font-bold">{model.rangeKm.toLocaleString()} km</span>
+                            <span className="text-emerald-400 font-bold">{model.rangeKm.toLocaleString()} {isTh ? 'กม.' : 'km'}</span>
                             <span className="text-slate-600">•</span>
-                            <span className="text-slate-400">{model.speedKmh} km/h</span>
+                            <span className="text-slate-400">{model.speedKmh} {isTh ? 'กม./ชม.' : 'km/h'}</span>
                           </div>
                         </div>
                       </div>
@@ -686,35 +691,35 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 <div className="shrink-0 mt-3 p-3.5 bg-slate-950 border-2 border-sky-800/70 rounded-xl flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-xl">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-xs text-slate-400">ORDERING UNIT:</span>
+                      <span className="font-mono text-xs text-slate-400">{t.market.orderingUnit}</span>
                       <strong className="text-sky-300 font-mono text-base">{selectedModel.model}</strong>
                       {ownedCount > 0 && (
                         <span className="px-2 py-0.5 rounded bg-sky-900/60 text-sky-300 border border-sky-500 text-xs font-mono">
-                          Already own {ownedCount} in fleet
+                          {t.market.alreadyOwn.replace('{count}', ownedCount.toString())}
                         </span>
                       )}
                       {selectedModel.retireYear === currentYear && (
                         <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500 text-xs font-mono font-black flex items-center gap-1 animate-pulse">
                           <AlertTriangle className="w-3.5 h-3.5" />
-                          <span>Final Production Year ({selectedModel.retireYear})</span>
+                          <span>{isTh ? `ผลิตปีสุดท้าย (${selectedModel.retireYear})` : `Final Production Year (${selectedModel.retireYear})`}</span>
                         </span>
                       )}
                       {selectedModel.retireYear === currentYear + 1 && (
                         <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500 text-xs font-mono font-black flex items-center gap-1">
                           <AlertTriangle className="w-3.5 h-3.5" />
-                          <span>Assembly Ceases Next Year ({selectedModel.retireYear})</span>
+                          <span>{isTh ? `หยุดผลิตสิ้นปีหน้า (${selectedModel.retireYear})` : `Assembly Ceases Next Year (${selectedModel.retireYear})`}</span>
                         </span>
                       )}
                       {selectedPriceInfo.hasDiscount && (
                         <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/80 text-xs font-mono font-black flex items-center gap-1">
                           <Flame className="w-3.5 h-3.5" />
-                          <span>{selectedPriceInfo.discountPct}% OFF Discount Applied!</span>
+                          <span>{isTh ? `ส่วนลดพิเศษ ${selectedPriceInfo.discountPct}%!` : `${selectedPriceInfo.discountPct}% OFF Discount Applied!`}</span>
                         </span>
                       )}
                     </div>
                     <div className="text-xs text-slate-400 font-mono mt-1 flex items-center gap-2.5 flex-wrap">
                       <span className="whitespace-nowrap">
-                        Unit Price:{' '}
+                        {t.market.unitPrice}{' '}
                         {selectedPriceInfo.hasDiscount ? (
                           <span>
                             <span className="line-through text-slate-500 mr-1">
@@ -728,7 +733,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                       </span>
                       <span className="text-slate-600 hidden sm:inline">•</span>
                       <span className="whitespace-nowrap">
-                        Order Total:{' '}
+                        {t.market.orderTotal}{' '}
                         <strong className="text-emerald-400 font-bold text-sm">
                           ${totalCostK.toLocaleString()}K
                         </strong>
@@ -736,12 +741,12 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                       <span className="text-slate-600 hidden sm:inline">•</span>
                       {canAfford ? (
                         <span className="text-emerald-400 font-bold whitespace-nowrap">
-                          Balance after delivery: ${remainingCash.toLocaleString()}K
+                          {t.market.balanceAfterDelivery} ${remainingCash.toLocaleString()}K
                         </span>
                       ) : (
                         <span className="text-rose-400 font-bold flex items-center gap-1 whitespace-nowrap">
                           <AlertCircle className="w-3.5 h-3.5" />
-                          Short by ${(totalCostK - playerAirline.cashK).toLocaleString()}K
+                          {t.market.shortBy.replace('{amount}', (totalCostK - playerAirline.cashK).toLocaleString())}
                         </span>
                       )}
                     </div>
@@ -751,7 +756,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                     {/* Quantity Stepper & Quick Presets */}
                     <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-700 p-1 rounded-xl">
                       <span className="text-[11px] font-mono text-slate-400 px-2 font-bold uppercase">
-                        QTY:
+                        {t.market.qty}
                       </span>
                       <button
                         type="button"
@@ -768,7 +773,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                           {safeQuantity}
                         </span>
                         <span className="text-[9px] font-mono text-slate-400 block -mt-0.5">
-                          {safeQuantity === 1 ? 'airframe' : 'airframes'}
+                          {safeQuantity === 1 ? t.market.airframe : t.market.airframes}
                         </span>
                       </div>
 
@@ -808,7 +813,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                             }`}
                             title={`Order maximum affordable quantity (${maxAffordableQuantity})`}
                           >
-                            Max ({maxAffordableQuantity})
+                            {t.market.maxQty.replace('{qty}', maxAffordableQuantity.toString())}
                           </button>
                         )}
                       </div>
@@ -822,7 +827,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                     >
                       <Receipt className="w-4 h-4 text-emerald-200" />
                       <span>
-                        Review & Order {safeQuantity}x (${totalCostK.toLocaleString()}K)
+                        {t.market.reviewOrderBtn.replace('{qty}', safeQuantity.toString()).replace('{total}', `$${totalCostK.toLocaleString()}K`)}
                       </span>
                     </button>
                   </div>
@@ -839,9 +844,9 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                   <Clock className="w-8 h-8" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white font-mono">No Outstanding Factory Aircraft Orders</h3>
+                  <h3 className="text-xl font-bold text-white font-mono">{t.market.noPendingOrders}</h3>
                   <p className="text-sm text-slate-400 font-mono mt-1">
-                    When you order commercial airliners from the market, they are queued here with the manufacturer for assembly and scheduled for delivery in the next quarter.
+                    {t.market.noPendingOrdersDesc}
                   </p>
                 </div>
                 <div className="pt-2">
@@ -850,7 +855,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                     className="px-6 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold font-mono text-sm rounded-xl transition cursor-pointer shadow-lg inline-flex items-center gap-2"
                   >
                     <Sparkles className="w-4 h-4 text-sky-200" />
-                    <span>Browse Commercial Aircraft Catalog</span>
+                    <span>{t.market.browseCatalogBtn}</span>
                   </button>
                 </div>
               </div>
@@ -860,14 +865,14 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                   <div>
                     <h3 className="text-base sm:text-lg font-black text-white font-mono flex items-center gap-2">
                       <Clock className="w-5 h-5 text-amber-400" />
-                      MANUFACTURER FACTORY ORDER BOOK
+                      {t.market.orderBookTitle}
                     </h3>
                     <div className="text-xs text-slate-400 font-mono">
-                      Orders queued at aerospace assembly lines • Delivered next quarter (5% delay risk)
+                      {t.market.orderBookSubtitle}
                     </div>
                   </div>
                   <div className="text-xs font-mono px-3 py-1.5 rounded-lg bg-amber-950/70 border border-amber-500/50 text-amber-300 font-bold self-start sm:self-auto">
-                    Total on Order: {pendingOrders.reduce((sum, o) => sum + o.quantity, 0)} Airframes
+                    {t.market.totalOnOrder.replace('{count}', pendingOrders.reduce((sum, o) => sum + o.quantity, 0).toString())}
                   </div>
                 </div>
 
@@ -909,51 +914,51 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                                 {order.modelName}
                               </h4>
                               <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/50">
-                                {order.quantity} {order.quantity === 1 ? 'Airframe' : 'Airframes'}
+                                {order.quantity} {order.quantity === 1 ? t.market.airframe : t.market.airframes}
                               </span>
                               {isDelayed ? (
                                 <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-rose-950 border border-rose-500 text-rose-300 animate-pulse flex items-center gap-1">
                                   <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
-                                  Factory Delay (+1 Qtr)
+                                  {t.market.factoryDelay}
                                 </span>
                               ) : (
                                 <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-sky-950 border border-sky-600 text-sky-300 flex items-center gap-1">
                                   <Clock className="w-3.5 h-3.5 text-sky-400" />
-                                  In Assembly (On Schedule)
+                                  {t.market.inAssembly}
                                 </span>
                               )}
                             </div>
 
                             {model && (
                               <div className="text-xs text-slate-300 font-mono mt-0.5">
-                                {model.capacity} Seats • {model.rangeKm.toLocaleString()} km Range • {model.speedKmh} km/h Cruise
+                                {model.capacity} {isTh ? 'ที่นั่ง' : 'Seats'} • {model.rangeKm.toLocaleString()} {isTh ? 'กม. พิสัยบิน' : 'km Range'} • {model.speedKmh} km/h
                               </div>
                             )}
 
                             {isDelayed && order.delayReason && (
                               <div className="mt-2 text-xs font-mono p-2 bg-rose-950/50 border border-rose-500/50 rounded-lg text-rose-200">
-                                <span className="font-bold text-rose-300">Notice from Manufacturer: </span>
+                                <span className="font-bold text-rose-300">{t.market.noticeFromMfg} </span>
                                 {order.delayReason}
                               </div>
                             )}
 
                             <div className="mt-2.5 p-2 bg-slate-950/80 rounded-lg border border-slate-800 flex flex-wrap items-center gap-4 text-xs font-mono">
                               <div>
-                                <span className="text-slate-400">Order Placed: </span>
-                                <span className="font-bold text-white">Year {order.orderYear} Q{order.orderQuarter}</span>
+                                <span className="text-slate-400">{isTh ? 'สั่งซื้อเมื่อ: ' : 'Order Placed: '}</span>
+                                <span className="font-bold text-white">{isTh ? `ปี ${order.orderYear} Q${order.orderQuarter}` : `Year ${order.orderYear} Q${order.orderQuarter}`}</span>
                               </div>
                               <div className="text-slate-600">•</div>
                               <div>
-                                <span className="text-slate-400">Scheduled Handover: </span>
+                                <span className="text-slate-400">{isTh ? 'กำหนดส่งมอบ: ' : 'Scheduled Handover: '}</span>
                                 <span className={`font-bold ${isDelayed ? 'text-amber-400' : 'text-emerald-400'}`}>
-                                  Year {order.deliveryYear} Q{order.deliveryQuarter}
+                                  {isTh ? `ปี ${order.deliveryYear} Q${order.deliveryQuarter}` : `Year ${order.deliveryYear} Q${order.deliveryQuarter}`}
                                 </span>
                               </div>
                               <div className="text-slate-600">•</div>
                               <div>
-                                <span className="text-slate-400">Delivery Status: </span>
+                                <span className="text-slate-400">{isTh ? 'สถานะส่งมอบ: ' : 'Delivery Status: '}</span>
                                 <span className="font-semibold text-slate-200">
-                                  {isDelayed ? 'Postponed to target quarter' : 'Expected Next Quarter Handover'}
+                                  {isDelayed ? (isTh ? 'เลื่อนไปไตรมาสถัดไป' : 'Postponed to target quarter') : (isTh ? 'กำหนดส่งมอบไตรมาสถัดไป' : 'Expected Next Quarter Handover')}
                                 </span>
                               </div>
                             </div>
@@ -961,12 +966,12 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                         </div>
 
                         <div className="shrink-0 text-left lg:text-right pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800 font-mono">
-                          <span className="text-[11px] text-slate-400 block">Total Contract Value:</span>
+                          <span className="text-[11px] text-slate-400 block">{t.market.contractValue}</span>
                           <span className="font-black text-base md:text-lg text-emerald-400">
                             ${order.totalCostK.toLocaleString()}K
                           </span>
                           <span className="text-[10px] text-slate-500 block">
-                            (${order.unitPriceK.toLocaleString()}K/unit • Paid in Full)
+                            (${order.unitPriceK.toLocaleString()}K/{t.market.airframe} • {t.market.paidInFull})
                           </span>
                         </div>
                       </div>
@@ -981,12 +986,12 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
           <div className="flex-1 min-h-0 p-6 overflow-y-auto bg-slate-950">
             {playerAirline.fleet.length === 0 ? (
               <div className="text-center py-20 text-slate-400 font-mono text-lg">
-                Your hangar is currently empty! Switch to the Aircraft Market to purchase your first commercial airliner.
+                {t.market.emptyFleet}
               </div>
             ) : (
               <div className="max-w-5xl mx-auto space-y-3">
                 <div className="text-sm font-mono text-slate-300 mb-2">
-                  Company Aircraft Registry ({playerAirline.fleet.length} active airframes)
+                  {t.market.fleetRegistry.replace('{count}', playerAirline.fleet.length.toString())}
                 </div>
                 {playerAirline.fleet.map((plane, index) => {
                   const model = AIRCRAFTS.find((a) => a.id === plane.modelId);
@@ -1001,45 +1006,85 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                   const sellValueK = Math.round(model.priceK * 0.7 * conditionFactor);
 
                   // Maintenance impact & breakdown risk
-                  let maintTier = {
-                    label: 'Mint Condition',
-                    mult: '1.0x',
-                    color: 'text-emerald-400',
-                    badgeBg: 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300',
-                    risk: 'Low Breakdown Risk',
-                  };
+                  let maintTier = isTh
+                    ? {
+                        label: 'สภาพดีเยี่ยม',
+                        mult: '1.0x',
+                        color: 'text-emerald-400',
+                        badgeBg: 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300',
+                        risk: 'ความเสี่ยงขัดข้องต่ำมาก',
+                      }
+                    : {
+                        label: 'Mint Condition',
+                        mult: '1.0x',
+                        color: 'text-emerald-400',
+                        badgeBg: 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300',
+                        risk: 'Low Breakdown Risk',
+                      };
                   if (ageYears >= 25) {
-                    maintTier = {
-                      label: 'Critical Fatigue',
-                      mult: '2.1x',
-                      color: 'text-rose-400',
-                      badgeBg: 'bg-rose-950/80 border-rose-500/70 text-rose-300',
-                      risk: 'High Breakdown Risk',
-                    };
+                    maintTier = isTh
+                      ? {
+                          label: 'โครงสร้างล้าวิกฤติ',
+                          mult: '2.1x',
+                          color: 'text-rose-400',
+                          badgeBg: 'bg-rose-950/80 border-rose-500/70 text-rose-300',
+                          risk: 'ความเสี่ยงขัดข้องสูง',
+                        }
+                      : {
+                          label: 'Critical Fatigue',
+                          mult: '2.1x',
+                          color: 'text-rose-400',
+                          badgeBg: 'bg-rose-950/80 border-rose-500/70 text-rose-300',
+                          risk: 'High Breakdown Risk',
+                        };
                   } else if (ageYears >= 19) {
-                    maintTier = {
-                      label: 'Heavy Airframe Wear',
-                      mult: '1.65x',
-                      color: 'text-orange-400',
-                      badgeBg: 'bg-orange-950/70 border-orange-500/60 text-orange-300',
-                      risk: 'Elevated Breakdown Risk',
-                    };
+                    maintTier = isTh
+                      ? {
+                          label: 'โครงสร้างสึกหรอหนัก',
+                          mult: '1.65x',
+                          color: 'text-orange-400',
+                          badgeBg: 'bg-orange-950/70 border-orange-500/60 text-orange-300',
+                          risk: 'ความเสี่ยงขัดข้องปานกลางค่อนสูง',
+                        }
+                      : {
+                          label: 'Heavy Airframe Wear',
+                          mult: '1.65x',
+                          color: 'text-orange-400',
+                          badgeBg: 'bg-orange-950/70 border-orange-500/60 text-orange-300',
+                          risk: 'Elevated Breakdown Risk',
+                        };
                   } else if (ageYears >= 13) {
-                    maintTier = {
-                      label: 'Aging Airframe',
-                      mult: '1.35x',
-                      color: 'text-amber-400',
-                      badgeBg: 'bg-amber-950/70 border-amber-500/60 text-amber-300',
-                      risk: 'Moderate Breakdown Risk',
-                    };
+                    maintTier = isTh
+                      ? {
+                          label: 'โครงสร้างเริ่มเก่า',
+                          mult: '1.35x',
+                          color: 'text-amber-400',
+                          badgeBg: 'bg-amber-950/70 border-amber-500/60 text-amber-300',
+                          risk: 'ความเสี่ยงขัดข้องปานกลาง',
+                        }
+                      : {
+                          label: 'Aging Airframe',
+                          mult: '1.35x',
+                          color: 'text-amber-400',
+                          badgeBg: 'bg-amber-950/70 border-amber-500/60 text-amber-300',
+                          risk: 'Moderate Breakdown Risk',
+                        };
                   } else if (ageYears >= 6) {
-                    maintTier = {
-                      label: 'Standard Service',
-                      mult: '1.15x',
-                      color: 'text-sky-300',
-                      badgeBg: 'bg-sky-950/60 border-sky-500/50 text-sky-300',
-                      risk: 'Normal Risk',
-                    };
+                    maintTier = isTh
+                      ? {
+                          label: 'การใช้งานมาตรฐาน',
+                          mult: '1.15x',
+                          color: 'text-sky-300',
+                          badgeBg: 'bg-sky-950/60 border-sky-500/50 text-sky-300',
+                          risk: 'ความเสี่ยงปกติ',
+                        }
+                      : {
+                          label: 'Standard Service',
+                          mult: '1.15x',
+                          color: 'text-sky-300',
+                          badgeBg: 'bg-sky-950/60 border-sky-500/50 text-sky-300',
+                          risk: 'Normal Risk',
+                        };
                   }
 
                   const condBarColor =
@@ -1079,28 +1124,28 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                               </span>
                             )}
                             <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${maintTier.badgeBg}`}>
-                              {maintTier.label} ({maintTier.mult} Maint)
+                              {maintTier.label} ({maintTier.mult} {isTh ? 'ค่าบำรุง' : 'Maint'})
                             </span>
                           </div>
 
                           <div className="text-xs text-slate-300 font-mono mt-0.5">
-                            {model.manufacturer} • {model.capacity} Seats • Max Range: {model.rangeKm.toLocaleString()} km
+                            {model.manufacturer} • {model.capacity} {isTh ? 'ที่นั่ง' : 'Seats'} • {isTh ? 'พิสัยบิน:' : 'Max Range:'} {model.rangeKm.toLocaleString()} {isTh ? 'กม.' : 'km'}
                           </div>
 
                           {/* Airframe Age & Mechanical Condition Health Bar */}
                           <div className="mt-2.5 p-2 bg-slate-950/80 rounded-lg border border-slate-800 flex flex-wrap items-center gap-4 text-xs font-mono">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-slate-400 text-[11px]">Airframe Age:</span>
+                              <span className="text-slate-400 text-[11px]">{t.market.airframeAge}</span>
                               <span className="font-bold text-white">
-                                {ageYears} Yrs Old
+                                {ageYears} {t.market.yearsOld}
                               </span>
                               <span className="text-[10px] text-slate-500">
-                                (Built {plane.purchaseYear || currentYear - ageYears})
+                                ({t.market.builtIn.replace('{year}', (plane.purchaseYear || currentYear - ageYears).toString())})
                               </span>
                             </div>
 
                             <div className="flex items-center gap-2 min-w-[160px] flex-1">
-                              <span className="text-slate-400 text-[11px] shrink-0">Condition:</span>
+                              <span className="text-slate-400 text-[11px] shrink-0">{isTh ? 'สภาพ:' : 'Condition:'}</span>
                               <div className="flex-1 bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-700">
                                 <div
                                   className={`h-full rounded-full transition-all duration-300 ${condBarColor}`}
@@ -1113,18 +1158,18 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                             </div>
 
                             <div className="text-[11px] text-slate-400">
-                              Risk: <span className="font-semibold text-slate-200">{maintTier.risk}</span>
+                              {isTh ? 'ความเสี่ยง:' : 'Risk:'} <span className="font-semibold text-slate-200">{maintTier.risk}</span>
                             </div>
                           </div>
 
                           <div className="mt-2">
                             {isAssigned ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-950 text-sky-400 border border-sky-700">
-                                ✈ Assigned to Commercial Route ({plane.assignedRouteId})
+                                ✈ {isTh ? `ประจำการในเส้นทาง (${plane.assignedRouteId})` : `Assigned to Commercial Route (${plane.assignedRouteId})`}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-950 text-emerald-400 border border-emerald-700">
-                                ✓ Idle in Hangar (Available for Route Assignment)
+                                ✓ {isTh ? 'ว่างในโรงเก็บ (พร้อมจัดสรรเข้าเส้นทางบิน)' : 'Idle in Hangar (Available for Route Assignment)'}
                               </span>
                             )}
                           </div>
@@ -1133,12 +1178,12 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
 
                       <div className="flex items-center justify-between lg:justify-end gap-4 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800">
                         <div className="text-right">
-                          <span className="text-[11px] text-slate-400 font-mono block">Secondary Resale Value:</span>
+                          <span className="text-[11px] text-slate-400 font-mono block">{t.market.resaleValue}</span>
                           <span className="font-black font-mono text-base md:text-lg text-emerald-400">
                             ${sellValueK.toLocaleString()}K
                           </span>
                           <span className="text-[9px] text-slate-500 font-mono block">
-                            (Depreciated: {conditionPct}% condition)
+                            ({isTh ? `ประเมินตามสภาพ ${conditionPct}%` : `Depreciated: ${conditionPct}% condition`})
                           </span>
                         </div>
                         <button
@@ -1146,7 +1191,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                           onClick={() => onSellAircraft(plane.instanceId, sellValueK)}
                           className="px-4 py-2.5 bg-rose-950 hover:bg-rose-900 border border-rose-500 disabled:opacity-30 disabled:pointer-events-none text-rose-200 rounded-xl font-bold text-xs md:text-sm transition-all cursor-pointer font-mono"
                         >
-                          {isAssigned ? 'In Flight Service' : 'Sell Airframe'}
+                          {isAssigned ? (isTh ? 'กำลังบินในเส้นทาง' : 'In Flight Service') : t.market.sellPlaneBtn}
                         </button>
                       </div>
                     </div>
@@ -1165,9 +1210,11 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-purple-400 font-mono font-bold text-xs">
                     <Calendar className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                    <span>AEROSPACE R&D TIMELINE (1962 – 2070+)</span>
+                    <span>{isTh ? 'ไทม์ไลน์ R&D วิศวกรรมการบิน (1962 – 2070+)' : 'AEROSPACE R&D TIMELINE (1962 – 2070+)'}</span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-mono">Current Year: {currentYear}</span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {isTh ? `ปีปัจจุบัน: ${currentYear}` : `Current Year: ${currentYear}`}
+                  </span>
                 </div>
 
                 <div className="flex flex-wrap gap-1.5 text-xs font-mono">
@@ -1179,7 +1226,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                         : 'bg-slate-900 border border-slate-700/80 text-slate-300 hover:bg-slate-800'
                     }`}
                   >
-                    All ({allAircraftCatalog.length})
+                    {isTh ? `ทั้งหมด (${allAircraftCatalog.length})` : `All (${allAircraftCatalog.length})`}
                   </button>
                   <button
                     onClick={() => setTimelineFilter('ACTIVE')}
@@ -1189,7 +1236,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                         : 'bg-emerald-950/40 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-900/50'
                     }`}
                   >
-                    <span>🟢 In Market</span>
+                    <span>{isTh ? '🟢 เปิดขายในตลาด' : '🟢 In Market'}</span>
                     <span className="text-[10px]">({availableModels.length})</span>
                   </button>
                   <button
@@ -1200,7 +1247,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                         : 'bg-amber-950/40 border border-amber-500/50 text-amber-300 hover:bg-amber-900/50'
                     }`}
                   >
-                    <span>🟡 Upcoming</span>
+                    <span>{isTh ? '🟡 เร็วๆ นี้' : '🟡 Upcoming'}</span>
                     <span className="text-[10px]">
                       ({allAircraftCatalog.filter((m) => m.introYear > currentYear).length})
                     </span>
@@ -1213,7 +1260,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                         : 'bg-slate-900 border border-slate-700 text-slate-400 hover:bg-slate-800'
                     }`}
                   >
-                    <span>⚪ Retired</span>
+                    <span>{isTh ? '⚪ ปลดระวาง' : '⚪ Retired'}</span>
                     <span className="text-[10px]">
                       ({allAircraftCatalog.filter((m) => m.retireYear && m.retireYear < currentYear).length})
                     </span>
@@ -1227,7 +1274,6 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                   const isSelected = selectedTimelineModel.id === m.id;
                   const isNow = m.introYear <= currentYear && (!m.retireYear || m.retireYear >= currentYear);
                   const isUpcoming = m.introYear > currentYear;
-                  const isRetired = m.retireYear && m.retireYear < currentYear;
                   const photoInfo = getAircraftPhotoInfo(m);
                   const meta = getMfgMeta(m.manufacturer);
 
@@ -1284,20 +1330,26 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                             <span>{m.manufacturer}</span>
                             <span>•</span>
                             {isNow ? (
-                              <span className="text-emerald-400 font-bold">🟢 Active in Market</span>
+                              <span className="text-emerald-400 font-bold">
+                                {isTh ? '🟢 เปิดขายในตลาด' : '🟢 Active in Market'}
+                              </span>
                             ) : isUpcoming ? (
                               <span className="text-amber-300 font-bold">
-                                🟡 Debuts in {m.introYear} ({m.introYear - currentYear === 1 ? 'Next Year' : `in ${m.introYear - currentYear} yrs`})
+                                {isTh
+                                  ? `🟡 เปิดตัวปี ${m.introYear} (${m.introYear - currentYear === 1 ? 'ปีหน้า' : `อีก ${m.introYear - currentYear} ปี`})`
+                                  : `🟡 Debuts in ${m.introYear} (${m.introYear - currentYear === 1 ? 'Next Year' : `in ${m.introYear - currentYear} yrs`})`}
                               </span>
                             ) : (
-                              <span className="text-slate-400">⚪ Retired {m.retireYear}</span>
+                              <span className="text-slate-400">
+                                {isTh ? `⚪ ยุติการผลิต ${m.retireYear}` : `⚪ Retired ${m.retireYear}`}
+                              </span>
                             )}
                           </div>
 
                           <div className="mt-1.5 flex items-center gap-2 text-[10px] font-mono text-slate-300 border-t border-slate-800/80 pt-1">
-                            <span>{m.capacity} Seats</span>
+                            <span>{m.capacity} {isTh ? 'ที่นั่ง' : 'Seats'}</span>
                             <span className="text-slate-600">•</span>
-                            <span className="text-emerald-400 font-bold">{m.rangeKm.toLocaleString()} km</span>
+                            <span className="text-emerald-400 font-bold">{m.rangeKm.toLocaleString()} {isTh ? 'กม.' : 'km'}</span>
                             <span className="text-slate-600">•</span>
                             <span>{m.speedKmh} km/h</span>
                           </div>
@@ -1322,28 +1374,32 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 <div className="shrink-0 mt-3 p-3.5 bg-slate-950 border-2 border-purple-800/70 rounded-xl flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-xl">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-xs text-slate-400">R&D STATUS:</span>
+                      <span className="font-mono text-xs text-slate-400">{isTh ? 'สถานะ R&D:' : 'R&D STATUS:'}</span>
                       <strong className="text-purple-300 font-mono text-base">{selectedTimelineModel.model}</strong>
                       {selectedTimelineModel.introYear <= currentYear && (!selectedTimelineModel.retireYear || selectedTimelineModel.retireYear >= currentYear) ? (
                         <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500 text-xs font-mono font-bold">
-                          ✓ Production Active (Order Available in Showroom)
+                          {isTh ? '✓ กำลังผลิตในตลาด (สั่งซื้อได้ในโชว์รูม)' : '✓ Production Active (Order Available in Showroom)'}
                         </span>
                       ) : selectedTimelineModel.introYear > currentYear ? (
                         <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500 text-xs font-mono font-bold animate-pulse">
-                          ⏳ Debut Scheduled: Year {selectedTimelineModel.introYear} ({selectedTimelineModel.introYear - currentYear === 1 ? 'Next Year' : `in ${selectedTimelineModel.introYear - currentYear} Years`})
+                          {isTh
+                            ? `⏳ มีกำหนดเปิดตัว: ปี ${selectedTimelineModel.introYear} (${selectedTimelineModel.introYear - currentYear === 1 ? 'ปีหน้า' : `อีก ${selectedTimelineModel.introYear - currentYear} ปี`})`
+                            : `⏳ Debut Scheduled: Year ${selectedTimelineModel.introYear} (${selectedTimelineModel.introYear - currentYear === 1 ? 'Next Year' : `in ${selectedTimelineModel.introYear - currentYear} Years`})`}
                         </span>
                       ) : (
                         <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-600 text-xs font-mono font-bold">
-                          🏛 Historical Classic (Production Ended {selectedTimelineModel.retireYear})
+                          {isTh
+                            ? `🏛 ยุติการผลิตแล้ว (สิ้นสุดการผลิตปี ${selectedTimelineModel.retireYear})`
+                            : `🏛 Historical Classic (Production Ended ${selectedTimelineModel.retireYear})`}
                         </span>
                       )}
                     </div>
                     <div className="text-xs text-slate-400 font-mono mt-1 flex items-center gap-2 flex-wrap">
-                      <span>Engine: {selectedTimelineModel.engineType || 'High-Bypass Turbofans'}</span>
+                      <span>{isTh ? 'เครื่องยนต์: ' : 'Engine: '}{selectedTimelineModel.engineType || 'High-Bypass Turbofans'}</span>
                       <span>•</span>
-                      <span>Ceiling: {selectedTimelineModel.serviceCeilingFt?.toLocaleString() || 41000} ft</span>
+                      <span>{isTh ? 'เพดานบิน: ' : 'Ceiling: '}{selectedTimelineModel.serviceCeilingFt?.toLocaleString() || 41000} ft</span>
                       <span>•</span>
-                      <span>Cabin: {selectedTimelineModel.cabinAisle || 'Standard'}</span>
+                      <span>{isTh ? 'ห้องโดยสาร: ' : 'Cabin: '}{selectedTimelineModel.cabinAisle || 'Standard'}</span>
                     </div>
                   </div>
 
@@ -1356,7 +1412,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                       className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm md:text-base rounded-xl shadow-xl transition-all active:scale-95 border-2 border-emerald-400 cursor-pointer flex items-center gap-2 shrink-0"
                     >
                       <ShoppingCart className="w-4 h-4 text-emerald-200" />
-                      <span>Switch to Showroom to Procure</span>
+                      <span>{isTh ? 'สลับไปโชว์รูมเพื่อสั่งซื้อ' : 'Switch to Showroom to Procure'}</span>
                     </button>
                   )}
                 </div>
@@ -1368,7 +1424,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
         {/* Standardized Modal Footer */}
         <div className="bg-slate-950 px-6 py-3.5 border-t border-slate-800 flex justify-between items-center text-xs font-mono shrink-0">
           <div className="text-slate-400">
-            Treasury Available:{' '}
+            {t.market.availableCash}{' '}
             <strong className="text-emerald-400 font-bold">
               ${playerAirline.cashK.toLocaleString()}K
             </strong>
@@ -1379,7 +1435,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
             data-testid="modal-close-footer-btn"
           >
             <X className="w-4 h-4 text-slate-400" />
-            <span>Close (ปิดหน้าต่าง)</span>
+            <span>{t.common.close}</span>
           </button>
         </div>
       </div>
@@ -1396,10 +1452,10 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 </div>
                 <div>
                   <h3 className="text-lg sm:text-xl font-black text-white tracking-wide font-mono flex items-center gap-2">
-                    AIRCRAFT PROCUREMENT CONTRACT REVIEW
+                    {t.market.orderModalTitle}
                   </h3>
                   <div className="text-xs sm:text-sm text-sky-300/80 font-mono">
-                    ใบตรวจสอบและยืนยันสัญญาจัดซื้ออากาศยานพาณิชย์ • Review before final commitment
+                    {t.market.orderModalSubtitle}
                   </div>
                 </div>
               </div>
@@ -1436,11 +1492,11 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                     {selectedModel.model}
                   </h4>
                   <div className="text-xs sm:text-sm text-slate-300 font-mono flex items-center gap-3 mt-1.5 flex-wrap">
-                    <span>{selectedModel.capacity} Passengers</span>
+                    <span>{selectedModel.capacity} {isTh ? 'ผู้โดยสาร' : 'Passengers'}</span>
                     <span>•</span>
-                    <span className="text-emerald-400 font-bold">{selectedModel.rangeKm.toLocaleString()} km Range</span>
+                    <span className="text-emerald-400 font-bold">{selectedModel.rangeKm.toLocaleString()} {isTh ? 'กม. พิสัยบิน' : 'km Range'}</span>
                     <span>•</span>
-                    <span>{selectedModel.speedKmh} km/h Cruise</span>
+                    <span>{selectedModel.speedKmh} km/h {isTh ? 'ความเร็วเดินทาง' : 'Cruise'}</span>
                   </div>
                 </div>
               </div>
@@ -1449,10 +1505,10 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-xs sm:text-sm font-mono font-bold text-slate-200 block">
-                    NUMBER OF AIRFRAMES TO PROCURE (จำนวนลำที่สั่งซื้อ):
+                    {t.market.orderQuantityLabel}
                   </span>
                   <span className="text-xs text-slate-400 font-mono">
-                    Adjust quantity before finalizing the contract
+                    {isTh ? 'ปรับจำนวนลำก่อนลงนามในสัญญา' : 'Adjust quantity before finalizing the contract'}
                   </span>
                 </div>
 
@@ -1472,7 +1528,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                       {safeQuantity}
                     </span>
                     <span className="text-[11px] font-mono text-slate-400 block -mt-0.5">
-                      {safeQuantity === 1 ? 'airframe' : 'airframes'}
+                      {safeQuantity === 1 ? t.market.airframe : t.market.airframes}
                     </span>
                   </div>
 
@@ -1510,7 +1566,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                             : 'bg-amber-950/40 text-amber-300 border-amber-500/50 hover:bg-amber-900/60'
                         }`}
                       >
-                        Max ({maxAffordableQuantity})
+                        {t.market.maxQty.replace('{qty}', maxAffordableQuantity.toString())}
                       </button>
                     )}
                   </div>
@@ -1520,9 +1576,9 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               {/* Financial Breakdown Table / Invoice */}
               <div className="bg-slate-950 rounded-2xl border border-slate-800 p-5 space-y-3 font-mono text-sm sm:text-base">
                 <div className="flex justify-between items-center text-slate-300">
-                  <span>Unit Base Price:</span>
+                  <span>{t.market.unitBasePrice}</span>
                   <span className="font-bold text-white">
-                    ${selectedPriceInfo.originalPriceK.toLocaleString()}K per unit
+                    ${selectedPriceInfo.originalPriceK.toLocaleString()}K {isTh ? 'ต่อลำ' : 'per unit'}
                   </span>
                 </div>
 
@@ -1530,7 +1586,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                   <div className="flex justify-between items-center text-amber-400">
                     <span className="flex items-center gap-1.5">
                       <Flame className="w-4 h-4" />
-                      <span>Promotional Rebate ({selectedPriceInfo.discountPct}% OFF):</span>
+                      <span>{t.market.promotionalRebate.replace('{pct}', selectedPriceInfo.discountPct.toString())}</span>
                     </span>
                     <span className="font-bold">
                       -${totalSavingsK.toLocaleString()}K
@@ -1539,21 +1595,21 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 )}
 
                 <div className="flex justify-between items-center text-slate-300">
-                  <span>Effective Unit Acquisition Price:</span>
+                  <span>{t.market.effectiveUnitPrice}</span>
                   <span className="font-bold text-emerald-400">
                     ${unitPriceK.toLocaleString()}K
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center text-slate-300">
-                  <span>Order Quantity (จำนวนลำ):</span>
+                  <span>{t.market.orderQuantityLabel}</span>
                   <span className="font-bold text-sky-400">
-                    × {safeQuantity} {safeQuantity === 1 ? 'Airframe' : 'Airframes'}
+                    × {safeQuantity} {safeQuantity === 1 ? t.market.airframe : t.market.airframes}
                   </span>
                 </div>
 
                 <div className="pt-3 border-t border-slate-800 flex justify-between items-center text-base sm:text-lg">
-                  <span className="font-bold text-white">Total Acquisition Cost (ยอดรวมชำระ):</span>
+                  <span className="font-bold text-white">{t.market.totalCostLabel}</span>
                   <span className="font-black text-2xl text-emerald-400">
                     ${totalCostK.toLocaleString()}K
                   </span>
@@ -1561,12 +1617,12 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
 
                 <div className="pt-2.5 border-t border-dashed border-slate-800/80 space-y-1.5 text-xs sm:text-sm">
                   <div className="flex justify-between items-center text-slate-400">
-                    <span>Current Company Cash (ยอดเงินปัจจุบัน):</span>
+                    <span>{t.market.currentCashLabel}</span>
                     <span className="font-bold text-slate-200">${playerAirline.cashK.toLocaleString()}K</span>
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Projected Balance After Delivery (เงินคงเหลือหลังจ่าย):</span>
+                    <span className="text-slate-400">{t.market.projectedBalance}</span>
                     {canAfford ? (
                       <span className="font-bold text-emerald-400">
                         ${remainingCash.toLocaleString()}K
@@ -1574,7 +1630,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                     ) : (
                       <span className="font-bold text-rose-400 flex items-center gap-1">
                         <AlertCircle className="w-4 h-4" />
-                        Insufficient Cash (Short by ${(totalCostK - playerAirline.cashK).toLocaleString()}K)
+                        {t.market.insufficientCashShort.replace('{short}', `$${(totalCostK - playerAirline.cashK).toLocaleString()}K`)}
                       </span>
                     )}
                   </div>
@@ -1586,13 +1642,13 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 <Clock className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <span className="font-bold text-sky-300 block text-sm">
-                    Manufacturing Lead Time & Delivery Terms (กำหนดการส่งมอบอากาศยาน):
+                    {t.market.leadTimeTitle}
                   </span>
                   <p className="text-slate-300">
-                    Airliners are ordered directly from the factory. Scheduled handover is set for <span className="font-bold text-white">Year {nextDeliveryYear} Quarter {nextDeliveryQuarter}</span> (Next Quarter).
+                    {t.market.leadTimeDesc.replace('{year}', nextDeliveryYear.toString()).replace('{quarter}', nextDeliveryQuarter.toString())}
                   </p>
                   <p className="text-slate-400 text-xs">
-                    ※ Realistic aviation production factor: 95% on-time delivery rate, 5% supply-chain/certification postponement risk.
+                    {t.market.deliveryRiskNote}
                   </p>
                 </div>
               </div>
@@ -1602,8 +1658,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 <div className="p-4 bg-amber-950/60 border border-amber-500/70 rounded-2xl flex items-center gap-3.5 text-xs sm:text-sm font-mono text-amber-200">
                   <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
                   <div>
-                    <span className="font-bold block">Low Working Capital Advisory:</span>
-                    Your airline will have less than $15,000K remaining after this order. Keep sufficient liquidity for route maintenance and operating overhead!
+                    <span className="font-bold block">{t.market.lowCapitalAlert}</span>
                   </div>
                 </div>
               )}
@@ -1617,7 +1672,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                 className="px-5 py-2.5 bg-slate-800 hover:bg-rose-950/80 border border-slate-700 hover:border-rose-500 rounded-xl text-slate-300 hover:text-white font-mono font-bold text-sm transition cursor-pointer flex items-center gap-2"
               >
                 <X className="w-4 h-4 text-rose-400" />
-                <span>Cancel Order (ยกเลิก)</span>
+                <span>{t.market.cancelOrderBtn}</span>
               </button>
 
               <button
@@ -1627,7 +1682,9 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
                   onBuyAircraft(selectedModel, unitPriceK, safeQuantity);
                   setShowConfirmModal(false);
                   setToastNotification(
-                    `Contract signed! Ordered ${safeQuantity}x ${selectedModel.model} for $${totalCostK.toLocaleString()}K. Scheduled delivery: Year ${nextDeliveryYear} Q${nextDeliveryQuarter}!`
+                    isTh
+                      ? `ลงนามสัญญาเรียบร้อย! สั่งซื้อ ${selectedModel.model} จำนวน ${safeQuantity} ลำ ยอดรวม $${totalCostK.toLocaleString()}K กำหนดส่งมอบ: ปี ${nextDeliveryYear} Q${nextDeliveryQuarter}!`
+                      : `Contract signed! Ordered ${safeQuantity}x ${selectedModel.model} for $${totalCostK.toLocaleString()}K. Scheduled delivery: Year ${nextDeliveryYear} Q${nextDeliveryQuarter}!`
                   );
                   setOrderQuantity(1);
                 }}
@@ -1635,7 +1692,7 @@ export const AircraftShopModal: React.FC<AircraftShopModalProps> = ({
               >
                 <CheckCircle2 className="w-5 h-5 text-emerald-200" />
                 <span>
-                  Confirm & Place Factory Order (${totalCostK.toLocaleString()}K)
+                  {t.market.confirmOrderBtn.replace('{total}', `$${totalCostK.toLocaleString()}K`)}
                 </span>
               </button>
             </div>

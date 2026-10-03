@@ -3,6 +3,7 @@ import { Airline, BusinessVenture, RegionalCampaign, RegionId } from '../types/g
 import { CITIES } from '../data/cities';
 import { REGIONS, RegionZone } from '../data/regions';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useI18n } from '../utils/i18n';
 import {
   X,
   Building2,
@@ -39,6 +40,100 @@ interface VentureTemplate {
   tourismBoost: number;
   description: string;
 }
+
+export const getVentureLocalized = (type: BusinessVenture['type'], isTh: boolean) => {
+  switch (type) {
+    case 'HOTEL':
+      return {
+        name: isTh ? 'โรงแรมหรูระดับพรีเมียม' : 'Grand Luxury Hotel',
+        description: isTh
+          ? 'โรงแรมใจกลางเมืองระดับห้าดาว มอบความสะดวกสบายชั้นเลิศ และสร้างเงินปันผลสม่ำเสมอทุกไตรมาส'
+          : 'Premier downtown hotel providing luxury accommodations and consistent quarterly dividend cashflow.',
+      };
+    case 'MUSEUM':
+      return {
+        name: isTh ? 'พิพิธภัณฑ์มรดกการบิน' : 'Aviation Heritage Museum',
+        description: isTh
+          ? 'แลนด์มาร์กทางประวัติศาสตร์การบิน ช่วยยกระดับชื่อเสียงเมือง และปลดล็อกแคมเปญวัฒนธรรมประจำทวีป'
+          : 'Cultural landmark that raises local prestige and unlocks regional Culture & Art campaigns.',
+      };
+    case 'ARTS_PAVILION':
+      return {
+        name: isTh ? 'หอศิลปะร่วมสมัย' : 'Fine Arts Pavilion',
+        description: isTh
+          ? 'หอศิลป์จัดแสดงผลงานระดับนานาชาติ ดึงดูดนักท่องเที่ยวผู้รักงานศิลปะ และปลดล็อกการตลาดวัฒนธรรม'
+          : 'Celebrated cultural gallery that attracts international connoisseurs and unlocks regional cultural marketing.',
+      };
+    case 'CONCERT_HALL':
+      return {
+        name: isTh ? 'คอนเสิร์ตฮอลล์มหานคร' : 'Metropolitan Concert Hall',
+        description: isTh
+          ? 'หอแสดงดนตรีซิมโฟนีระดับโลก รองรับทัวร์คอนเสิร์ตระดับนานาชาติ กระตุ้นการท่องเที่ยวและอัตราเดินทาง'
+          : 'Acoustic symphony auditorium hosting world tours, boosting local city tourism and cultural visibility.',
+      };
+    case 'AMUSEMENT_PARK':
+      return {
+        name: isTh ? 'สวนสนุกซูเปอร์โซนิก' : 'Supersonic Theme Park',
+        description: isTh
+          ? 'สวนสนุกระดับโลกขนาดใหญ่ เพิ่มดัชนีท่องเที่ยวของเมืองอย่างถาวร +20 จุด และปลดล็อกแคมเปญสันทนาการ'
+          : 'Massive world-class attraction! Permanently boosts the city tourism index by +20 points and unlocks Leisure campaigns.',
+      };
+    case 'PLEASURE_BOAT':
+      return {
+        name: isTh ? 'เรือสำราญชมทัศนียภาพชายฝั่ง' : 'Coastal Cruise & Pleasure Boat',
+        description: isTh
+          ? 'กองเรือนำเที่ยวทางน้ำ มอบประสบการณ์ชมวิวชายฝั่งสำหรับเมืองท่าและเมืองติดทะเล'
+          : 'Scenic pleasure cruise fleet offering sightseeing tours for seaside and coastal hubs.',
+      };
+    case 'GOLF_COURSE':
+      return {
+        name: isTh ? 'สนามกอล์ฟระดับแชมเปียนชิพ' : 'Championship Golf Club',
+        description: isTh
+          ? 'สนามกอล์ฟมาตรฐาน 18 หลุม ดึงดูดนักธุรกิจระดับสูงและนักท่องเที่ยวกลุ่มกำลังซื้อสูง'
+          : 'Prestigious 18-hole resort course attracting affluent business travelers and holidaymakers.',
+      };
+    case 'SKI_RESORT':
+      return {
+        name: isTh ? 'สกีรีสอร์ทเทือกเขาสูง' : 'Alpine Ski Resort',
+        description: isTh
+          ? 'รีสอร์ทฤดูหนาวบนเทือกเขา สร้างอุปสงค์การเดินทางท่องเที่ยวพักผ่อนช่วงวันหยุดอย่างคึกคัก'
+          : 'Mountain winter wonderland generating strong seasonal demand and elevating regional leisure traffic.',
+      };
+    case 'SHUTTLE_BUS':
+      return {
+        name: isTh ? 'รถบัสชัตเติิลด่วนสนามบิน' : 'Airport Express Shuttle',
+        description: isTh
+          ? 'เครือข่ายรถรับส่งสนามบินความสะดวกสูง เชื่อมต่อหัวเมืองโดยรอบและส่งผู้โดยสารเข้าสู่เที่ยวบินของคุณ'
+          : 'High-convenience airport transfer network connecting regional cities and feeding passengers to your flights.',
+      };
+    case 'FERRY_BOAT':
+      return {
+        name: isTh ? 'เรือข้ามฟากเชื่อมเกาะ' : 'Island Cross-Harbor Ferry',
+        description: isTh
+          ? 'เส้นทางเชื่อมต่อผู้โดยสารทางทะเล ลำเลียงนักเดินทางระหว่างเกาะโดยรอบกับท่าอากาศยานนานาชาติ'
+          : 'Essential maritime passenger link transporting travelers between surrounding islands and the international airport.',
+      };
+    case 'COMMUTER_AIRLINE':
+      return {
+        name: isTh ? 'สายการบินฟีดเดอร์ท้องถิ่น' : 'Regional Feeder Commuter',
+        description: isTh
+          ? 'สายการบินเครื่องบินใบพัดเชื่อมต่อชุมชนย่อยเข้าสู่เที่ยวบินระยะไกลที่ศูนย์กลางการบินของคุณ'
+          : 'Turboprop feeder airline serving smaller remote communities and connecting them into your main hub flights.',
+      };
+    case 'TRAVEL_AGENCY':
+      return {
+        name: isTh ? 'บริษัทนำเที่ยวและตัวแทนจำหน่ายตั๋ว' : 'Global Travel Agency',
+        description: isTh
+          ? 'ช่วยจัดจำหน่ายแพ็กเกจตั๋วเครื่องบินทั่วทวีป มอบโบนัสเสริมผลลัพธ์แคมเปญโฆษณาในทวีปเพิ่มอีก +30%!'
+          : 'Promotes your airline ticket packages across the continent. Grants a +30% synergy boost to all regional advertising campaigns!',
+      };
+    default:
+      return {
+        name: isTh ? 'ธุรกิจเสริม' : 'Commercial Venture',
+        description: isTh ? 'ธุรกิจในเครือ' : 'Subsidiary venture.',
+      };
+  }
+};
 
 const VENTURE_TYPES: VentureTemplate[] = [
   // 1. Hotels
@@ -176,6 +271,8 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
   onLaunchCampaign,
 }) => {
   useEscapeKey(onClose);
+  const { t, lang } = useI18n();
+  const isTh = lang === 'th';
   const [activeTab, setActiveTab] = useState<'VENTURES' | 'CAMPAIGNS'>('VENTURES');
   const [selectedCityId, setSelectedCityId] = useState<string>(playerAirline.homeCityId);
   const [selectedFilterCategory, setSelectedFilterCategory] = useState<string>('ALL');
@@ -183,6 +280,19 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
   const accessibleCities = CITIES.filter((c) => (playerAirline.slots[c.id] || 0) > 0);
   const city = CITIES.find((c) => c.id === selectedCityId) || CITIES[0];
   const cityMap = new Map(CITIES.map((c) => [c.id, c]));
+
+  const getCategoryLabel = (cat: string) => {
+    if (!isTh) return cat;
+    switch (cat) {
+      case 'ALL': return 'ทั้งหมด';
+      case 'HOTEL': return 'โรงแรม';
+      case 'CULTURE': return 'วัฒนธรรม';
+      case 'AMUSEMENT': return 'สวนสนุก';
+      case 'SERVICE': return 'บริการ';
+      case 'TRAVEL': return 'ท่องเที่ยว';
+      default: return cat;
+    }
+  };
 
   const filteredTemplates = VENTURE_TYPES.filter((t) => {
     if (selectedFilterCategory === 'ALL') return true;
@@ -193,13 +303,14 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
     const costMultiplier = 0.6 + (city.businessIndex / 100) * 0.8;
     const finalCostK = Math.round(template.baseCostK * costMultiplier);
     const finalDividendK = Math.round(template.baseDividendK * costMultiplier);
+    const localized = getVentureLocalized(template.type, isTh);
 
     const newVenture: BusinessVenture = {
       id: `BIZ_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
       cityId: city.id,
       airlineId: playerAirline.id,
       type: template.type,
-      name: `${city.name} ${template.name}`,
+      name: `${city.name} ${localized.name}`,
       purchaseCostK: finalCostK,
       quarterlyDividendK: finalDividendK,
       tourismBoost: template.tourismBoost,
@@ -212,7 +323,9 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
     const refundK = Math.round(venture.purchaseCostK * 0.75); // 75% liquidation value
     if (
       window.confirm(
-        `Are you sure you want to liquidate and sell ${venture.name}? You will recover $${refundK.toLocaleString()}K (75% of asset valuation).`
+        isTh
+          ? `คุณแน่ใจหรือไม่ว่าต้องการขายคืนกิจการ ${venture.name}? คุณจะได้รับเงินสดคืน $${refundK.toLocaleString()}K (75% ของมูลค่าสินทรัพย์)`
+          : `Are you sure you want to liquidate and sell ${venture.name}? You will recover $${refundK.toLocaleString()}K (75% of asset valuation).`
       )
     ) {
       onSellBusiness(venture.id, refundK);
@@ -262,22 +375,32 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
     const finalBoostPct = Math.round(baseBoostPct * synergy);
 
     if (playerAirline.cashK < baseCostK) {
-      alert(`Insufficient funds! $${baseCostK.toLocaleString()}K required to launch this campaign.`);
+      alert(
+        isTh
+          ? `เงินสดสำรองไม่เพียงพอ! ต้องการเงิน $${baseCostK.toLocaleString()}K เพื่อเปิดแคมเปญนี้`
+          : `Insufficient funds! $${baseCostK.toLocaleString()}K required to launch this campaign.`
+      );
       return;
     }
 
-    const campaignNames: Record<string, string> = {
-      CULTURE_ART: 'Continental Culture & Heritage Promotion',
-      LEISURE_SPORTS: 'Grand Holiday & Leisure Tourism Campaign',
-      TRAVEL_NETWORK: 'Integrated Transit & Feeder Network Drive',
-    };
+    const campaignNames: Record<string, string> = isTh
+      ? {
+          CULTURE_ART: 'แคมเปญส่งเสริมศิลปวัฒนธรรมประจำทวีป',
+          LEISURE_SPORTS: 'แคมเปญการท่องเที่ยวและกีฬาประจำทวีป',
+          TRAVEL_NETWORK: 'แคมเปญเครือข่ายคมนาคมท่องเที่ยวประจำทวีป',
+        }
+      : {
+          CULTURE_ART: 'Continental Culture & Heritage Promotion',
+          LEISURE_SPORTS: 'Grand Holiday & Leisure Tourism Campaign',
+          TRAVEL_NETWORK: 'Integrated Transit & Feeder Network Drive',
+        };
 
     const newCampaign: RegionalCampaign = {
       id: `CAMP_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
       airlineId: playerAirline.id,
       regionId,
       category,
-      name: campaignNames[category] || 'Regional Promotion',
+      name: campaignNames[category] || (isTh ? 'แคมเปญประจำภูมิภาค' : 'Regional Promotion'),
       quartersRemaining: 4, // 1 full year duration!
       demandBoostPct: finalBoostPct,
       costK: baseCostK,
@@ -297,10 +420,10 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-black font-mono tracking-wide text-white">
-                SUBSIDIARIES & REGIONAL ADVERTISING (ธุรกิจในเครือและแคมเปญโฆษณา)
+                {t.ventures.headerTitle}
               </h2>
               <div className="text-xs text-indigo-300 font-mono">
-                {playerAirline.name} • Commercial Ventures Division
+                {playerAirline.name} • {t.ventures.headerSubtitle}
               </div>
             </div>
           </div>
@@ -315,7 +438,7 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                1. Subsidiaries (ธุรกิจเสริม)
+                {t.ventures.tabSubsidiaries}
               </button>
               <button
                 onClick={() => setActiveTab('CAMPAIGNS')}
@@ -326,14 +449,14 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                 }`}
               >
                 <Megaphone className="w-3.5 h-3.5" />
-                <span>2. Ad Campaigns (แคมเปญโฆษณา)</span>
+                <span>{t.ventures.tabCampaigns}</span>
               </button>
             </div>
 
             <button
               onClick={onClose}
               className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
-              title="Close (Esc)"
+              title={t.common.close}
               data-testid="modal-close-header-btn"
             >
               <X className="w-6 h-6" />
@@ -347,7 +470,7 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
             {/* Filter & City Selector Bar */}
             <div className="bg-slate-950 px-5 py-3.5 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
               <div className="flex items-center gap-2.5">
-                <span className="text-slate-400 font-bold">TARGET CITY:</span>
+                <span className="text-slate-400 font-bold">{t.ventures.targetCity}</span>
                 <select
                   value={selectedCityId}
                   onChange={(e) => setSelectedCityId(e.target.value)}
@@ -355,7 +478,7 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                 >
                   {accessibleCities.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} ({c.id}) • Tourism: {c.tourismIndex}/100 • Econ: {c.businessIndex}/100
+                      {c.name} ({c.id}) • {isTh ? 'ท่องเที่ยว:' : 'Tourism:'} {c.tourismIndex}/100 • {isTh ? 'เศรษฐกิจ:' : 'Econ:'} {c.businessIndex}/100
                     </option>
                   ))}
                 </select>
@@ -373,12 +496,11 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                         : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    {cat}
+                    {getCategoryLabel(cat)}
                   </button>
                 ))}
               </div>
             </div>
-
             {/* Ventures Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               {filteredTemplates.map((template) => {
@@ -391,7 +513,7 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                   (b) => b.cityId === city.id && b.type === template.type
                 );
 
-                const Icon = template.icon;
+                const localized = getVentureLocalized(template.type, isTh);
 
                 return (
                   <div
@@ -402,7 +524,7 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                       <div className="flex justify-between items-start gap-3">
                         <div className="flex items-start gap-3">
                           <VentureCardVisual
-                            name={template.name}
+                            name={localized.name}
                             type={template.type}
                             icon={
                               template.category === 'HOTEL'
@@ -419,10 +541,10 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                           />
                           <div>
                             <div className="font-mono font-black text-sm sm:text-base text-white">
-                              {template.name}
+                              {localized.name}
                             </div>
                             <div className="text-xs text-sky-400 font-mono mt-0.5">
-                              {city.name} ({city.id}) • {template.category}
+                              {city.name} ({city.id}) • {getCategoryLabel(template.category)}
                             </div>
                           </div>
                         </div>
@@ -432,18 +554,18 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                             ${finalCostK.toLocaleString()}K
                           </div>
                           <div className="text-[10px] text-indigo-300 font-bold">
-                            Yield: +${finalDividendK}K/qtr
+                            {t.ventures.yieldQtr.replace('{dividend}', finalDividendK.toString())}
                           </div>
                         </div>
                       </div>
 
                       <p className="mt-2 text-slate-300 text-xs leading-relaxed">
-                        {template.description}
+                        {localized.description}
                       </p>
 
                       {template.tourismBoost > 0 && (
                         <div className="mt-2 text-[11px] text-pink-300 font-black bg-pink-950/40 border border-pink-700/60 px-2 py-1 rounded-lg text-center">
-                          ⭐ Permanently boosts {city.name} Tourism by +{template.tourismBoost} Points!
+                          {t.ventures.boostTourism.replace('{city}', city.name).replace('{boost}', template.tourismBoost.toString())}
                         </div>
                       )}
                     </div>
@@ -454,7 +576,7 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                         onClick={() => handleBuy(template)}
                         className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-30 disabled:pointer-events-none text-white font-black text-xs font-mono rounded-xl shadow transition-all active:scale-95 border border-indigo-400 cursor-pointer"
                       >
-                        {isAlreadyOwned ? 'Already Established' : `Acquire ($${finalCostK.toLocaleString()}K)`}
+                        {isAlreadyOwned ? t.ventures.alreadyOwned : `${t.ventures.investBtn} ($${finalCostK.toLocaleString()}K)`}
                       </button>
                     </div>
                   </div>
@@ -468,14 +590,16 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-black text-sm text-white uppercase tracking-wider flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>ACTIVE CORPORATE SUBSIDIARIES ({playerAirline.businesses.length})</span>
+                    <span>{t.ventures.ownedVenturesTitle.replace('{count}', playerAirline.businesses.length.toString())}</span>
                   </h3>
                   <span className="text-xs text-emerald-400 font-bold">
-                    Total Passive Dividends: +$
-                    {playerAirline.businesses
-                      .reduce((sum, b) => sum + b.quarterlyDividendK, 0)
-                      .toLocaleString()}
-                    K / quarter
+                    {isTh
+                      ? `เงินปันผลรวม: +$${playerAirline.businesses
+                          .reduce((sum, b) => sum + b.quarterlyDividendK, 0)
+                          .toLocaleString()}K / ไตรมาส`
+                      : `Total Passive Dividends: +$${playerAirline.businesses
+                          .reduce((sum, b) => sum + b.quarterlyDividendK, 0)
+                          .toLocaleString()}K / quarter`}
                   </span>
                 </div>
 
@@ -490,19 +614,21 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                         <div>
                           <div className="font-bold text-white text-xs truncate">{biz.name}</div>
                           <div className="text-[11px] text-emerald-400 font-bold mt-0.5">
-                            Dividend: +${biz.quarterlyDividendK}K/qtr
+                            {t.ventures.yieldQtr.replace('{dividend}', biz.quarterlyDividendK.toString())}
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[10px]">
-                          <span className="text-slate-400">Valuation: ${biz.purchaseCostK}K</span>
+                          <span className="text-slate-400">
+                            {isTh ? `มูลค่า: $${biz.purchaseCostK.toLocaleString()}K` : `Valuation: $${biz.purchaseCostK.toLocaleString()}K`}
+                          </span>
                           <button
                             onClick={() => handleSell(biz)}
                             className="px-2 py-1 bg-rose-950/80 hover:bg-rose-900 border border-rose-600/80 text-rose-300 font-bold rounded flex items-center gap-1 transition cursor-pointer"
-                            title="Sell venture for 75% liquid cash refund"
+                            title={isTh ? 'ขายคืนกิจการ รับเงินสด 75%' : 'Sell venture for 75% liquid cash refund'}
                           >
                             <Trash2 className="w-3 h-3 text-rose-400" />
-                            <span>Sell (${refundK}K)</span>
+                            <span>{isTh ? `ขาย ($${refundK.toLocaleString()}K)` : `Sell ($${refundK.toLocaleString()}K)`}</span>
                           </button>
                         </div>
                       </div>
@@ -522,10 +648,12 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
               <Megaphone className="w-6 h-6 text-indigo-400 shrink-0" />
               <div className="space-y-0.5">
                 <div className="font-bold text-white text-sm">
-                  CONTINENTAL ADVERTISING CAMPAIGNS (การทำแคมเปญโฆษณาประจำทวีป)
+                  {isTh ? 'แคมเปญโฆษณาประจำทวีป' : 'CONTINENTAL ADVERTISING CAMPAIGNS'}
                 </div>
                 <div className="text-slate-300 leading-relaxed text-[11px]">
-                  ตามคู่มือ Koei Aerobiz Supersonic: เมื่อท่านครอบครองธุรกิจเสริมในภูมิภาค จะปลดล็อกการทำแคมเปญโฆษณาประจำทวีปเพื่อกระตุ้นยอดผู้โดยสาร (Passenger Demand) ของทุกเที่ยวบินในทวีปนั้นยาวนาน 1 ปีเต็ม (4 ไตรมาส)! หากเป็นเจ้าของ <strong>Travel Agency</strong> จะได้รับโบนัสขยายผลลัพธ์แคมเปญเพิ่มอีก +30%!
+                  {isTh
+                    ? 'ตามคู่มือการบริหาร: เมื่อครอบครองธุรกิจเสริมในภูมิภาค จะปลดล็อกการทำแคมเปญโฆษณาประจำทวีปเพื่อกระตุ้นยอดผู้โดยสารของทุกเที่ยวบินในทวีปนั้นยาวนาน 1 ปีเต็ม (4 ไตรมาส)! หากเป็นเจ้าของบริษัทนำเที่ยวจะได้รับโบนัสขยายผลลัพธ์แคมเปญเพิ่มอีก +30%!'
+                    : 'According to aviation executive guidelines: Owning regional subsidiaries unlocks continental advertising campaigns to stimulate passenger demand across all flights in that region for a full year (4 quarters)! Owning a Travel Agency grants a +30% synergy boost to campaign effectiveness!'}
                 </div>
               </div>
             </div>
@@ -546,11 +674,11 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                       <div className="flex items-center gap-2">
                         <span className="font-black text-sm text-white">{reg.name}</span>
                         <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">
-                          {data.regionalVentures.length} Subsidiaries Owned
+                          {data.regionalVentures.length} {isTh ? 'แห่งในเครือ' : 'Subsidiaries Owned'}
                         </span>
                         {hasSynergy && (
                           <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-500/80 px-2 py-0.5 rounded flex items-center gap-1 font-bold animate-pulse">
-                            ⭐ Travel Agency Synergy (+30% Power)
+                            ⭐ {isTh ? 'พลังหนุนจากบริษัทนำเที่ยว (+30%)' : 'Travel Agency Synergy (+30% Power)'}
                           </span>
                         )}
                       </div>
@@ -559,8 +687,9 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                         <div className="flex items-center gap-1.5 text-emerald-400 font-bold bg-emerald-950/80 border border-emerald-500 px-2.5 py-1 rounded-xl">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>
-                            ACTIVE: {data.activeCampaign.quartersRemaining} Quarters Left (+
-                            {data.activeCampaign.demandBoostPct}% Traffic)
+                            {isTh
+                              ? `กำลังดำเนินการ: เหลืออีก ${data.activeCampaign.quartersRemaining} ไตรมาส (ผู้โดยสาร +${data.activeCampaign.demandBoostPct}%)`
+                              : `ACTIVE: ${data.activeCampaign.quartersRemaining} Quarters Left (+${data.activeCampaign.demandBoostPct}% Traffic)`}
                           </span>
                         </div>
                       )}
@@ -578,13 +707,13 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                       >
                         <div>
                           <div className="font-bold text-white flex items-center justify-between">
-                            <span>Culture & Art Campaign</span>
+                            <span>{isTh ? 'แคมเปญส่งเสริมศิลปวัฒนธรรม' : 'Culture & Art Campaign'}</span>
                             <span className="text-emerald-400">
                               +{hasSynergy ? '20%' : '15%'}
                             </span>
                           </div>
                           <div className="text-[10px] text-slate-400 mt-1">
-                            Requires: Museum or Arts Pavilion
+                            {isTh ? 'เงื่อนไข: ต้องมีพิพิธภัณฑ์หรือหอศิลป์' : 'Requires: Museum or Arts Pavilion'}
                           </div>
                         </div>
 
@@ -600,7 +729,7 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                           }
                           className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:pointer-events-none text-white font-bold rounded-lg transition cursor-pointer"
                         >
-                          Launch ($1,200K)
+                          {isTh ? 'เริ่มแคมเปญ ($1,200K)' : 'Launch ($1,200K)'}
                         </button>
                       </div>
 
@@ -614,13 +743,13 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                       >
                         <div>
                           <div className="font-bold text-white flex items-center justify-between">
-                            <span>Leisure & Sports Campaign</span>
+                            <span>{isTh ? 'แคมเปญการท่องเที่ยวและกีฬา' : 'Leisure & Sports Campaign'}</span>
                             <span className="text-emerald-400">
                               +{hasSynergy ? '29%' : '22%'}
                             </span>
                           </div>
                           <div className="text-[10px] text-slate-400 mt-1">
-                            Requires: Theme Park, Cruise or Golf
+                            {isTh ? 'เงื่อนไข: ต้องมีสวนสนุก เรือสำราญ หรือสนามกอล์ฟ' : 'Requires: Theme Park, Cruise or Golf'}
                           </div>
                         </div>
 
@@ -636,7 +765,7 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                           }
                           className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:pointer-events-none text-white font-bold rounded-lg transition cursor-pointer"
                         >
-                          Launch ($2,500K)
+                          {isTh ? 'เริ่มแคมเปญ ($2,500K)' : 'Launch ($2,500K)'}
                         </button>
                       </div>
 
@@ -650,13 +779,13 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                       >
                         <div>
                           <div className="font-bold text-white flex items-center justify-between">
-                            <span>Travel Network Campaign</span>
+                            <span>{isTh ? 'แคมเปญเครือข่ายคมนาคมท่องเที่ยว' : 'Travel Network Campaign'}</span>
                             <span className="text-emerald-400">
                               +{hasSynergy ? '24%' : '18%'}
                             </span>
                           </div>
                           <div className="text-[10px] text-slate-400 mt-1">
-                            Requires: Shuttle, Ferry, or Travel Agency
+                            {isTh ? 'เงื่อนไข: ต้องมีรถบัส เรือข้ามฟาก หรือบริษัทนำเที่ยว' : 'Requires: Shuttle, Ferry, or Travel Agency'}
                           </div>
                         </div>
 
@@ -675,7 +804,7 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
                           }
                           className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:pointer-events-none text-white font-bold rounded-lg transition cursor-pointer"
                         >
-                          Launch ($1,800K)
+                          {isTh ? 'เริ่มแคมเปญ ($1,800K)' : 'Launch ($1,800K)'}
                         </button>
                       </div>
                     </div>
@@ -689,7 +818,8 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
         {/* Modal Footer */}
         <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-xs font-mono shrink-0">
           <div className="text-slate-400">
-            Treasury Balance: <strong className="text-emerald-400">${playerAirline.cashK.toLocaleString()}K</strong>
+            {t.market.availableCash}{' '}
+            <strong className="text-emerald-400">${playerAirline.cashK.toLocaleString()}K</strong>
           </div>
           <button
             onClick={onClose}
@@ -697,7 +827,7 @@ export const BusinessModal: React.FC<BusinessModalProps> = ({
             data-testid="modal-close-footer-btn"
           >
             <X className="w-4 h-4 text-slate-400" />
-            <span>Close (ปิดหน้าต่าง)</span>
+            <span>{t.common.close}</span>
           </button>
         </div>
       </div>

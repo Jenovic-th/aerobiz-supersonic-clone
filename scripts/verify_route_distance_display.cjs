@@ -79,9 +79,9 @@ async function run() {
     '  const routeCards = Array.from(document.querySelectorAll(".space-y-3 > div"));' +
     '  const sample = routeCards.map(div => {' +
     '    const text = div.textContent;' +
-    '    const hasKm = text.includes("km");' +
-    '    const hasDistanceLabel = text.includes("Distance:");' +
-    '    const hasRangeLabel = text.includes("พิสัยบิน");' +
+    '    const hasKm = text.includes("km") || text.includes("กม.");' +
+    '    const hasDistanceLabel = text.includes("Distance:") || text.includes("ระยะทาง:");' +
+    '    const hasRangeLabel = text.includes("พิสัยบิน") || text.includes("Range");' +
     '    return { hasKm, hasDistanceLabel, hasRangeLabel, snippet: text.slice(0, 180) };' +
     '  });' +
     '  return {' +
@@ -120,8 +120,8 @@ async function run() {
     '(() => {' +
     '  const modal = document.querySelector(".z-\\\\[60\\\\]") || document.querySelector("h3");' +
     '  const bodyText = document.body.textContent;' +
-    '  const hasCorridorDist = bodyText.includes("ระยะทางบิน:") || bodyText.includes("Distance:");' +
-    '  const hasRangeMargin = bodyText.includes("ส่วนต่างพิสัย:") || bodyText.includes("ส่วนเกิน");' +
+    '  const hasCorridorDist = bodyText.includes("ระยะทางบิน:") || bodyText.includes("Distance:") || bodyText.includes("ระยะทาง:");' +
+    '  const hasRangeMargin = bodyText.includes("ส่วนต่างพิสัย") || bodyText.includes("ส่วนเกิน") || bodyText.includes("Surplus") || bodyText.includes("Margin");' +
     '  const hasPillBadge = !!document.querySelector(".bg-sky-950");' +
     '  return {' +
     '    modalHeader: modal ? modal.textContent : null,' +

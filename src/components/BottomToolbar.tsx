@@ -22,6 +22,8 @@ import {
   Newspaper,
 } from 'lucide-react';
 
+import { useI18n } from '../utils/i18n';
+
 interface BottomToolbarProps {
   gameState: GameState;
   playerAirline: Airline;
@@ -49,6 +51,8 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
   onAdvanceQuarter,
   onOpenNews,
 }) => {
+  const { lang, t } = useI18n();
+  const isTh = lang === 'th';
   const [showOperationsDrawer, setShowOperationsDrawer] = useState(false);
 
   // Player fleet metrics
@@ -77,7 +81,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
 
   return (
     <footer className="w-full shrink-0 relative bg-slate-900 border-t border-slate-700/80 shadow-2xl z-20 select-none">
-      {/* 1. SLIDE-UP OPERATIONS HUD DRAWER (เด้งขึ้นมาเมื่อกด และพับจมลงไปได้) */}
+      {/* 1. SLIDE-UP OPERATIONS HUD DRAWER */}
       {showOperationsDrawer && (
         <div className="absolute bottom-full left-2 right-2 md:left-4 md:right-4 mb-2 bg-slate-900/95 backdrop-blur-xl border-2 border-sky-500/80 rounded-3xl shadow-[0_-12px_40px_rgba(0,0,0,0.85)] p-4 md:p-5 z-40 animate-in slide-in-from-bottom-4 duration-200 text-slate-100">
           {/* Drawer Header */}
@@ -88,10 +92,10 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
               </div>
               <div>
                 <h3 className="font-black text-sm md:text-base text-white">
-                  Operations & Market Intelligence HUD
+                  {t.toolbar.hudTitle}
                 </h3>
                 <p className="text-[11px] text-slate-400">
-                  ศูนย์ควบคุมข้อมูลสถานะฝูงบิน ตลาดเชื้อเพลิง เครือข่ายการบิน และเรดาร์เหตุการณ์โลก
+                  {t.toolbar.hudSubtitle}
                 </p>
               </div>
             </div>
@@ -100,7 +104,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
               onClick={() => setShowOperationsDrawer(false)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 hover:text-white text-xs font-bold transition cursor-pointer shadow active:scale-95"
             >
-              <span>พับเก็บ (Hide)</span>
+              <span>{isTh ? 'พับเก็บ' : 'Hide'}</span>
               <ChevronDown className="w-4 h-4 text-sky-400" />
             </button>
           </div>
@@ -112,25 +116,27 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Plane className="w-4 h-4 text-sky-400" />
-                  <span className="font-black text-xs text-white uppercase tracking-wider">Fleet Logistics</span>
+                  <span className="font-black text-xs text-white uppercase tracking-wider">
+                    {isTh ? 'โลจิสติกส์ฝูงบิน' : 'Fleet Logistics'}
+                  </span>
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800 font-mono font-bold">
-                  {totalPlanes} Total
+                  {totalPlanes} {isTh ? 'ลำรวม' : 'Total'}
                 </span>
               </div>
 
               <div className="space-y-1.5 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Assigned Flights:</span>
-                  <span className="font-bold text-white font-mono">{assignedPlanes} planes</span>
+                  <span className="text-slate-400">{isTh ? 'ประจำเส้นทาง:' : 'Assigned Flights:'}</span>
+                  <span className="font-bold text-white font-mono">{assignedPlanes} {isTh ? 'ลำ' : 'planes'}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Ready in Hangars:</span>
-                  <span className="font-bold text-emerald-400 font-mono">{availablePlanes} idle planes</span>
+                  <span className="text-slate-400">{isTh ? 'พร้อมในโรงเก็บ:' : 'Ready in Hangars:'}</span>
+                  <span className="font-bold text-emerald-400 font-mono">{availablePlanes} {isTh ? 'ลำว่าง' : 'idle planes'}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Airframe Health:</span>
-                  <span className="font-bold text-amber-300 font-mono">{avgCondition}% avg</span>
+                  <span className="text-slate-400">{isTh ? 'สภาพตัวเครื่องเฉลี่ย:' : 'Airframe Health:'}</span>
+                  <span className="font-bold text-amber-300 font-mono">{avgCondition}% {isTh ? 'เฉลี่ย' : 'avg'}</span>
                 </div>
               </div>
 
@@ -142,7 +148,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
                   }}
                   className="flex-1 py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-lg font-bold text-[11px] transition shadow cursor-pointer text-center"
                 >
-                  Manage Fleet
+                  {isTh ? 'จัดการฝูงบิน' : 'Manage Fleet'}
                 </button>
                 <button
                   onClick={() => {
@@ -151,7 +157,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
                   }}
                   className="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-bold text-[11px] border border-slate-700 transition cursor-pointer"
                 >
-                  Buy Planes
+                  {isTh ? 'สั่งซื้อเครื่องบิน' : 'Buy Planes'}
                 </button>
               </div>
             </div>
@@ -161,7 +167,9 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Flame className="w-4 h-4 text-amber-400" />
-                  <span className="font-black text-xs text-white uppercase tracking-wider">Fuel Market</span>
+                  <span className="font-black text-xs text-white uppercase tracking-wider">
+                    {isTh ? 'ตลาดน้ำมัน' : 'Fuel Market'}
+                  </span>
                 </div>
                 <span
                   className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold border ${
@@ -176,31 +184,35 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
 
               <div className="space-y-1.5 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Market Rate:</span>
+                  <span className="text-slate-400">{isTh ? 'ดัชนีราคา:' : 'Market Rate:'}</span>
                   <span className="font-bold text-white font-mono">
                     {fuelMultiplier <= 1.0
-                      ? 'Low / Stable (1.0x)'
+                      ? (isTh ? 'ปกติ / เสถียร (1.0x)' : 'Low / Stable (1.0x)')
                       : fuelMultiplier <= 1.3
-                      ? 'Elevated (+10-30%)'
-                      : 'Severe Crisis (High Risk)'}
+                      ? (isTh ? 'สูงขึ้น (+10-30%)' : 'Elevated (+10-30%)')
+                      : (isTh ? 'วิกฤตรุนแรง (เสี่ยงสูง)' : 'Severe Crisis (High Risk)')}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Expense Impact:</span>
+                  <span className="text-slate-400">{isTh ? 'ผลกระทบค่าใช้จ่าย:' : 'Expense Impact:'}</span>
                   <span className={`font-bold font-mono ${isFuelHigh ? 'text-rose-400' : 'text-slate-300'}`}>
-                    {isFuelHigh ? 'High Fuel Surcharges' : 'Standard Operating Cost'}
+                    {isFuelHigh 
+                      ? (isTh ? 'ภาระค่าน้ำมันพุ่งสูง' : 'High Fuel Surcharges')
+                      : (isTh ? 'ต้นทุนดำเนินงานมาตรฐาน' : 'Standard Operating Cost')}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Profit Squeeze:</span>
+                  <span className="text-slate-400">{isTh ? 'การบีบกำไร:' : 'Profit Squeeze:'}</span>
                   <span className="font-bold text-amber-400 font-mono">
-                    {fuelMultiplier > 1.0 ? `-${Math.round((fuelMultiplier - 1.0) * 20)}% margin` : 'Optimal'}
+                    {fuelMultiplier > 1.0 
+                      ? (isTh ? `กำไรลด -${Math.round((fuelMultiplier - 1.0) * 20)}%` : `-${Math.round((fuelMultiplier - 1.0) * 20)}% margin`) 
+                      : (isTh ? 'ระดับเหมาะสม' : 'Optimal')}
                   </span>
                 </div>
               </div>
 
               <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400 italic">
-                *วิกฤตน้ำมันลดลงได้ด้วยการเลือกเครื่องบินยุคใหม่ที่ประหยัดพลังงาน
+                {isTh ? '*รับมือวิกฤตน้ำมันได้ด้วยการเลือกใช้เครื่องบินยุคใหม่ที่ประหยัดพลังงาน' : '*Mitigate fuel crises by deploying modern, fuel-efficient aircraft'}
               </div>
             </div>
 
@@ -209,26 +221,28 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Globe2 className="w-4 h-4 text-indigo-400" />
-                  <span className="font-black text-xs text-white uppercase tracking-wider">Network Health</span>
+                  <span className="font-black text-xs text-white uppercase tracking-wider">
+                    {isTh ? 'สุขภาพเครือข่าย' : 'Network Health'}
+                  </span>
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800 font-mono font-bold">
-                  {playerRoutes.length} Routes
+                  {playerRoutes.length} {isTh ? 'เส้นทาง' : 'Routes'}
                 </span>
               </div>
 
               <div className="space-y-1.5 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Regional Hubs:</span>
+                  <span className="text-slate-400">{isTh ? 'ศูนย์กลางภูมิภาค:' : 'Regional Hubs:'}</span>
                   <span className="font-bold text-sky-300 font-mono">
-                    {(playerAirline.hubCityIds || []).length} Hubs Active
+                    {(playerAirline.hubCityIds || []).length} {isTh ? 'ฮับที่เปิด' : 'Hubs Active'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Last Q Passengers:</span>
+                  <span className="text-slate-400">{isTh ? 'ผู้โดยสาร Q ก่อน:' : 'Last Q Passengers:'}</span>
                   <span className="font-bold text-white font-mono">{lastQuarterPax.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Last Q Profit:</span>
+                  <span className="text-slate-400">{isTh ? 'กำไรสุทธิ Q ก่อน:' : 'Last Q Profit:'}</span>
                   <span
                     className={`font-black font-mono ${
                       lastQuarterProf >= 0 ? 'text-emerald-400' : 'text-rose-400'
@@ -247,7 +261,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
                   }}
                   className="w-full py-1.5 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-600 hover:to-teal-600 text-white rounded-lg font-bold text-[11px] transition shadow cursor-pointer text-center"
                 >
-                  + Open New Flight Route
+                  {t.toolbar.quickOpenRoute}
                 </button>
               </div>
             </div>
@@ -257,10 +271,12 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-purple-400" />
-                  <span className="font-black text-xs text-white uppercase tracking-wider">World Radar</span>
+                  <span className="font-black text-xs text-white uppercase tracking-wider">
+                    {lang === 'th' ? 'เรดาร์โลก' : 'World Radar'}
+                  </span>
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800 font-mono font-bold">
-                  {upcomingEvents.length} Upcoming
+                  {upcomingEvents.length} {lang === 'th' ? 'เหตุการณ์' : 'Upcoming'}
                 </span>
               </div>
 
@@ -277,14 +293,14 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
                   <div className="font-bold flex items-center justify-between">
                     <span className="truncate max-w-[140px]">{upcomingEvents[0].event.title}</span>
                     <span className="font-mono text-emerald-400 text-[10px]">
-                      อีก {upcomingEvents[0].quartersUntil * 3} เดือน
+                      {lang === 'th' ? `อีก ${upcomingEvents[0].quartersUntil * 3} เดือน` : `In ${upcomingEvents[0].quartersUntil * 3} mos`}
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-400 line-clamp-2">{upcomingEvents[0].event.description}</p>
                 </div>
               ) : (
                 <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 text-xs italic">
-                  ไม่มีเหตุการณ์วิกฤติต่อเนื่องในไตรมาสนี้ น่านฟ้าสงบราบรื่น
+                  {t.toolbar.noActiveEvents}
                 </div>
               )}
 
@@ -297,7 +313,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
                   className="text-amber-300 font-bold hover:underline cursor-pointer flex items-center gap-1"
                 >
                   <Newspaper className="w-3.5 h-3.5" />
-                  <span>Read News Chronicle →</span>
+                  <span>{t.toolbar.readNews}</span>
                 </button>
                 <button
                   onClick={() => {
@@ -306,7 +322,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
                   }}
                   className="text-slate-400 font-bold hover:text-white cursor-pointer"
                 >
-                  Consult Board →
+                  {t.toolbar.consultBoard}
                 </button>
               </div>
             </div>
@@ -324,7 +340,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
             className="flex items-center gap-1.5 md:gap-2 px-3 sm:px-3.5 py-1.5 md:py-2 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-500 hover:to-sky-500 text-white rounded-xl font-bold text-xs md:text-sm shadow-lg transition-all active:scale-95 border border-sky-400 cursor-pointer whitespace-nowrap shrink-0"
           >
             <PlusCircle className="w-4 h-4 md:w-5 md:h-5 text-sky-100" />
-            <span>Open Route</span>
+            <span>{t.toolbar.openRoute}</span>
           </button>
 
           {/* My Routes */}
@@ -334,69 +350,78 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
             className="flex items-center gap-1.5 md:gap-2 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-sky-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <Plane className="w-4 h-4 text-sky-400" />
-            <span>My Routes</span>
+            <span>{t.toolbar.myRoutes}</span>
           </button>
 
           {/* Fleet Status Badge (Placed right beside My Routes as requested!) */}
           <button
             onClick={() => setShowOperationsDrawer((prev) => !prev)}
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 hover:border-sky-400 rounded-xl text-xs font-bold transition shadow cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
-            title="Fleet Status: คลิกเพื่อเปิดดูรายละเอียดฝูงบิน"
+            title={lang === 'th' ? 'สถานะฝูงบิน: คลิกเพื่อดูรายละเอียด' : 'Fleet Status: Click to view details'}
           >
-            <span className="text-slate-400 hidden xl:inline">Fleet:</span>
+            <span className="text-slate-400 hidden xl:inline">{t.toolbar.fleet}:</span>
             <strong className="text-white font-mono text-xs md:text-sm font-black">
               {assignedPlanes}/{totalPlanes}
             </strong>
             {availablePlanes > 0 ? (
-              <span className="text-emerald-400 font-bold text-[11px]">({availablePlanes} idle)</span>
+              <span className="text-emerald-400 font-bold text-[11px]">
+                ({availablePlanes} {t.toolbar.idlePlanes})
+              </span>
             ) : (
-              <span className="text-amber-400 font-bold text-[11px]">(0 idle)</span>
+              <span className="text-amber-400 font-bold text-[11px]">
+                (0 {t.toolbar.idlePlanes})
+              </span>
             )}
           </button>
 
           {/* Aircraft Market */}
           <button
             onClick={onOpenAircraftShop}
+            data-testid="toolbar-market-btn"
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-amber-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <ShoppingCart className="w-4 h-4 text-amber-400" />
-            <span>Market</span>
+            <span>{t.toolbar.market}</span>
           </button>
 
           {/* Airport Slots */}
           <button
             onClick={onOpenSlotModal}
+            data-testid="toolbar-slots-btn"
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-emerald-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <Handshake className="w-4 h-4 text-emerald-400" />
-            <span>Slots</span>
+            <span>{t.toolbar.slots}</span>
           </button>
 
           {/* Hotels & Ventures */}
           <button
             onClick={onOpenBusinessModal}
+            data-testid="toolbar-ventures-btn"
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-indigo-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <Building2 className="w-4 h-4 text-indigo-400" />
-            <span>Ventures</span>
+            <span>{t.toolbar.ventures}</span>
           </button>
 
           {/* Board Meeting */}
           <button
             onClick={onOpenBoardMeeting}
+            data-testid="toolbar-board-btn"
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 bg-gradient-to-r from-amber-700/80 to-amber-800/80 hover:from-amber-600 hover:to-amber-700 text-amber-100 rounded-xl font-bold text-xs md:text-sm shadow border border-amber-500/50 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <Users className="w-4 h-4 text-amber-300" />
-            <span>Board</span>
+            <span>{t.toolbar.board}</span>
           </button>
 
           {/* Financials */}
           <button
             onClick={onOpenFinancialReport}
+            data-testid="toolbar-financials-btn"
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 md:py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs md:text-sm shadow border border-slate-600 hover:border-pink-400 transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
           >
             <BarChart3 className="w-4 h-4 text-pink-400" />
-            <span>Financials</span>
+            <span>{t.toolbar.financials}</span>
           </button>
 
           {/* News Chronicle Button */}
@@ -408,16 +433,16 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
                 ? 'bg-gradient-to-r from-amber-700 via-rose-700 to-amber-800 text-white border-amber-300 ring-2 ring-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.5)]'
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-100 border-slate-600 hover:border-amber-400'
             }`}
-            title="Global News & Chronicle (ศูนย์รวมข่าวสาร & คลังเหตุการณ์โลก)"
+            title={lang === 'th' ? 'ข่าวสารโลก & คลังเหตุการณ์' : 'Global News & Chronicle'}
           >
             <Newspaper className={`w-4 h-4 ${hasUnreadNews ? 'text-amber-200 animate-bounce' : 'text-amber-400'}`} />
-            <span>News</span>
+            <span>{t.toolbar.news}</span>
             {hasUnreadNews && (
               <span
                 data-testid="toolbar-news-unread-badge"
                 className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-mono font-black animate-pulse"
               >
-                ● NEW
+                ● {lang === 'th' ? 'ใหม่' : 'NEW'}
               </span>
             )}
           </button>
@@ -431,10 +456,10 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
                 ? 'bg-sky-600 text-white border-sky-300 ring-2 ring-sky-400/50'
                 : 'bg-slate-800 text-sky-300 border-slate-700 hover:bg-slate-700 hover:border-sky-400'
             }`}
-            title="เปิด/ปิด แผงสรุปปฏิบัติการ & เรดาร์ (Operations HUD Drawer)"
+            title={lang === 'th' ? 'เปิด/ปิด แผงสรุปปฏิบัติการ HUD' : 'Toggle Operations HUD Drawer'}
           >
             <LayoutGrid className="w-4 h-4" />
-            <span>HUD</span>
+            <span>{lang === 'th' ? 'HUD ข้อมูล' : 'HUD'}</span>
             {isFuelHigh && (
               <span className="w-2 h-2 rounded-full bg-rose-500 ring-2 ring-slate-900 animate-pulse" title="เตือน: น้ำมันแพง" />
             )}
@@ -456,7 +481,7 @@ export const BottomToolbar: React.FC<BottomToolbarProps> = ({
             data-testid="toolbar-end-quarter-btn"
             className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 md:py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-black text-xs md:text-sm shadow-xl hover:shadow-emerald-500/30 transition-all active:scale-95 border-2 border-emerald-400 cursor-pointer whitespace-nowrap shrink-0"
           >
-            <span>End Quarter</span>
+            <span>{t.toolbar.endQuarter}</span>
             <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-emerald-200 animate-pulse" />
           </button>
         </div>

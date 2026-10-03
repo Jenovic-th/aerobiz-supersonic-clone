@@ -2,6 +2,7 @@ import React from 'react';
 import { Airline } from '../types/game';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useI18n } from '../utils/i18n';
 import { X, Users, Clock, CheckCircle2, Shield, MapPin, Building2, Briefcase } from 'lucide-react';
 
 interface ExecutiveRosterModalProps {
@@ -14,6 +15,9 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
   onClose,
 }) => {
   useEscapeKey(onClose);
+  const { t, lang } = useI18n();
+  const isTh = lang === 'th';
+
   const negotiators = playerAirline.negotiators || [];
   const fieldDelegates = negotiators.filter((n) => n.role === 'FIELD');
   const hqDirector = negotiators.find((n) => n.role === 'HQ') || negotiators[4];
@@ -32,10 +36,12 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-wide">
-                Executive Delegation Roster (4+1 Staff)
+                {isTh ? 'ทำเนียบคณะผู้บริหารและตัวแทนเจรจา (4+1 ท่าน)' : 'Executive Delegation Roster (4+1 Staff)'}
               </h2>
               <div className="text-xs sm:text-sm text-sky-300 font-mono mt-0.5">
-                {availableCount} Available • {dispatchedCount} Dispatched on Mission • 1 HQ Director
+                {isTh
+                  ? `พร้อมปฏิบัติงาน ${availableCount} ท่าน • กำลังเจรจา ${dispatchedCount} ท่าน • ผู้อำนวยการส่วนกลาง 1 ท่าน`
+                  : `${availableCount} Available • ${dispatchedCount} Dispatched on Mission • 1 HQ Director`}
               </div>
             </div>
           </div>
@@ -43,7 +49,7 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
           <button
             onClick={onClose}
             className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
-            title="Close (Esc)"
+            title={`${t.common.close} (Esc)`}
             data-testid="modal-close-header-btn"
           >
             <X className="w-6 h-6" />
@@ -58,10 +64,12 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
               <div className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-sky-400" />
                 <h3 className="text-sm font-black text-slate-200 tracking-wide font-mono uppercase">
-                  Field Diplomatic Envoys (4 Foreign Mission Delegates)
+                  {isTh ? 'ตัวแทนเจรจาการทูตภาคสนาม (4 ท่าน)' : 'Field Diplomatic Envoys (4 Foreign Mission Delegates)'}
                 </h3>
               </div>
-              <span className="text-xs text-slate-400">Equal Capability & Authority</span>
+              <span className="text-xs text-slate-400">
+                {isTh ? 'ความสามารถและอำนาจเท่าเทียมกัน' : 'Equal Capability & Authority'}
+              </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -87,11 +95,11 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
                           </h4>
                           {isDispatched ? (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-400 whitespace-nowrap animate-pulse">
-                              DISPATCHED
+                              {isTh ? 'กำลังปฏิบัติภารกิจ' : 'DISPATCHED'}
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-400 whitespace-nowrap">
-                              AVAILABLE
+                              {isTh ? 'พร้อมปฏิบัติงาน' : 'AVAILABLE'}
                             </span>
                           )}
                         </div>
@@ -104,25 +112,26 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
                           <div className="mt-3 p-2.5 bg-slate-900/90 rounded-xl border border-slate-800 text-xs space-y-1">
                             <div className="flex items-center gap-1.5 text-slate-300 font-bold">
                               <MapPin className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                              <span className="truncate">Mission in {mission.targetCityName}</span>
+                              <span className="truncate">{isTh ? `ภารกิจที่เมือง ${mission.targetCityName}` : `Mission in ${mission.targetCityName}`}</span>
                             </div>
                             <div className="text-[11px] text-slate-400">
-                              Objective:{' '}
+                              {isTh ? 'เป้าหมาย: ' : 'Objective: '}
                               <strong className="text-white">
                                 {mission.type === 'SLOT_NEGOTIATION'
-                                  ? `+${mission.requestedSlots} Airport Slots`
-                                  : `Subsidiary Acquisition`}
+                                  ? (isTh ? `ขอสล็อตสนามบิน +${mission.requestedSlots} ช่อง` : `+${mission.requestedSlots} Airport Slots`)
+                                  : (isTh ? 'เข้าซื้อกิจการธุรกิจเสริม' : 'Subsidiary Acquisition')}
                               </strong>
                             </div>
                             <div className="flex items-center gap-1.5 text-amber-300 font-mono text-xs pt-1">
                               <Clock className="w-3.5 h-3.5" />
-                              <span>{mission.quartersRemaining} Quarter(s) Remaining</span>
+                              <span>{isTh ? `เหลือเวลาอีก ${mission.quartersRemaining} ไตรมาส` : `${mission.quartersRemaining} Quarter(s) Remaining`}</span>
                             </div>
                           </div>
                         ) : (
                           <div className="mt-3 text-xs text-slate-400 leading-relaxed">
-                            Stationed at flight operations desk. Ready to be dispatched to foreign
-                            civil aviation authorities.
+                            {isTh
+                              ? 'ประจำการอยู่ที่ส่วนกลาง พร้อมรับคำสั่งส่งตัวแทนไปเจรจาสล็อตการบินกับหน่วยงานการบินพลเรือนต่างประเทศ'
+                              : 'Stationed at flight operations desk. Ready to be dispatched to foreign civil aviation authorities.'}
                           </div>
                         )}
                       </div>
@@ -133,13 +142,13 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
             </div>
           </div>
 
-          {/* 2. Permanent HQ Operations Director (David Sterling) */}
+          {/* 2. Permanent HQ Operations Director */}
           {hqDirector && (
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Shield className="w-4 h-4 text-amber-400" />
                 <h3 className="text-sm font-black text-slate-200 tracking-wide font-mono uppercase">
-                  HQ Operations Director (Stationed at Home Office)
+                  {isTh ? 'ผู้อำนวยการฝ่ายปฏิบัติการส่วนกลาง (ประจำสำนักงานใหญ่)' : 'HQ Operations Director (Stationed at Home Office)'}
                 </h3>
               </div>
 
@@ -150,7 +159,7 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="font-black text-lg text-white">{hqDirector.name}</h4>
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-500/20 text-sky-300 border border-sky-400">
-                        PERMANENT HQ STATION
+                        {isTh ? 'ประจำสำนักงานใหญ่' : 'PERMANENT HQ STATION'}
                       </span>
                     </div>
                     <div className="text-xs text-amber-400 font-mono mt-0.5">
@@ -158,8 +167,9 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
                     </div>
 
                     <p className="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                      Coordinates head office internal administration, regulatory compliance, slot
-                      surrenders, and subsidiary asset divestments without dispatch wait.
+                      {isTh
+                        ? 'ประสานงานฝ่ายบริหารภายใน กฎระเบียบข้อบังคับการบิน จัดการสล็อตสนามบิน และการจัดการสินทรัพย์ของบริษัท'
+                        : 'Coordinates head office internal administration, regulatory compliance, slot surrenders, and subsidiary asset divestments without dispatch wait.'}
                     </p>
                   </div>
                 </div>
@@ -176,7 +186,7 @@ export const ExecutiveRosterModal: React.FC<ExecutiveRosterModalProps> = ({
             data-testid="modal-close-footer-btn"
           >
             <X className="w-4 h-4 text-slate-400" />
-            <span>Close (ปิดหน้าต่าง)</span>
+            <span>{t.common.close}</span>
           </button>
         </div>
       </div>

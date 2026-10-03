@@ -6,6 +6,7 @@ import { CityLandmarkDiorama } from './CityLandmarkDiorama';
 import { NegotiatorAvatar } from './NegotiatorAvatar';
 import { VentureCardVisual } from './VentureCardVisual';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useI18n } from '../utils/i18n';
 import {
   X,
   Plane,
@@ -53,6 +54,9 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
   gameState,
 }) => {
   useEscapeKey(onClose);
+  const { t, lang } = useI18n();
+  const isTh = lang === 'th';
+
   const visualData = getCityVisual(city.id);
   const isHQ = playerAirline.homeCityId === city.id;
   const isHub = playerAirline.hubCityIds.includes(city.id);
@@ -114,13 +118,13 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
       n.currentMission.type === 'SLOT_NEGOTIATION'
   );
 
-  // Modal State for Confirming Envoy Dispatch (Prevents accidental clicks!)
+  // Modal State for Confirming Envoy Dispatch
   const [pendingMission, setPendingMission] = useState<NegotiatorMission | null>(null);
   const [selectedEnvoyId, setSelectedEnvoyId] = useState<string>(
     availableFieldNegotiators[0]?.id || ''
   );
 
-  // Toggle for David Sterling HQ Operations Popup
+  // Toggle for HQ Operations Popup
   const [showHQOperations, setShowHQOperations] = useState(false);
 
   // Player owned businesses in this city
@@ -180,7 +184,6 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150">
-      {/* WIDESCREEN HIGH-LEGIBILITY EXECUTIVE MODAL CONTAINER */}
       <div className="bg-slate-900 border-2 border-sky-500/80 rounded-3xl shadow-2xl w-[96vw] max-w-[1720px] h-[94vh] max-h-[96vh] overflow-hidden flex flex-col text-slate-100 font-sans relative">
         {/* 1. TOP EXECUTIVE TITLE & METRICS RIBBON */}
         <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 px-4 sm:px-6 py-2 sm:py-2.5 border-b border-sky-800/80 flex items-center justify-between shrink-0 shadow-lg gap-3">
@@ -197,12 +200,12 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                 </span>
                 {isHQ && (
                   <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-400 font-black text-xs">
-                    👑 HQ
+                    {isTh ? '👑 สำนักงานใหญ่' : '👑 HQ'}
                   </span>
                 )}
                 {isHub && !isHQ && (
                   <span className="px-2.5 py-0.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-400 font-black text-xs">
-                    🌐 HUB
+                    {isTh ? '🌐 ศูนย์การบินฮับ' : '🌐 HUB'}
                   </span>
                 )}
                 <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300">
@@ -219,24 +222,24 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
           <div className="hidden md:flex items-center gap-2.5 sm:gap-3">
             <div className="flex items-center gap-2 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-slate-800 shadow">
               <Users className="w-4 h-4 text-sky-400" />
-              <span className="text-xs text-slate-400 font-medium">Pop:</span>
+              <span className="text-xs text-slate-400 font-medium">{isTh ? 'ประชากร:' : 'Pop:'}</span>
               <span className="font-mono font-bold text-sm text-white">{city.population}M</span>
             </div>
             <div className="flex items-center gap-2 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-slate-800 shadow">
               <KeyRound className="w-4 h-4 text-emerald-400" />
-              <span className="text-xs text-slate-400 font-medium">Slots:</span>
+              <span className="text-xs text-slate-400 font-medium">{isTh ? 'สล็อต:' : 'Slots:'}</span>
               <span className="font-mono font-bold text-sm text-emerald-400">
                 {slotsOwned}/{totalAirportCap}
               </span>
             </div>
             <div className="flex items-center gap-2 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-slate-800 shadow">
               <Briefcase className="w-4 h-4 text-amber-400" />
-              <span className="text-xs text-slate-400 font-medium">Biz:</span>
+              <span className="text-xs text-slate-400 font-medium">{isTh ? 'เศรษฐกิจ:' : 'Biz:'}</span>
               <span className="font-mono font-bold text-sm text-amber-300">{city.businessIndex}/100</span>
             </div>
             <div className="flex items-center gap-2 bg-slate-950/80 px-3.5 py-1.5 rounded-xl border border-slate-800 shadow">
               <Palmtree className="w-4 h-4 text-pink-400" />
-              <span className="text-xs text-slate-400 font-medium">Tour:</span>
+              <span className="text-xs text-slate-400 font-medium">{isTh ? 'ท่องเที่ยว:' : 'Tour:'}</span>
               <span className="font-mono font-bold text-sm text-pink-300">{city.tourismIndex}/100</span>
             </div>
           </div>
@@ -245,14 +248,14 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
           <button
             onClick={onClose}
             className="p-2 sm:p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700 shrink-0"
-            title="Close (Esc)"
+            title={`${t.common.close} (Esc)`}
             data-testid="modal-close-header-btn"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* 2. MAIN WORKSPACE (Widescreen 2-Column Dashboard, Fully Responsive & Non-Overlapping) */}
+        {/* 2. MAIN WORKSPACE */}
         <div className="flex-1 min-h-0 p-2.5 sm:p-3.5 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-3.5 overflow-hidden">
           {/* LEFT COLUMN: LANDMARK ART, ROUTES & DIPLOMATIC CORPS (4 Cols) */}
           <div className="lg:col-span-4 flex flex-col gap-2 min-h-0 h-full overflow-hidden">
@@ -266,7 +269,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
               <div className="flex items-center gap-2 min-w-0">
                 <Plane className="w-4 h-4 text-sky-400 shrink-0" />
                 <span className="text-xs sm:text-sm font-bold text-slate-200 font-mono">
-                  Routes: <span className="text-sky-300">{cityRoutes.length} Active</span>
+                  {isTh ? `เส้นทางบิน: ` : `Routes: `}<span className="text-sky-300">{cityRoutes.length} {isTh ? 'เส้นทาง' : 'Active'}</span>
                 </span>
                 {cityRoutes.length > 0 && (
                   <span className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-[160px]">
@@ -283,21 +286,21 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                 className="px-3 py-1.5 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-lg font-bold text-xs shadow flex items-center gap-1.5 cursor-pointer transition active:scale-95 border border-sky-400 shrink-0"
               >
                 <Plane className="w-3.5 h-3.5" />
-                <span>Launch Route</span>
+                <span>{isTh ? 'เปิดเส้นทางบิน' : 'Launch Route'}</span>
               </button>
             </div>
 
-            {/* DIPLOMATIC CORPS STATION (All 4 Field Envoys always visible & scrollable) */}
+            {/* DIPLOMATIC CORPS STATION */}
             <div className="flex-1 min-h-0 bg-slate-950/80 p-2 rounded-2xl border border-slate-800 flex flex-col overflow-hidden shadow-inner">
               <div className="flex items-center justify-between mb-1.5 pb-1 border-b border-slate-800/80 shrink-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm">💼</span>
                   <span className="text-xs sm:text-sm font-black text-slate-200 font-mono uppercase tracking-wider">
-                    Diplomatic Envoys (คณะทูตเจรจา)
+                    {isTh ? 'คณะทูตเจรจา' : 'Diplomatic Envoys'}
                   </span>
                 </div>
                 <span className="text-[11px] sm:text-xs font-mono font-bold px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800 shrink-0">
-                  {availableFieldNegotiators.length} of 4 Available
+                  {isTh ? `พร้อมงาน: ${availableFieldNegotiators.length} จาก 4 ท่าน` : `${availableFieldNegotiators.length} of 4 Available`}
                 </span>
               </div>
 
@@ -342,12 +345,12 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                           </span>
                           {isStationedHere && (
                             <span className="text-[10px] sm:text-xs font-mono font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
-                              {mission?.quartersRemaining}Q Left
+                              {mission?.quartersRemaining}Q {isTh ? 'ไตรมาส' : 'Left'}
                             </span>
                           )}
                           {isAvail && (
                             <span className="text-[10px] sm:text-xs font-mono font-bold text-emerald-400 flex items-center gap-1 shrink-0">
-                              <CheckCircle2 className="w-3 h-3" /> Ready
+                              <CheckCircle2 className="w-3 h-3" /> {isTh ? 'พร้อม' : 'Ready'}
                             </span>
                           )}
                           {isStationedElsewhere && (
@@ -358,7 +361,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                         </div>
 
                         <div className="text-[10px] sm:text-[11px] font-mono text-sky-300/80 truncate">
-                          {neg.title || 'Senior Field Envoy'}
+                          {neg.title || (isTh ? 'ตัวแทนการทูตอาวุโส' : 'Senior Field Envoy')}
                         </div>
 
                         {/* Subtitle / Live Mission description */}
@@ -366,18 +369,18 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                           {isStationedHere ? (
                             <span className="text-amber-200 font-bold">
                               {mission?.type === 'SLOT_NEGOTIATION'
-                                ? `Negotiating ${mission.requestedSlots || 10} Slots`
+                                ? (isTh ? `กำลังขอ ${mission.requestedSlots || 10} สล็อต` : `Negotiating ${mission.requestedSlots || 10} Slots`)
                                 : mission?.type === 'SUBSIDIARY_ACQUISITION'
-                                ? `Acquiring "${mission.ventureName || 'Venture'}"`
-                                : 'Chartering Regional Hub'}
+                                ? (isTh ? `กำลังซื้อกิจการ "${mission.ventureName || 'ธุรกิจ'}"` : `Acquiring "${mission.ventureName || 'Venture'}"`)
+                                : (isTh ? 'กำลังยกระดับฮับภูมิภาค' : 'Chartering Regional Hub')}
                             </span>
                           ) : isStationedElsewhere ? (
                             <span className="text-slate-400">
-                              Stationed in {mission?.targetCityName}
+                              {isTh ? `ปฏิบัติภารกิจที่ ${mission?.targetCityName}` : `Stationed in ${mission?.targetCityName}`}
                             </span>
                           ) : (
                             <span className="text-slate-300 font-medium">
-                              Ready for treaties & buyouts
+                              {isTh ? 'พร้อมเจรจาสล็อตและซื้อกิจการ' : 'Ready for treaties & buyouts'}
                             </span>
                           )}
                         </div>
@@ -389,29 +392,27 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
             </div>
           </div>
 
-          {/* RIGHT COLUMN: 6 SUBSIDIARY TILES (8 Cols - Rich Commercial Matrix with Vivid Photos & Zero Overlap) */}
+          {/* RIGHT COLUMN: 6 SUBSIDIARY TILES */}
           <div className="lg:col-span-8 flex flex-col min-h-0 h-full bg-slate-950/60 p-2.5 sm:p-3.5 rounded-2xl border border-slate-800 overflow-hidden">
             <div className="flex items-center justify-between mb-2 shrink-0">
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" />
                 <h3 className="text-xs sm:text-base font-black text-slate-200 font-mono tracking-wide uppercase">
-                  Local Commercial Subsidiaries (6 Opportunities)
+                  {isTh ? 'ธุรกิจเสริมและการลงทุนในเมือง (6 กิจการ)' : 'Local Commercial Subsidiaries (6 Opportunities)'}
                 </h3>
               </div>
               <span className="text-xs sm:text-sm text-slate-300 font-mono">
-                Duration: {requiredQuarters} Quarter{requiredQuarters > 1 ? 's' : ''} ({requiredQuarters * 3} mo)
+                {isTh ? `ระยะเวลา: ${requiredQuarters} ไตรมาส (${requiredQuarters * 3} เดือน)` : `Duration: ${requiredQuarters} Quarter${requiredQuarters > 1 ? 's' : ''} (${requiredQuarters * 3} mo)`}
               </span>
             </div>
 
-            {/* 6-Tile Matrix (2 cols x 3 rows with Responsive Side-by-Side Cards & Smooth Scrolling) */}
+            {/* 6-Tile Matrix */}
             <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-1.5 custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5 content-start">
               {visualData.ventures.map((v) => {
-                // Check if player already owns this exact venture
                 const isOwned = playerAirline.businesses.some(
                   (b) => b.cityId === city.id && b.name === v.name
                 );
 
-                // Check which exact negotiator is acquiring this specific venture
                 const activeNegotiator = fieldNegotiators.find(
                   (n) =>
                     n.status === 'DISPATCHED' &&
@@ -460,15 +461,15 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                           {/* Status Pill */}
                           {isOwned ? (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-400 shrink-0">
-                              OWNED
+                              {isTh ? 'เป็นเจ้าของ' : 'OWNED'}
                             </span>
                           ) : activeNegotiator ? (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-400 shrink-0">
-                              TALKS ONGOING
+                              {isTh ? 'กำลังเจรจา' : 'TALKS ONGOING'}
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
-                              AVAILABLE
+                              {isTh ? 'พร้อมลงทุน' : 'AVAILABLE'}
                             </span>
                           )}
                         </div>
@@ -485,7 +486,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                       {/* Financial Metrics Strip */}
                       <div className="pt-1 border-t border-slate-800/80 flex items-center justify-between text-[11px] flex-wrap gap-1">
                         <span className="text-slate-400 font-mono">
-                          Cost: <strong className="text-white">${v.costK.toLocaleString()}K</strong>
+                          {isTh ? 'ราคา: ' : 'Cost: '}<strong className="text-white">${v.costK.toLocaleString()}K</strong>
                         </span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-emerald-400 font-mono font-black bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-700/60 text-[10px]">
@@ -502,13 +503,13 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                         {isOwned ? (
                           <div className="w-full py-1.5 bg-emerald-950/50 border border-emerald-500/40 rounded-xl text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                            <span className="truncate">Acquired Asset (+${v.dividendK}K/qtr)</span>
+                            <span className="truncate">{isTh ? `เป็นเจ้าของแล้ว (+${v.dividendK}K/ไตรมาส)` : `Acquired Asset (+${v.dividendK}K/qtr)`}</span>
                           </div>
                         ) : activeNegotiator ? (
                           <div className="w-full py-1.5 bg-amber-950/50 border border-amber-500/50 rounded-xl text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm animate-pulse">
                             <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                             <span className="truncate">
-                              Envoy {activeNegotiator.name.split(' ')[0]} in Talks ({activeNegotiator.currentMission?.quartersRemaining}Q)
+                              {isTh ? `ทูต ${activeNegotiator.name.split(' ')[0]} กำลังเจรจา (${activeNegotiator.currentMission?.quartersRemaining}Q)` : `Envoy ${activeNegotiator.name.split(' ')[0]} in Talks (${activeNegotiator.currentMission?.quartersRemaining}Q)`}
                             </span>
                           </div>
                         ) : (
@@ -519,7 +520,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                             className="w-full py-1.5 bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 hover:from-indigo-500 hover:to-blue-500 disabled:opacity-30 disabled:pointer-events-none text-white rounded-xl font-bold text-xs shadow-md border border-indigo-400 transition active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
                           >
                             <Clock className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">Acquire Subsidiary (${v.costK.toLocaleString()}K • {requiredQuarters}Q)</span>
+                            <span className="truncate">{isTh ? `ลงทุนซื้อกิจการ ($${v.costK.toLocaleString()}K • ${requiredQuarters}Q)` : `Acquire Subsidiary ($${v.costK.toLocaleString()}K • ${requiredQuarters}Q)`}</span>
                           </button>
                         )}
                       </div>
@@ -536,23 +537,23 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
           {/* Left: City Status & Negotiation Summary */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 font-bold uppercase font-mono">Status:</span>
+              <span className="text-xs text-slate-400 font-bold uppercase font-mono">{t.common.status}:</span>
               <span className="px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 font-mono font-bold text-xs sm:text-sm text-sky-300">
-                {slotsOwned} / {totalAirportCap} Slots (Airport: {totalAllocated}/{totalAirportCap})
+                {slotsOwned} / {totalAirportCap} {isTh ? 'สล็อต' : 'Slots'} ({isTh ? 'สนามบิน: ' : 'Airport: '}{totalAllocated}/{totalAirportCap})
               </span>
             </div>
 
             {ongoingExpansion && (
               <span className="text-xs px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500 font-bold flex items-center gap-1.5 animate-pulse">
                 <Hammer className="w-3.5 h-3.5" />
-                <span>+{ongoingExpansion.addedSlots} in {ongoingExpansion.quartersRemaining}Q ({ongoingExpansion.quartersRemaining * 3}mo)</span>
+                <span>{isTh ? `+${ongoingExpansion.addedSlots} สล็อตใน ${ongoingExpansion.quartersRemaining} ไตรมาส` : `+${ongoingExpansion.addedSlots} in ${ongoingExpansion.quartersRemaining}Q`}</span>
               </span>
             )}
 
             {limits.isAntiMonopolyActive && !isAirportFull && (
               <span className="text-xs px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500 font-bold flex items-center gap-1.5">
                 <Scale className="w-3.5 h-3.5" />
-                <span>Fair-Share: Max {limits.maxRequestableSlots}</span>
+                <span>{isTh ? `โควตาสูงสุด: ${limits.maxRequestableSlots}` : `Fair-Share: Max ${limits.maxRequestableSlots}`}</span>
               </span>
             )}
 
@@ -561,7 +562,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
               <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-950/70 border border-amber-500/80 text-amber-300 text-xs sm:text-sm font-bold animate-pulse shadow">
                 <Clock className="w-4 h-4 text-amber-400" />
                 <span>
-                  Slot Treaty: {activeSlotNegotiator.currentMission?.quartersRemaining}Q Remaining ({activeSlotNegotiator.name.split(' ')[0]})
+                  {isTh ? `เจรจาสล็อต: เหลืออีก ${activeSlotNegotiator.currentMission?.quartersRemaining} ไตรมาส (${activeSlotNegotiator.name.split(' ')[0]})` : `Slot Treaty: ${activeSlotNegotiator.currentMission?.quartersRemaining}Q Remaining (${activeSlotNegotiator.name.split(' ')[0]})`}
                 </span>
               </div>
             )}
@@ -584,8 +585,8 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                 <KeyRound className="w-4 h-4 text-emerald-200" />
                 <span>
                   {maxSlotsReached
-                    ? 'Slots Maxed'
-                    : `Negotiate ${requestedSlots} Slots ($${slotCostK.toLocaleString()}K • ${requiredQuarters}Q)`}
+                    ? (isTh ? 'สล็อตเต็มโควตา' : 'Slots Maxed')
+                    : (isTh ? `เจรจาขอ ${requestedSlots} สล็อต ($${slotCostK.toLocaleString()}K • ${requiredQuarters}Q)` : `Negotiate ${requestedSlots} Slots ($${slotCostK.toLocaleString()}K • ${requiredQuarters}Q)`)}
                 </span>
               </button>
             )}
@@ -598,20 +599,20 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
               const canCharter = hasInboundRoute && hasEnoughSlots && hasEnoughCash;
 
               const tooltipMsg = !hasInboundRoute
-                ? `Charter Hub: Requires at least 1 active flight connecting to ${city.name} from your network.`
+                ? (isTh ? `ก่อตั้งฮับ: ต้องมีเที่ยวบินเข้าสู่ ${city.name} อย่างน้อย 1 เส้นทาง` : `Charter Hub: Requires at least 1 active flight connecting to ${city.name} from your network.`)
                 : !hasEnoughSlots
-                ? `Charter Hub: Requires holding at least 10 landing slots (currently ${slotsOwned}/10). Negotiate more slots first.`
+                ? (isTh ? `ก่อตั้งฮับ: ต้องมีสล็อตอย่างน้อย 10 สล็อต (ปัจจุบัน ${slotsOwned}/10)` : `Charter Hub: Requires holding at least 10 landing slots (currently ${slotsOwned}/10). Negotiate more slots first.`)
                 : !hasEnoughCash
-                ? `Charter Hub: Requires $15,000K treasury funds (currently have $${playerAirline.cashK.toLocaleString()}K).`
-                : `Charter ${city.name} as an Official Regional Hub ($15M). Grants +15 bonus landing slots and unlocks spoke routes across this continent with +18% connecting transit bonus!`;
+                ? (isTh ? `ก่อตั้งฮับ: ต้องใช้เงิน $15,000K (ปัจจุบันมี $${playerAirline.cashK.toLocaleString()}K)` : `Charter Hub: Requires $15,000K treasury funds (currently have $${playerAirline.cashK.toLocaleString()}K).`)
+                : (isTh ? `ยกระดับ ${city.name} เป็นศูนย์การบินฮับภูมิภาค ($15M • +15 สล็อตโบนัส)` : `Charter ${city.name} as an Official Regional Hub ($15M). Grants +15 bonus landing slots and unlocks spoke routes across this continent with +18% connecting transit bonus!`);
 
               const buttonLabel = !hasInboundRoute
-                ? 'Hub: Need Inbound Flight'
+                ? (isTh ? 'ฮับ: ต้องมีเส้นทางบินก่อน' : 'Hub: Need Inbound Flight')
                 : !hasEnoughSlots
-                ? `Hub: Need 10 Slots (${slotsOwned}/10)`
+                ? (isTh ? `ฮับ: ต้องการ 10 สล็อต (${slotsOwned}/10)` : `Hub: Need 10 Slots (${slotsOwned}/10)`)
                 : !hasEnoughCash
-                ? 'Hub: Need $15M'
-                : 'Charter Hub ($15M • +15 Slots)';
+                ? (isTh ? 'ฮับ: ต้องการ $15M' : 'Hub: Need $15M')
+                : (isTh ? 'ก่อตั้งฮับ ($15M • +15 สล็อต)' : 'Charter Hub ($15M • +15 Slots)');
 
               return (
                 <button
@@ -634,22 +635,22 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
             {isHub && !isHQ && (
               <div className="px-3.5 py-2 rounded-xl bg-sky-950/90 border border-sky-400 text-sky-300 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-[0_0_12px_rgba(56,189,248,0.25)]">
                 <span>🌐</span>
-                <span>Regional Hub (+18% Transit Boost)</span>
+                <span>{isTh ? 'ศูนย์การบินฮับ (+18% โบนัสต่อเครื่อง)' : 'Regional Hub (+18% Transit Boost)'}</span>
               </div>
             )}
 
-            {/* HQ Operations Button (David Sterling) */}
+            {/* HQ Operations Button */}
             <button
               onClick={() => setShowHQOperations(true)}
               className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold text-xs sm:text-sm border border-slate-600 flex items-center gap-2 transition cursor-pointer"
             >
               <Shield className="w-4 h-4 text-amber-400" />
-              <span>HQ Director</span>
+              <span>{isTh ? 'ฝ่ายบริหารส่วนกลาง' : 'HQ Director'}</span>
             </button>
           </div>
         </div>
 
-        {/* 4. CONFIRMATION POPUP OVERLAY (Expansive Widescreen Mission Dispatch Center) */}
+        {/* 4. CONFIRMATION POPUP OVERLAY */}
         {pendingMission && (
           <div className="absolute inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 z-50 animate-in fade-in duration-100">
             <div className="bg-slate-900 border-2 border-sky-400 rounded-3xl shadow-[0_0_60px_rgba(56,189,248,0.35)] w-full h-full max-w-[1600px] max-h-[860px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-100">
@@ -661,17 +662,17 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                   </div>
                   <div>
                     <h3 className="font-black text-xl sm:text-2xl text-white tracking-wide">
-                      Confirm Diplomatic Delegation Dispatch
+                      {isTh ? 'ยืนยันการส่งตัวแทนเจรจา' : 'Confirm Diplomatic Delegation Dispatch'}
                     </h3>
                     <p className="text-xs sm:text-sm text-sky-300 font-mono mt-0.5">
-                      มอบหมายทูตเจรจาประจำสายการบินเพื่อปฏิบัติภารกิจใน {city.name} ({city.country})
+                      {isTh ? `มอบหมายตัวแทนเจรจาเพื่อปฏิบัติภารกิจใน ${city.name} (${city.country})` : `Assign envoy to lead diplomatic mission in ${city.name} (${city.country})`}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setPendingMission(null)}
                   className="text-slate-400 hover:text-white p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 transition cursor-pointer"
-                  title="Close"
+                  title={`${t.common.close}`}
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -679,22 +680,22 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
 
               {/* Two-Column Dossier Layout */}
               <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 sm:p-8 overflow-y-auto">
-                {/* Left Column: Mission Summary, Slot Controls & Financial Impact (5 of 12 cols = 42%) */}
+                {/* Left Column: Mission Summary, Slot Controls & Financial Impact */}
                 <div className="lg:col-span-5 flex flex-col justify-between gap-5 bg-slate-950/80 rounded-3xl border border-slate-800 p-5 sm:p-6 shadow-inner">
                   <div className="space-y-4">
                     <div className="border-b border-slate-800 pb-3">
                       <span className="text-slate-400 text-xs font-mono uppercase font-bold block mb-1">
-                        Target Objective:
+                        {isTh ? 'เป้าหมายภารกิจ:' : 'Target Objective:'}
                       </span>
                       <span className="font-black text-white text-xl sm:text-2xl md:text-3xl block leading-snug">
                         {pendingMission.type === 'SLOT_NEGOTIATION'
-                          ? `+${pendingMission.requestedSlots} Airport Slots in ${city.name}`
+                          ? (isTh ? `ขอสล็อตสนามบิน +${pendingMission.requestedSlots} ช่องใน ${city.name}` : `+${pendingMission.requestedSlots} Airport Slots in ${city.name}`)
                           : `${pendingMission.ventureName}`}
                       </span>
                       <div className="text-xs text-sky-400 font-mono mt-1">
                         {pendingMission.type === 'SLOT_NEGOTIATION'
-                          ? 'การเจรจาสิทธิการบินและการเพิ่มสล็อตลงจอดระหว่างประเทศ'
-                          : 'การลงทุนเข้าซื้อกิจการสาขาย่อยเพื่อเสริมศักยภาพโครงข่าย'}
+                          ? (isTh ? 'การเจรจาสิทธิการบินและการเพิ่มสล็อตลงจอดระหว่างประเทศ' : 'Bilateral treaty negotiation for international flight slots')
+                          : (isTh ? 'การลงทุนเข้าซื้อกิจการสาขาย่อยเพื่อเสริมศักยภาพโครงข่าย' : 'Commercial subsidiary acquisition to boost route load factor')}
                       </div>
                     </div>
 
@@ -702,7 +703,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                       <div className="bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-slate-700/80 space-y-4 shadow">
                         <div className="flex items-center justify-between">
                           <span className="text-slate-200 font-bold uppercase font-mono text-xs sm:text-sm">
-                            Adjust Requested Slots:
+                            {isTh ? 'ปรับจำนวนสล็อตที่ต้องการขอ:' : 'Adjust Requested Slots:'}
                           </span>
                           <div className="flex items-center gap-3">
                             <button
@@ -755,7 +756,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                                     : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
                                 }`}
                               >
-                                {isMax ? `Max (${preset})` : `+${preset}`}
+                                {isMax ? (isTh ? `สูงสุด (${preset})` : `Max (${preset})`) : `+${preset}`}
                               </button>
                             );
                           })}
@@ -774,19 +775,19 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                   {/* Financial Breakdown & Treasury Impact */}
                   <div className="bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-slate-700/80 space-y-3 font-mono text-xs sm:text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Negotiation Duration:</span>
+                      <span className="text-slate-400">{isTh ? 'ระยะเวลาเจรจา:' : 'Negotiation Duration:'}</span>
                       <span className="font-bold text-amber-300 text-sm sm:text-base">
-                        {pendingMission.quartersRemaining} Quarter{pendingMission.quartersRemaining > 1 ? 's' : ''} ({pendingMission.quartersRemaining * 3} Months)
+                        {pendingMission.quartersRemaining} {isTh ? `ไตรมาส (${pendingMission.quartersRemaining * 3} เดือน)` : `Quarter${pendingMission.quartersRemaining > 1 ? 's' : ''} (${pendingMission.quartersRemaining * 3} Months)`}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Delegation Cost:</span>
+                      <span className="text-slate-400">{isTh ? 'ค่าธรรมเนียมเจรจา:' : 'Delegation Cost:'}</span>
                       <span className="font-black text-emerald-400 text-xl sm:text-2xl">
                         ${pendingMission.costK.toLocaleString()}K
                       </span>
                     </div>
                     <div className="flex items-center justify-between pt-2.5 border-t border-slate-800">
-                      <span className="text-slate-400">Remaining Treasury After:</span>
+                      <span className="text-slate-400">{isTh ? 'เงินสดคงเหลือหลังดำเนินการ:' : 'Remaining Treasury After:'}</span>
                       <span className="font-black text-white text-sm sm:text-base">
                         ${(playerAirline.cashK - pendingMission.costK).toLocaleString()}K
                       </span>
@@ -794,18 +795,18 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                   </div>
                 </div>
 
-                {/* Right Column: Assign Envoy Selection (7 of 12 cols = 58%) */}
+                {/* Right Column: Assign Envoy Selection */}
                 <div className="lg:col-span-7 flex flex-col justify-between gap-4">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                     <label className="text-xs sm:text-sm font-black text-slate-200 font-mono uppercase tracking-wider">
-                      Select Available Envoy To Dispatch (เลือกทูตเจรจาประจำภารกิจ):
+                      {isTh ? 'เลือกตัวแทนเจรจาประจำภารกิจ:' : 'Select Available Envoy To Dispatch:'}
                     </label>
                     <span className="text-xs text-sky-400 font-mono font-bold">
-                      {availableFieldNegotiators.length} of 4 Available
+                      {isTh ? `พร้อมงาน: ${availableFieldNegotiators.length} จาก 4 ท่าน` : `${availableFieldNegotiators.length} of 4 Available`}
                     </span>
                   </div>
 
-                  {/* 2x2 Envoy Grid with Large Cards & Zero Truncation */}
+                  {/* 2x2 Envoy Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 content-start">
                     {availableFieldNegotiators.map((neg) => {
                       const isSelected = selectedEnvoyId === neg.id;
@@ -823,7 +824,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                         >
                           {isSelected && (
                             <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-sky-500 text-slate-950 text-[10px] font-black font-mono shadow">
-                              SELECTED ✓
+                              {isTh ? 'เลือกแล้ว ✓' : 'SELECTED ✓'}
                             </span>
                           )}
 
@@ -840,7 +841,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                             </div>
                             <div className="text-xs text-emerald-400 font-mono font-bold flex items-center gap-1.5 mt-2.5">
                               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                              <span>Ready for Mission</span>
+                              <span>{isTh ? 'พร้อมปฏิบัติการ' : 'Ready for Mission'}</span>
                             </div>
                           </div>
                         </button>
@@ -853,7 +854,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
               {/* Actions Footer */}
               <div className="px-6 sm:px-8 py-4 sm:py-5 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0">
                 <div className="hidden sm:flex items-center gap-2 text-xs sm:text-sm text-slate-400 font-mono">
-                  <span>Deploying mission to:</span>
+                  <span>{isTh ? 'เป้าหมายเมือง:' : 'Deploying mission to:'}</span>
                   <strong className="text-white bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-700">
                     {city.name} ({city.id})
                   </strong>
@@ -863,7 +864,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                     onClick={() => setPendingMission(null)}
                     className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer active:scale-95 border border-slate-700"
                   >
-                    Cancel (ยกเลิก)
+                    {t.common.cancel}
                   </button>
                   <button
                     disabled={!selectedEnvoyId || playerAirline.cashK < pendingMission.costK}
@@ -871,7 +872,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                     className="px-8 py-3.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 text-white rounded-xl font-black text-xs sm:text-sm md:text-base shadow-xl transition active:scale-95 border border-emerald-400 cursor-pointer flex items-center gap-2.5"
                   >
                     <CheckCircle2 className="w-5 h-5 text-white" />
-                    <span>Confirm & Dispatch (ยืนยันส่งทูต)</span>
+                    <span>{isTh ? 'ยืนยันส่งตัวแทนเจรจา' : 'Confirm & Dispatch Envoy'}</span>
                   </button>
                 </div>
               </div>
@@ -879,7 +880,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
           </div>
         )}
 
-        {/* 5. HQ OPERATIONS POPUP (David Sterling - Slot Return & Venture Liquidation) */}
+        {/* 5. HQ OPERATIONS POPUP */}
         {showHQOperations && (
           <div className="absolute inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 z-50 animate-in fade-in duration-100">
             <div className="bg-slate-900 border-2 border-amber-500 rounded-3xl shadow-[0_0_60px_rgba(245,158,11,0.3)] w-full h-full max-w-[1200px] max-h-[700px] flex flex-col justify-between overflow-hidden animate-in zoom-in-95 duration-100">
@@ -889,8 +890,8 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                     <NegotiatorAvatar avatarId={hqDirector.avatarId} size="md" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <h3 className="font-black text-lg sm:text-xl text-white">HQ Operations: {hqDirector.name}</h3>
-                    <div className="text-xs sm:text-sm text-amber-400 font-mono">Permanent Home Office Desk • ฝ่ายบริหารสำนักงานใหญ่</div>
+                    <h3 className="font-black text-lg sm:text-xl text-white">{isTh ? `ฝ่ายบริหารส่วนกลาง: ${hqDirector.name}` : `HQ Operations: ${hqDirector.name}`}</h3>
+                    <div className="text-xs sm:text-sm text-amber-400 font-mono">{isTh ? 'ฝ่ายบริหารและนิติกรรมการบิน สำนักงานใหญ่' : 'Permanent Home Office Desk'}</div>
                   </div>
                 </div>
                 <button
@@ -903,17 +904,18 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
 
               <div className="p-6 sm:p-8 space-y-5 flex-1 overflow-y-auto">
                 <p className="text-xs sm:text-sm md:text-base text-slate-300 leading-relaxed bg-slate-950 p-5 rounded-2xl border border-slate-800">
-                  &quot;I can instantly process regulatory surrenders or subsidiary liquidations in{' '}
-                  <strong className="text-white">{city.name}</strong> directly from head office without dispatch delays.&quot;
+                  {isTh
+                    ? `\"ผมสามารถดำเนินการคืนสล็อตสนามบินที่ไม่ได้ใช้งาน หรือขายคืนสินทรัพย์ธุรกิจเสริมใน ${city.name} ได้ทันทีจากส่วนกลางโดยไม่ต้องรอระยะเวลาเดินทางครับ\"`
+                    : `\"I can instantly process regulatory surrenders or subsidiary liquidations in ${city.name} directly from head office without dispatch delays.\"`}
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
                   {/* Surrender Slots */}
                   <div className="p-5 bg-slate-950 rounded-2xl border border-slate-800 flex flex-col justify-between gap-4">
                     <div>
-                      <div className="text-base font-bold text-white">Surrender Unused Slots</div>
+                      <div className="text-base font-bold text-white">{isTh ? 'คืนสล็อตสนามบินที่ไม่ได้ใช้งาน' : 'Surrender Unused Slots'}</div>
                       <div className="text-xs sm:text-sm text-slate-400 mt-1">
-                        Currently owned: <strong className="text-emerald-400 font-mono">{slotsOwned} slots</strong> in {city.name}
+                        {isTh ? `ปัจจุบันถือครอง: ` : `Currently owned: `}<strong className="text-emerald-400 font-mono">{slotsOwned} {isTh ? 'สล็อต' : 'slots'}</strong> {isTh ? `ใน ${city.name}` : `in ${city.name}`}
                       </div>
                     </div>
                     <button
@@ -924,16 +926,16 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                       }}
                       className="px-5 py-3 bg-rose-900/60 hover:bg-rose-800 disabled:opacity-30 text-rose-200 rounded-xl font-bold text-xs sm:text-sm border border-rose-700 transition cursor-pointer"
                     >
-                      Return 5 Slots
+                      {isTh ? 'คืน 5 สล็อต' : 'Return 5 Slots'}
                     </button>
                   </div>
 
                   {/* Divest Business Ventures */}
                   <div className="p-5 bg-slate-950 rounded-2xl border border-slate-800 flex flex-col justify-between gap-4">
                     <div>
-                      <div className="text-base font-bold text-white">Liquidate Local Venture</div>
+                      <div className="text-base font-bold text-white">{isTh ? 'ขายคืนธุรกิจเสริมในเมืองนี้' : 'Liquidate Local Venture'}</div>
                       <div className="text-xs sm:text-sm text-slate-400 mt-1">
-                        Owned: <strong className="text-indigo-400 font-mono">{playerBusinessesInCity.length} subsidiaries</strong> in {city.name}
+                        {isTh ? `ถือครอง: ` : `Owned: `}<strong className="text-indigo-400 font-mono">{playerBusinessesInCity.length} {isTh ? 'แห่ง' : 'subsidiaries'}</strong> {isTh ? `ใน ${city.name}` : `in ${city.name}`}
                       </div>
                     </div>
                     {playerBusinessesInCity.length > 0 && onInstantSellBusiness ? (
@@ -945,10 +947,10 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                         }}
                         className="px-5 py-3 bg-amber-900/60 hover:bg-amber-800 text-amber-200 rounded-xl font-bold text-xs sm:text-sm border border-amber-700 transition cursor-pointer"
                       >
-                        Sell 1 Venture (75% Refund)
+                        {isTh ? 'ขาย 1 กิจการ (รับเงินคืน 75%)' : 'Sell 1 Venture (75% Refund)'}
                       </button>
                     ) : (
-                      <span className="text-xs sm:text-sm text-slate-500 italic">None Owned in this city</span>
+                      <span className="text-xs sm:text-sm text-slate-500 italic">{isTh ? 'ยังไม่มีธุรกิจในเมืองนี้' : 'None Owned in this city'}</span>
                     )}
                   </div>
                 </div>
@@ -959,7 +961,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
                   onClick={() => setShowHQOperations(false)}
                   className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer"
                 >
-                  Close (ปิด)
+                  {t.common.close}
                 </button>
               </div>
             </div>
@@ -977,7 +979,7 @@ export const CityDetailModal: React.FC<CityDetailModalProps> = ({
             data-testid="modal-close-footer-btn"
           >
             <X className="w-4 h-4 text-slate-400" />
-            <span>Close (ปิดหน้าต่าง)</span>
+            <span>{t.common.close}</span>
           </button>
         </div>
       </div>

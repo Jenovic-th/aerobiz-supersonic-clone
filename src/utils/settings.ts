@@ -1,4 +1,5 @@
 export interface GameSettings {
+  language: 'th' | 'en';
   sfxEnabled: boolean;
   sfxVolume: number; // 0 - 100
   bgmEnabled: boolean;
@@ -11,6 +12,7 @@ export interface GameSettings {
 const SETTINGS_KEY = 'aerobiz_user_settings';
 
 export const DEFAULT_SETTINGS: GameSettings = {
+  language: 'th',
   sfxEnabled: true,
   sfxVolume: 75,
   bgmEnabled: true,

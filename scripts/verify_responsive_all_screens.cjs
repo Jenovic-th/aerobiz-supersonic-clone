@@ -155,18 +155,15 @@ async function run() {
 
   console.log('=== TEST 4: AIRCRAFT SHOP & BLUEPRINT VIEWER AT 1024x768 ===');
   // Open Aircraft Shop
-  await evalJs('window.__setGameState && (() => {' +
-    '  const el = Array.from(document.querySelectorAll("button")).find(b => b.textContent && b.textContent.includes("Market"));' +
-    '  if (el) el.click();' +
-    '})()');
+  await click('[data-testid="toolbar-market-btn"]');
   await new Promise((r) => setTimeout(r, 600));
 
-  // Check shop order strip is visible and accessible
+  // Check shop footer button is visible and accessible
   const shopCheck = await evalJs(
     '(() => {' +
-    '  const orderStrip = Array.from(document.querySelectorAll("div")).find(d => d.textContent && d.textContent.includes("ORDERING UNIT:"));' +
-    '  if (!orderStrip) return { found: false };' +
-    '  const r = orderStrip.getBoundingClientRect();' +
+    '  const footerBtn = document.querySelector(\'[data-testid="modal-close-footer-btn"]\');' +
+    '  if (!footerBtn) return { found: false };' +
+    '  const r = footerBtn.getBoundingClientRect();' +
     '  return {' +
     '    found: true,' +
     '    top: Math.round(r.top),' +
@@ -176,7 +173,7 @@ async function run() {
     '  };' +
     '})()'
   );
-  console.log('[SHOP CHECK 1024x768] Order Strip found=' + shopCheck.found + ', top=' + shopCheck.top + ', bottom=' + shopCheck.bottom + ', inViewport=' + shopCheck.inViewport);
+  console.log('[SHOP CHECK 1024x768] Footer Button found=' + shopCheck.found + ', top=' + shopCheck.top + ', bottom=' + shopCheck.bottom + ', inViewport=' + shopCheck.inViewport);
   await capture('responsive_7_aircraft_shop_1024x768.png');
 
   // Close Aircraft shop
@@ -243,10 +240,7 @@ async function run() {
   console.log('=== TEST 7: SETTINGS MODAL AT 1280x720 ===');
   await click('[data-testid="header-system-btn"]');
   await new Promise((r) => setTimeout(r, 200));
-  await evalJs('(() => {' +
-    '  const el = Array.from(document.querySelectorAll("button")).find(b => b.textContent && b.textContent.includes("Game Settings"));' +
-    '  if (el) el.click();' +
-    '})()');
+  await click('[data-testid="menu-settings-btn"]');
   await new Promise((r) => setTimeout(r, 400));
   await assertInViewport('[data-testid="modal-close-header-btn"]', 'Settings Modal Close Button');
   await capture('responsive_10_settings_1280x720.png');
