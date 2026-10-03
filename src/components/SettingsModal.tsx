@@ -115,13 +115,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
               <div>
                 <div className="font-bold text-sm text-white flex items-center gap-2">
-                  <span>Background Music (ดนตรีคลอ Lo-Fi)</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-500/50 font-bold">
-                    {bgmPlayer.getIsCustomTrack() ? 'Custom MP3 Track' : 'Lo-Fi Jazz Ambient'}
+                  <span>Background Music (ดนตรีประกอบ BGM)</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/50 font-bold">
+                    {bgmPlayer.getIsCustomTrack() ? 'Custom MP3 Track' : 'Executive Lounge (100 BPM)'}
                   </span>
                 </div>
                 <div className="text-xs text-slate-400">
-                  ดนตรีแจ๊สเปียโน Lo-Fi คลอเบาๆ สร้างสมาธิขณะเล่น (ไม่รบกวนเสียงคลิก)
+                  ดนตรีเรโทรแจ๊สป๊อปสไตล์ Super Famicom ยุค 90 (Executive Lounge 100 BPM)
                 </div>
               </div>
             </div>
