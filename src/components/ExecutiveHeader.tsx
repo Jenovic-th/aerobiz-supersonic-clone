@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { GameState, Airline } from '../types/game';
 import {
   Plane,
@@ -378,117 +379,123 @@ export const ExecutiveHeader: React.FC<ExecutiveHeaderProps> = ({
       />
 
       {/* Floating Save Toast Notification */}
-      {saveToast && (
-        <div className="fixed bottom-20 right-6 z-50 px-4 py-2 bg-emerald-950 border-2 border-emerald-400 text-emerald-200 rounded-xl shadow-2xl font-black text-xs flex items-center gap-2 animate-bounce">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{saveToast}</span>
-        </div>
-      )}
+      {saveToast &&
+        createPortal(
+          <div className="fixed bottom-20 right-6 z-[100] px-4 py-2 bg-emerald-950 border-2 border-emerald-400 text-emerald-200 rounded-xl shadow-2xl font-black text-xs flex items-center gap-2 animate-bounce">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <span>{saveToast}</span>
+          </div>,
+          document.body
+        )}
 
       {/* Roster Modal */}
-      {showRoster && (
-        <ExecutiveRosterModal
-          playerAirline={playerAirline}
-          onClose={() => setShowRoster(false)}
-        />
-      )}
+      {showRoster &&
+        createPortal(
+          <ExecutiveRosterModal
+            playerAirline={playerAirline}
+            onClose={() => setShowRoster(false)}
+          />,
+          document.body
+        )}
 
       {/* Confirmation Dialog Modal for Restart / Title / Exit */}
-      {confirmAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-150">
-          <div className="bg-slate-900 border-2 border-slate-700 w-full max-w-md rounded-3xl shadow-2xl p-6 text-slate-100 space-y-4">
-            <div className="flex items-center gap-3">
-              <div
-                className={`p-3 rounded-2xl border ${
-                  confirmAction === 'restart'
-                    ? 'bg-amber-500/20 border-amber-400 text-amber-400'
-                    : confirmAction === 'title'
-                    ? 'bg-indigo-500/20 border-indigo-400 text-indigo-400'
-                    : 'bg-rose-500/20 border-rose-400 text-rose-400'
-                }`}
-              >
-                {confirmAction === 'restart' && <RotateCcw className="w-6 h-6" />}
-                {confirmAction === 'title' && <Home className="w-6 h-6" />}
-                {confirmAction === 'exit' && <Power className="w-6 h-6" />}
+      {confirmAction &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-150">
+            <div className="bg-slate-900 border-2 border-slate-700 w-full max-w-md rounded-3xl shadow-2xl p-6 text-slate-100 space-y-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`p-3 rounded-2xl border ${
+                    confirmAction === 'restart'
+                      ? 'bg-amber-500/20 border-amber-400 text-amber-400'
+                      : confirmAction === 'title'
+                      ? 'bg-indigo-500/20 border-indigo-400 text-indigo-400'
+                      : 'bg-rose-500/20 border-rose-400 text-rose-400'
+                  }`}
+                >
+                  {confirmAction === 'restart' && <RotateCcw className="w-6 h-6" />}
+                  {confirmAction === 'title' && <Home className="w-6 h-6" />}
+                  {confirmAction === 'exit' && <Power className="w-6 h-6" />}
+                </div>
+                <div>
+                  <h3 className="text-base font-black font-mono">
+                    {confirmAction === 'restart' && (lang === 'th' ? 'ยืนยันการเริ่มเกมใหม่' : 'Restart Simulation')}
+                    {confirmAction === 'title' && (lang === 'th' ? 'กลับสู่หน้าแรก' : 'Return to Title Screen')}
+                    {confirmAction === 'exit' && (lang === 'th' ? 'ออกจากเกม' : 'Exit Aerobiz Supersonic')}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {confirmAction === 'restart' && (lang === 'th' ? 'เริ่มสร้างสายการบินรอบใหม่' : 'Start fresh simulation')}
+                    {confirmAction === 'title' && (lang === 'th' ? 'กลับสู่หน้าแรกของเกม' : 'Leave to main title')}
+                    {confirmAction === 'exit' && (lang === 'th' ? 'ปิดและยุติการทำงานของโปรแกรม' : 'Quit application')}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-black font-mono">
-                  {confirmAction === 'restart' && (lang === 'th' ? 'ยืนยันการเริ่มเกมใหม่' : 'Restart Simulation')}
-                  {confirmAction === 'title' && (lang === 'th' ? 'กลับสู่หน้าปกหลัก' : 'Return to Title Screen')}
-                  {confirmAction === 'exit' && (lang === 'th' ? 'ออกจากเกม' : 'Exit Aerobiz Supersonic')}
-                </h3>
-                <p className="text-xs text-slate-400">
-                  {confirmAction === 'restart' && (lang === 'th' ? 'เริ่มสร้างสายการบินรอบใหม่' : 'Start fresh simulation')}
-                  {confirmAction === 'title' && (lang === 'th' ? 'กลับสู่หน้าแรกของเกม' : 'Leave to main title')}
-                  {confirmAction === 'exit' && (lang === 'th' ? 'ปิดและยุติการทำงานของโปรแกรม' : 'Quit application')}
-                </p>
+
+              <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 text-xs text-slate-300 leading-relaxed font-mono">
+                {confirmAction === 'restart' &&
+                  (lang === 'th'
+                    ? 'คุณต้องการยกเลิกความคืบหน้าปัจจุบันและเริ่มสร้างสายการบินรอบใหม่หรือไม่? (แนะนำให้บันทึกเกมไว้ก่อนหากยังต้องการเล่นต่อ)'
+                    : 'Are you sure you want to discard current simulation progress and start over? (Recommended to save first).')}
+                {confirmAction === 'title' &&
+                  (lang === 'th'
+                    ? 'คุณต้องการออกจากรอบการเล่นปัจจุบันและกลับสู่หน้าแรกของเกมหรือไม่? ความคืบหน้าที่ไม่ได้บันทึกจะสูญหาย'
+                    : 'Return to main title screen? Any unsaved progress will be lost.')}
+                {confirmAction === 'exit' &&
+                  (lang === 'th'
+                    ? 'คุณต้องการปิดโปรแกรมและออกจากเกมหรือไม่? ตรวจสอบให้แน่ใจว่าได้บันทึกเกมเรียบร้อยแล้ว'
+                    : 'Are you sure you want to quit the game? Ensure you have saved your game.')}
               </div>
-            </div>
 
-            <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 text-xs text-slate-300 leading-relaxed font-mono">
-              {confirmAction === 'restart' &&
-                (lang === 'th'
-                  ? 'คุณต้องการยกเลิกความคืบหน้าปัจจุบันและเริ่มสร้างสายการบินรอบใหม่หรือไม่? (แนะนำให้เซฟเกมไว้ก่อนหากยังต้องการเล่นต่อ)'
-                  : 'Are you sure you want to discard current simulation progress and start over? (Recommended to save first).')}
-              {confirmAction === 'title' &&
-                (lang === 'th'
-                  ? 'คุณต้องการออกจากรอบการเล่นปัจจุบันและกลับสู่หน้าปกของเกมหรือไม่? ความคืบหน้าที่ไม่ได้บันทึกจะสูญหาย'
-                  : 'Return to main title screen? Any unsaved progress will be lost.')}
-              {confirmAction === 'exit' &&
-                (lang === 'th'
-                  ? 'คุณต้องการปิดโปรแกรมและออกจากเกมหรือไม่? ตรวจสอบให้แน่ใจว่าได้บันทึกเกมเรียบร้อยแล้ว'
-                  : 'Are you sure you want to quit the game? Ensure you have saved your game.')}
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  playSound.click();
-                  setConfirmAction(null);
-                }}
-                data-testid="confirm-dialog-cancel-btn"
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  playSound.confirm();
-                  const action = confirmAction;
-                  setConfirmAction(null);
-                  if (action === 'restart' && onRestartGame) {
-                    onRestartGame();
-                  } else if (action === 'title' && onReturnToTitle) {
-                    onReturnToTitle();
-                  } else if (action === 'exit') {
-                    if (typeof window !== 'undefined' && (window as any).electronAPI?.quit) {
-                      (window as any).electronAPI.quit();
-                    } else if (typeof window !== 'undefined' && (window as any).electronAPI?.close) {
-                      (window as any).electronAPI.close();
-                    } else if (window.close) {
-                      window.close();
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    playSound.click();
+                    setConfirmAction(null);
+                  }}
+                  data-testid="confirm-dialog-cancel-btn"
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  {t.common.cancel}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    playSound.confirm();
+                    const action = confirmAction;
+                    setConfirmAction(null);
+                    if (action === 'restart' && onRestartGame) {
+                      onRestartGame();
+                    } else if (action === 'title' && onReturnToTitle) {
+                      onReturnToTitle();
+                    } else if (action === 'exit') {
+                      if (typeof window !== 'undefined' && (window as any).electronAPI?.quit) {
+                        (window as any).electronAPI.quit();
+                      } else if (typeof window !== 'undefined' && (window as any).electronAPI?.close) {
+                        (window as any).electronAPI.close();
+                      } else if (window.close) {
+                        window.close();
+                      }
                     }
-                  }
-                }}
-                data-testid="confirm-dialog-confirm-btn"
-                className={`px-5 py-2 rounded-xl text-xs font-black shadow-lg transition cursor-pointer ${
-                  confirmAction === 'restart'
-                    ? 'bg-amber-600 hover:bg-amber-500 text-slate-950'
-                    : confirmAction === 'title'
-                    ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
-                    : 'bg-rose-600 hover:bg-rose-500 text-white'
-                }`}
-              >
-                {confirmAction === 'restart' && (lang === 'th' ? 'เริ่มรอบใหม่' : 'Restart')}
-                {confirmAction === 'title' && (lang === 'th' ? 'กลับหน้าปก' : 'Title Screen')}
-                {confirmAction === 'exit' && (lang === 'th' ? 'ออกจากเกม' : 'Exit')}
-              </button>
+                  }}
+                  data-testid="confirm-dialog-confirm-btn"
+                  className={`px-5 py-2 rounded-xl text-xs font-black shadow-lg transition cursor-pointer ${
+                    confirmAction === 'restart'
+                      ? 'bg-amber-600 hover:bg-amber-500 text-slate-950'
+                      : confirmAction === 'title'
+                      ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                      : 'bg-rose-600 hover:bg-rose-500 text-white'
+                  }`}
+                >
+                  {confirmAction === 'restart' && (lang === 'th' ? 'เริ่มรอบใหม่' : 'Restart')}
+                  {confirmAction === 'title' && (lang === 'th' ? 'กลับหน้าแรก' : 'Title Screen')}
+                  {confirmAction === 'exit' && (lang === 'th' ? 'ออกจากเกม' : 'Exit')}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </header>
   );
 };

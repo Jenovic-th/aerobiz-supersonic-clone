@@ -1750,7 +1750,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({
           }`}
         >
           <Globe className="w-3.5 h-3.5" />
-          <span>Global World</span>
+          <span>{isTh ? 'แผนที่โลก' : 'Global World'}</span>
         </button>
 
         <div className="w-[1px] h-4 bg-slate-700/80 mx-1 shrink-0"></div>
@@ -1759,18 +1759,33 @@ export const WorldMap: React.FC<WorldMapProps> = ({
         {REGION_LIST.map((reg) => {
           const isActive = activeRegion === reg.id;
           const cityCount = CITIES.filter((c) => c.region === reg.id).length;
-          const label =
-            reg.id === 'AFRICA'
-              ? 'Africa'
-              : reg.id === 'NORTH_AMERICA'
-              ? 'N. America'
-              : reg.id === 'SOUTH_AMERICA'
-              ? 'S. America'
-              : reg.id === 'MIDDLE_EAST_SOUTH_ASIA'
-              ? 'M. East'
-              : reg.id === 'EAST_SOUTHEAST_ASIA'
-              ? 'East Asia'
-              : reg.name.split('&')[0].trim();
+          const label = isTh
+            ? (reg.id === 'AFRICA'
+                ? 'แอฟริกา'
+                : reg.id === 'NORTH_AMERICA'
+                ? 'อเมริกาเหนือ'
+                : reg.id === 'SOUTH_AMERICA'
+                ? 'อเมริกาใต้'
+                : reg.id === 'MIDDLE_EAST_SOUTH_ASIA'
+                ? 'ตะวันออกกลาง'
+                : reg.id === 'EAST_SOUTHEAST_ASIA'
+                ? 'เอเชียตะวันออก'
+                : reg.id === 'EUROPE'
+                ? 'ยุโรป'
+                : reg.id === 'OCEANIA'
+                ? 'โอเชียเนีย'
+                : reg.name)
+            : (reg.id === 'AFRICA'
+                ? 'Africa'
+                : reg.id === 'NORTH_AMERICA'
+                ? 'N. America'
+                : reg.id === 'SOUTH_AMERICA'
+                ? 'S. America'
+                : reg.id === 'MIDDLE_EAST_SOUTH_ASIA'
+                ? 'M. East'
+                : reg.id === 'EAST_SOUTHEAST_ASIA'
+                ? 'East Asia'
+                : reg.name.split('&')[0].trim());
 
           return (
             <button
