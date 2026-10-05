@@ -65,6 +65,16 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
   }
 
   // 4. Boeing 747 Queen of the Skies
+  if (id.includes('747-400') || id.includes('B747-400')) {
+    return {
+      photoUrl: './aircrafts/b747_400.jpg',
+      caption: 'Boeing 747-400 Long-Haul Intercontinental Flagship',
+      airlineLivery: 'British Airways World Flagship Livery',
+      flightContext: 'Cruising at 39,000 ft with Angled Winglets Above Cloud Sea',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'JUMBO',
+    };
+  }
   if (id.includes('747')) {
     return {
       photoUrl: './aircrafts/b747.jpg',
@@ -223,13 +233,24 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 12. Early & Mid Widebody Twinjets: Airbus A300, A310, A330, A340, Boeing 767
+  // 14. Boeing 767 Transcontinental Widebody Twinjet
+  if (id.includes('767') || id.includes('B767')) {
+    return {
+      photoUrl: './aircrafts/b767_200.jpg',
+      caption: `${model.model} Transcontinental Twinjet`,
+      airlineLivery: 'United Airlines Retro Saul Bass Tulip Livery',
+      flightContext: 'Transcontinental ETOPS Corridor Above Stratocumulus',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'WIDEBODY',
+    };
+  }
+
+  // 15. Early & Mid Widebody Twinjets: Airbus A300, A310, A330, A340
   if (
     id.includes('A300') ||
     id.includes('310') ||
     id.includes('330') ||
-    id.includes('340') ||
-    id.includes('767')
+    id.includes('340')
   ) {
     return {
       photoUrl: './aircrafts/a300.jpg',
@@ -241,7 +262,43 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 13. Standard Narrowbody Airliners: Boeing 737, 757, Airbus A320, A320neo, A321XLR
+  // 16. Boeing 757 High-Performance Twinjet
+  if (id.includes('757') || id.includes('B757')) {
+    return {
+      photoUrl: './aircrafts/b757_200.jpg',
+      caption: 'Boeing 757-200 High-Performance Twinjet',
+      airlineLivery: 'British Airways Classic Landor Fleet Livery',
+      flightContext: 'Power Climb Through High Stratosphere with RB211 Turbofans',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 17. Boeing 737-300 Classic High-Bypass
+  if (id.includes('737-300') || id.includes('B737-300')) {
+    return {
+      photoUrl: './aircrafts/b737_300.jpg',
+      caption: 'Boeing 737-300 Classic High-Bypass Twinjet',
+      airlineLivery: 'Southwest Airlines Classic Canyon Blue Livery',
+      flightContext: 'Cruising with CFM56 Flat-Nacelle Turbofans Above Clouds',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 18. Airbus A320-200 Fly-By-Wire Pioneer
+  if (id.includes('A320-200') || (id.includes('A320') && !id.includes('NEO'))) {
+    return {
+      photoUrl: './aircrafts/a320_200.jpg',
+      caption: 'Airbus A320-200 Fly-By-Wire Pioneer',
+      airlineLivery: 'Air France Flagship European Tricolor Livery',
+      flightContext: 'Cruising Smoothly with Wingtip Fences at Sunset Horizon',
+      manufacturerWatermark: 'AIRBUS INDUSTRIE',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 19. Standard Narrowbody Airliners: Boeing 737, 757, Airbus A320neo, A321XLR
   return {
     photoUrl: './aircrafts/b737.jpg',
     caption: `${model.model} High-Efficiency Narrowbody Jet`,

@@ -23,7 +23,12 @@ const targetImages = [
   { file: 'l1011.jpg', model: 'Lockheed L-1011 TriStar' },
   { file: 'tu154.jpg', model: 'Tupolev Tu-154B' },
   { file: 'il86.jpg', model: 'Ilyushin Il-86' },
-  { file: 'md82.jpg', model: 'McDonnell Douglas MD-82' }
+  { file: 'md82.jpg', model: 'McDonnell Douglas MD-82' },
+  { file: 'b767_200.jpg', model: 'Boeing 767-200' },
+  { file: 'b757_200.jpg', model: 'Boeing 757-200' },
+  { file: 'b737_300.jpg', model: 'Boeing 737-300' },
+  { file: 'a320_200.jpg', model: 'Airbus A320-200' },
+  { file: 'b747_400.jpg', model: 'Boeing 747-400' }
 ];
 
 let allPassed = true;
@@ -48,5 +53,5 @@ if (!allPassed) {
   process.exit(1);
 }
 
-console.log('ALL 4 TARGET AIRCRAFT PHOTOS VERIFIED SUCCESSFULLY (100%)');
+console.log('ALL ' + targetImages.length + ' TARGET AIRCRAFT PHOTOS VERIFIED SUCCESSFULLY (100%)');
 process.exit(0);

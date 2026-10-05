@@ -78,6 +78,7 @@ function getAircraftPhotoUrl(model) {
   ) {
     return 'future.jpg';
   }
+  if (id.includes('747-400') || id.includes('B747-400')) return 'b747_400.jpg';
   if (id.includes('747')) return 'b747.jpg';
   if (id.includes('380')) return 'a380.jpg';
   if (id.includes('707')) return 'b707.jpg';
@@ -113,15 +114,18 @@ function getAircraftPhotoUrl(model) {
   ) {
     return 'b777.jpg';
   }
+  if (id.includes('767') || id.includes('B767')) return 'b767_200.jpg';
   if (
     id.includes('A300') ||
     id.includes('310') ||
     id.includes('330') ||
-    id.includes('340') ||
-    id.includes('767')
+    id.includes('340')
   ) {
     return 'a300.jpg';
   }
+  if (id.includes('757') || id.includes('B757')) return 'b757_200.jpg';
+  if (id.includes('737-300') || id.includes('B737-300')) return 'b737_300.jpg';
+  if (id.includes('A320-200') || (id.includes('A320') && !id.includes('NEO'))) return 'a320_200.jpg';
   return 'b737.jpg';
 }
 
