@@ -125,21 +125,32 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
   // 8. Lockheed L-1011 TriStar
   if (id.includes('L-1011')) {
     return {
-      photoUrl: './aircrafts/dc10.jpg',
+      photoUrl: './aircrafts/l1011.jpg',
       caption: 'Lockheed L-1011 TriStar Advanced Widebody Trijet',
-      airlineLivery: 'Delta Air Lines Classic Widget Livery',
-      flightContext: 'Transcontinental Cruising Over Coastline',
+      airlineLivery: 'Eastern Air Lines Whisperliner Classic Livery',
+      flightContext: 'Transcontinental Cruising Above Golden Cloudscape',
       manufacturerWatermark: 'LOCKHEED CORPORATION',
       badgeType: 'WIDEBODY',
     };
   }
 
-  // 9. McDonnell Douglas DC-10 & MD-11 & MD-80 / MD-82 / MD-XX
+  // 9. McDonnell Douglas MD-82
+  if (id.includes('MD-82') || id.includes('MD82')) {
+    return {
+      photoUrl: './aircrafts/md82.jpg',
+      caption: 'McDonnell Douglas MD-82 Twin-Jet Airliner',
+      airlineLivery: 'American Airlines Classic Bare-Metal Livery',
+      flightContext: 'High-Altitude Banking Cruise Over Cumulus Deck',
+      manufacturerWatermark: 'MCDONNELL DOUGLAS',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 10. McDonnell Douglas DC-10 & MD-11 & MD2000
   if (
     id.includes('DC-10') ||
     id.includes('MD-11') ||
     id.includes('MD-80') ||
-    id.includes('MD-82') ||
     id.includes('MD2000')
   ) {
     return {
@@ -148,14 +159,37 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
       airlineLivery: 'Continental Airlines Golden Tail Jet Livery',
       flightContext: 'Transoceanic Crossing Over Deep Blue Waters',
       manufacturerWatermark: 'MCDONNELL DOUGLAS',
-      badgeType: id.includes('MD-80') || id.includes('MD-82') ? 'NARROWBODY' : 'WIDEBODY',
+      badgeType: id.includes('MD-80') ? 'NARROWBODY' : 'WIDEBODY',
     };
   }
 
-  // 10. Soviet Aviation: Ilyushin Il-62, Il-86, Il-96, Tu-154, Tu-204, Tu-404
+  // 11. Tupolev Tu-154B
+  if (id.includes('154') || id.includes('TU-154')) {
+    return {
+      photoUrl: './aircrafts/tu154.jpg',
+      caption: 'Tupolev Tu-154B Trijet Passenger Airliner',
+      airlineLivery: 'Aeroflot Soviet Civil Aviation Classic Livery',
+      flightContext: 'Cruising High Altitude Over Alpine Mountain Peaks',
+      manufacturerWatermark: 'TUPOLEV DESIGN BUREAU',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 12. Ilyushin Il-86
+  if (id.includes('IL-86') || id.includes('IL86')) {
+    return {
+      photoUrl: './aircrafts/il86.jpg',
+      caption: 'Ilyushin Il-86 Widebody Quadjet Heavy Airliner',
+      airlineLivery: 'Aeroflot Soviet Civil Aviation Flagship Livery',
+      flightContext: 'Cruising Above Extensive Cloud Sea in Sunlight',
+      manufacturerWatermark: 'ILYUSHIN DESIGN BUREAU',
+      badgeType: 'WIDEBODY',
+    };
+  }
+
+  // 13. Soviet Aviation: Ilyushin Il-62, Il-96, Tu-204, Tu-404
   if (
     id.includes('IL-') ||
-    id.includes('154') ||
     id.includes('204') ||
     id.includes('404') ||
     model.manufacturer.toLowerCase().includes('ilyushin') ||
@@ -167,7 +201,7 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
       airlineLivery: 'Aeroflot Civil Aviation Directorate',
       flightContext: 'Cruising Northern Airway Above Snow-Covered Terrain',
       manufacturerWatermark: `${model.manufacturer.toUpperCase()} DESIGN BUREAU`,
-      badgeType: id.includes('IL-86') || id.includes('IL-96') || id.includes('404') ? 'WIDEBODY' : 'NARROWBODY',
+      badgeType: id.includes('IL-96') || id.includes('404') ? 'WIDEBODY' : 'NARROWBODY',
     };
   }
 

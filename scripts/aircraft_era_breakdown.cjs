@@ -76,19 +76,20 @@ function getAircraftPhotoUrl(model) {
   if (id.includes('707')) return 'b707.jpg';
   if (id.includes('DC-8')) return 'dc8.jpg';
   if (id.includes('727')) return 'b727.jpg';
-  if (id.includes('L-1011')) return 'dc10.jpg';
+  if (id.includes('L-1011')) return 'l1011.jpg';
+  if (id.includes('MD-82') || id.includes('MD82')) return 'md82.jpg';
   if (
     id.includes('DC-10') ||
     id.includes('MD-11') ||
     id.includes('MD-80') ||
-    id.includes('MD-82') ||
     id.includes('MD2000')
   ) {
     return 'dc10.jpg';
   }
+  if (id.includes('154') || id.includes('TU-154')) return 'tu154.jpg';
+  if (id.includes('IL-86') || id.includes('IL86')) return 'il86.jpg';
   if (
     id.includes('IL-') ||
-    id.includes('154') ||
     id.includes('204') ||
     id.includes('404') ||
     model.manufacturer.toLowerCase().includes('ilyushin') ||

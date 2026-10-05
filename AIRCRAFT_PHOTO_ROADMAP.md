@@ -21,12 +21,12 @@
 - [x] **Boeing 747-200B** (`B747-200B`) — 1971–2002 | Western | ปัจจุบัน: `b747.jpg` (ตรงรุ่น)
 - [x] **Boeing 727-200 Advanced** (`B727-200`) — 1972–1996 | Western | ปัจจุบัน: `b727.jpg` (ตรงรุ่น)
 - [x] **McDonnell Douglas DC-10-30** (`DC-10-30`) — 1972–2006 | Western | ปัจจุบัน: `dc10.jpg` (ตรงรุ่น)
-- [ ] **Lockheed L-1011 TriStar** (`L-1011`) — 1972–2000 | Western | ปัจจุบัน: `dc10.jpg` | *เป้าหมาย: `l1011.jpg`*
+- [x] **Lockheed L-1011 TriStar** (`L-1011`) — 1972–2000 | Western | ปัจจุบัน: `l1011.jpg` (ตรงรุ่น)
 - [x] **Airbus A300B4** (`A300B4`) — 1975–2005 | Western | ปัจจุบัน: `a300.jpg` (ตรงรุ่น)
 - [x] **Aérospatiale/BAC Concorde** (`CONCORDE`) — 1976–2003 | Western | ปัจจุบัน: `concorde.jpg` (ตรงรุ่น)
-- [ ] **Tupolev Tu-154B Careless** (`TU-154B`) — 1977–2010 | Eastern | ปัจจุบัน: `soviet.jpg` | *เป้าหมาย: `tu154.jpg`*
-- [ ] **Ilyushin Il-86 Camber** (`IL-86`) — 1980–2011 | Eastern | ปัจจุบัน: `soviet.jpg` | *เป้าหมาย: `il86.jpg`*
-- [ ] **McDonnell Douglas MD-82** (`MD-82`) — 1980–2014 | Western | ปัจจุบัน: `dc10.jpg` | *เป้าหมาย: `md82.jpg`*
+- [x] **Tupolev Tu-154B Careless** (`TU-154B`) — 1977–2010 | Eastern | ปัจจุบัน: `tu154.jpg` (ตรงรุ่น)
+- [x] **Ilyushin Il-86 Camber** (`IL-86`) — 1980–2011 | Eastern | ปัจจุบัน: `il86.jpg` (ตรงรุ่น)
+- [x] **McDonnell Douglas MD-82** (`MD-82`) — 1980–2014 | Western | ปัจจุบัน: `md82.jpg` (ตรงรุ่น)
 
 #### 🟡 เครื่องบินที่รอเปิดตัวตามช่วงปีใน Era 1 (Upcoming Era 1 — 16 รุ่น)
 - [ ] **Boeing 767-200** (`B767-200`) — ปี 1982 | Western | ปัจจุบัน: `a300.jpg` | *เป้าหมาย: `b767_200.jpg`*
