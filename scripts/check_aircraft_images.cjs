@@ -86,9 +86,9 @@ function getAircraftPhotoUrl(model) {
   if (id.includes('727')) return 'b727.jpg';
   if (id.includes('L-1011')) return 'l1011.jpg';
   if (id.includes('MD-82') || id.includes('MD82')) return 'md82.jpg';
+  if (id.includes('MD-11') || id.includes('MD11')) return 'md11.jpg';
   if (
     id.includes('DC-10') ||
-    id.includes('MD-11') ||
     id.includes('MD-80') ||
     id.includes('MD2000')
   ) {
@@ -115,11 +115,11 @@ function getAircraftPhotoUrl(model) {
     return 'b777.jpg';
   }
   if (id.includes('767') || id.includes('B767')) return 'b767_200.jpg';
+  if (id.includes('A340') || id.includes('340')) return 'a340_300.jpg';
+  if (id.includes('A330') || id.includes('330')) return 'a330_300.jpg';
   if (
     id.includes('A300') ||
-    id.includes('310') ||
-    id.includes('330') ||
-    id.includes('340')
+    id.includes('310')
   ) {
     return 'a300.jpg';
   }

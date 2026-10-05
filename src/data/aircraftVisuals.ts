@@ -156,10 +156,21 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 10. McDonnell Douglas DC-10 & MD-11 & MD2000
+  // 10. McDonnell Douglas MD-11
+  if (id.includes('MD-11') || id.includes('MD11')) {
+    return {
+      photoUrl: './aircrafts/md11.jpg',
+      caption: 'McDonnell Douglas MD-11 Widebody Trijet Flagship',
+      airlineLivery: 'KLM Royal Dutch Airlines Classic Clean Livery',
+      flightContext: 'Cruising Above Extensive Stratocumulus at 38,000 ft',
+      manufacturerWatermark: 'MCDONNELL DOUGLAS',
+      badgeType: 'WIDEBODY',
+    };
+  }
+
+  // 11. McDonnell Douglas DC-10 & MD2000
   if (
     id.includes('DC-10') ||
-    id.includes('MD-11') ||
     id.includes('MD-80') ||
     id.includes('MD2000')
   ) {
@@ -245,12 +256,34 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 15. Early & Mid Widebody Twinjets: Airbus A300, A310, A330, A340
+  // 15. Airbus A340 Long-Haul Quadjet
+  if (id.includes('A340') || id.includes('340')) {
+    return {
+      photoUrl: './aircrafts/a340_300.jpg',
+      caption: 'Airbus A340-300 Long-Haul Widebody Quadjet',
+      airlineLivery: 'Lufthansa Intercontinental German Livery',
+      flightContext: 'Four-Engine Cruising Above Cloud Sea During Golden Sunset',
+      manufacturerWatermark: 'AIRBUS INDUSTRIE',
+      badgeType: 'WIDEBODY',
+    };
+  }
+
+  // 16. Airbus A330 High-Efficiency Twinjet
+  if (id.includes('A330') || id.includes('330')) {
+    return {
+      photoUrl: './aircrafts/a330_300.jpg',
+      caption: 'Airbus A330-300 High-Efficiency Widebody Twinjet',
+      airlineLivery: 'Cathay Pacific Airways Flagship Asian Livery',
+      flightContext: 'Cruising at 37,000 ft Above Marine Clouds and Atolls',
+      manufacturerWatermark: 'AIRBUS INDUSTRIE',
+      badgeType: 'WIDEBODY',
+    };
+  }
+
+  // 17. Early Airbus Widebodies: A300 & A310
   if (
     id.includes('A300') ||
-    id.includes('310') ||
-    id.includes('330') ||
-    id.includes('340')
+    id.includes('310')
   ) {
     return {
       photoUrl: './aircrafts/a300.jpg',

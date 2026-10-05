@@ -28,7 +28,10 @@ const targetImages = [
   { file: 'b757_200.jpg', model: 'Boeing 757-200' },
   { file: 'b737_300.jpg', model: 'Boeing 737-300' },
   { file: 'a320_200.jpg', model: 'Airbus A320-200' },
-  { file: 'b747_400.jpg', model: 'Boeing 747-400' }
+  { file: 'b747_400.jpg', model: 'Boeing 747-400' },
+  { file: 'md11.jpg', model: 'McDonnell Douglas MD-11' },
+  { file: 'a340_300.jpg', model: 'Airbus A340-300' },
+  { file: 'a330_300.jpg', model: 'Airbus A330-300' }
 ];
 
 let allPassed = true;
