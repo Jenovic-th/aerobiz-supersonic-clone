@@ -49,12 +49,12 @@
 ---
 
 ### 🌐 ERA 2: ยุคดิจิทัลและการปฏิวัติประสิทธิภาพ (2000 – 2020 — 11 รุ่น)
-- [ ] **Boeing 777-200ER** (`B777-200ER`) — ปี 2000 | Western | ปัจจุบัน: `b777.jpg` | *เป้าหมาย: `b777_200er.jpg`*
-- [ ] **Embraer E190 E-Jet** (`E190`) — ปี 2004 | Neutral | ปัจจุบัน: `b737.jpg` | *เป้าหมาย: `e190.jpg`*
-- [ ] **Boeing 777-300ER** (`B777-300ER`) — ปี 2004 | Western | ปัจจุบัน: `b777.jpg` | *เป้าหมาย: `b777_300er.jpg`*
+- [x] **Boeing 777-200ER** (`B777-200ER`) — ปี 2000 | Western | ปัจจุบัน: `b777_200er.jpg` (ตรงรุ่น)
+- [x] **Embraer E190 E-Jet** (`E190`) — ปี 2004 | Neutral | ปัจจุบัน: `e190.jpg` (ตรงรุ่น)
+- [x] **Boeing 777-300ER** (`B777-300ER`) — ปี 2004 | Western | ปัจจุบัน: `b777_300er.jpg` (ตรงรุ่น)
 - [x] **Airbus A380-800 Superjumbo** (`A380-800`) — ปี 2007 | Western | ปัจจุบัน: `a380.jpg` (ตรงรุ่น)
-- [ ] **Boeing 747-8 Intercontinental** (`B747-8I`) — ปี 2012 | Western | ปัจจุบัน: `b747.jpg` | *เป้าหมาย: `b747_8i.jpg`*
-- [ ] **Boeing 787-9 Dreamliner** (`B787-9`) — ปี 2014 | Western | ปัจจุบัน: `b777.jpg` | *เป้าหมาย: `b787_9.jpg`*
+- [x] **Boeing 747-8 Intercontinental** (`B747-8I`) — ปี 2012 | Western | ปัจจุบัน: `b747_8i.jpg` (ตรงรุ่น)
+- [x] **Boeing 787-9 Dreamliner** (`B787-9`) — ปี 2014 | Western | ปัจจุบัน: `b787_9.jpg` (ตรงรุ่น)
 - [ ] **Airbus A350-900 XWB** (`A350-900`) — ปี 2015 | Western | ปัจจุบัน: `b777.jpg` | *เป้าหมาย: `a350_900.jpg`*
 - [ ] **Airbus A320neo** (`A320NEO`) — ปี 2016 | Western | ปัจจุบัน: `b737.jpg` | *เป้าหมาย: `a320neo.jpg`*
 - [ ] **Boeing 737 MAX 8** (`B737-MAX8`) — ปี 2017 | Western | ปัจจุบัน: `b737.jpg` | *เป้าหมาย: `b737_max8.jpg`*

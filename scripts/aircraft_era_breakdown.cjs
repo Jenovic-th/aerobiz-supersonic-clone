@@ -73,6 +73,7 @@ function getAircraftPhotoUrl(model) {
   }
   if (id.includes('747-400') || id.includes('B747-400')) return 'b747_400.jpg';
   if (id.includes('747-300') || id.includes('B747-300')) return 'b747_300.jpg';
+  if (id.includes('747-8') || id.includes('B747-8')) return 'b747_8i.jpg';
   if (id.includes('747')) return 'b747.jpg';
   if (id.includes('380')) return 'a380.jpg';
   if (id.includes('707')) return 'b707.jpg';
@@ -101,9 +102,11 @@ function getAircraftPhotoUrl(model) {
     return 'soviet.jpg';
   }
   if (id === 'B777-200' || (id.includes('777-200') && !id.includes('ER'))) return 'b777_200.jpg';
+  if (id.includes('777-200ER') || id.includes('B777-200ER')) return 'b777_200er.jpg';
+  if (id.includes('777-300ER') || id.includes('B777-300ER')) return 'b777_300er.jpg';
+  if (id.includes('787') || id.includes('B787')) return 'b787_9.jpg';
   if (
     id.includes('777') ||
-    id.includes('787') ||
     id.includes('350') ||
     id.includes('B777') ||
     id.includes('A350')
@@ -123,6 +126,7 @@ function getAircraftPhotoUrl(model) {
   if (id.includes('737-800') || id.includes('B737-800')) return 'b737_800.jpg';
   if (id.includes('737-300') || id.includes('B737-300')) return 'b737_300.jpg';
   if (id.includes('A320-200') || (id.includes('A320') && !id.includes('NEO'))) return 'a320_200.jpg';
+  if (id.includes('E190') || id.includes('EMBRAER')) return 'e190.jpg';
   return 'b737.jpg';
 }
 

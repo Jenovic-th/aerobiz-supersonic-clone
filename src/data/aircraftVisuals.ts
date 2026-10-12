@@ -85,6 +85,16 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
       badgeType: 'JUMBO',
     };
   }
+  if (id.includes('747-8') || id.includes('B747-8')) {
+    return {
+      photoUrl: './aircrafts/b747_8i.jpg',
+      caption: 'Boeing 747-8 Intercontinental Advanced Jumbo',
+      airlineLivery: 'Lufthansa Modern Deep Blue Livery',
+      flightContext: 'Cruising at FL390 with Scalloped Chevron GEnx-2B Engines',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'JUMBO',
+    };
+  }
   if (id.includes('747')) {
     return {
       photoUrl: './aircrafts/b747.jpg',
@@ -259,8 +269,8 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 16. Boeing 777-200 Original Triple-Seven
-  if (id === 'B777-200' || id.includes('777-200') && !id.includes('ER')) {
+  // 16. Boeing 777 Family
+  if (id === 'B777-200' || (id.includes('777-200') && !id.includes('ER'))) {
     return {
       photoUrl: './aircrafts/b777_200.jpg',
       caption: 'Boeing 777-200 Original Triple-Seven Widebody',
@@ -270,11 +280,42 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
       badgeType: 'WIDEBODY',
     };
   }
+  if (id.includes('777-200ER') || id.includes('B777-200ER')) {
+    return {
+      photoUrl: './aircrafts/b777_200er.jpg',
+      caption: 'Boeing 777-200ER Extended Range Flagship Twinjet',
+      airlineLivery: 'Singapore Airlines Golden Bird Flagship Livery',
+      flightContext: 'Transpacific High-Altitude Long-Haul Cruise at FL370',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'WIDEBODY',
+    };
+  }
+  if (id.includes('777-300ER') || id.includes('B777-300ER')) {
+    return {
+      photoUrl: './aircrafts/b777_300er.jpg',
+      caption: 'Boeing 777-300ER Stretched Flagship Twinjet',
+      airlineLivery: 'Emirates Intercontinental Flagship Livery',
+      flightContext: 'Golden Hour Cruise with Raked Wingtips and GE90-115B',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'WIDEBODY',
+    };
+  }
 
-  // 17. Modern Flagship Twinjets: Boeing 777-200ER, 777-300ER, 787, Airbus A350
+  // 17. Boeing 787 Dreamliner
+  if (id.includes('787') || id.includes('B787')) {
+    return {
+      photoUrl: './aircrafts/b787_9.jpg',
+      caption: 'Boeing 787-9 Dreamliner Advanced Composite Twinjet',
+      airlineLivery: 'All Nippon Airways (ANA) Inspiration of Japan Livery',
+      flightContext: 'High-Altitude Cruise with Swooping Flexed Wings at FL400',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'WIDEBODY',
+    };
+  }
+
+  // 18. Modern Flagship Twinjets: Airbus A350, Boeing 777-9X
   if (
     id.includes('777') ||
-    id.includes('787') ||
     id.includes('350') ||
     id.includes('B777') ||
     id.includes('A350')
@@ -421,7 +462,19 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 29. Standard Narrowbody Airliners: Airbus A320neo, A321XLR, Embraer E190, COMAC C919
+  // 29. Embraer E-Jets: E190
+  if (id.includes('E190') || id.includes('EMBRAER')) {
+    return {
+      photoUrl: './aircrafts/e190.jpg',
+      caption: 'Embraer E190 Advanced Regional Twinjet',
+      airlineLivery: 'JetBlue Airways Blue Tail Graphic Livery',
+      flightContext: 'Coastal Banking Cruise Above Cumulus Clouds',
+      manufacturerWatermark: 'EMBRAER S.A.',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 30. Standard Narrowbody Airliners: Airbus A320neo, A321XLR, COMAC C919
   return {
     photoUrl: './aircrafts/b737.jpg',
     caption: `${model.model} High-Efficiency Narrowbody Jet`,
