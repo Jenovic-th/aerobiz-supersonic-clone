@@ -75,6 +75,16 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
       badgeType: 'JUMBO',
     };
   }
+  if (id.includes('747-300') || id.includes('B747-300')) {
+    return {
+      photoUrl: './aircrafts/b747_300.jpg',
+      caption: 'Boeing 747-300 Stretched Upper Deck (SUD)',
+      airlineLivery: 'Swissair Classic Swiss Cross Livery',
+      flightContext: 'High-Altitude Transcontinental Cruise (Clean Wingtips)',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'JUMBO',
+    };
+  }
   if (id.includes('747')) {
     return {
       photoUrl: './aircrafts/b747.jpg',
@@ -208,10 +218,33 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 13. Soviet Aviation: Ilyushin Il-62, Il-96, Tu-204, Tu-404
+  // 13. Ilyushin Il-96-300
+  if (id.includes('IL-96') || id.includes('IL96')) {
+    return {
+      photoUrl: './aircrafts/il96_300.jpg',
+      caption: 'Ilyushin Il-96-300 Long-Haul Quadjet Flagship',
+      airlineLivery: 'Aeroflot Russian International Airlines Modern Livery',
+      flightContext: 'Transpolar Long-Range Route with Winglets at FL380',
+      manufacturerWatermark: 'ILYUSHIN AVIATION COMPLEX',
+      badgeType: 'WIDEBODY',
+    };
+  }
+
+  // 14. Tupolev Tu-204
+  if (id.includes('204') || id.includes('TU-204')) {
+    return {
+      photoUrl: './aircrafts/tu204.jpg',
+      caption: 'Tupolev Tu-204 Modern Medium-Haul Twinjet',
+      airlineLivery: 'Rossiya Special Flight Squadron Flagship Livery',
+      flightContext: 'Cruising Above Snow-Capped Alpine Mountain Ranges',
+      manufacturerWatermark: 'TUPOLEV DESIGN BUREAU',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 15. Soviet Aviation: Ilyushin Il-62, Tu-404
   if (
     id.includes('IL-') ||
-    id.includes('204') ||
     id.includes('404') ||
     model.manufacturer.toLowerCase().includes('ilyushin') ||
     model.manufacturer.toLowerCase().includes('tupolev')
@@ -222,11 +255,23 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
       airlineLivery: 'Aeroflot Civil Aviation Directorate',
       flightContext: 'Cruising Northern Airway Above Snow-Covered Terrain',
       manufacturerWatermark: `${model.manufacturer.toUpperCase()} DESIGN BUREAU`,
-      badgeType: id.includes('IL-96') || id.includes('404') ? 'WIDEBODY' : 'NARROWBODY',
+      badgeType: id.includes('404') ? 'WIDEBODY' : 'NARROWBODY',
     };
   }
 
-  // 11. Modern Flagship Twinjets: Boeing 777, 787, Airbus A350
+  // 16. Boeing 777-200 Original Triple-Seven
+  if (id === 'B777-200' || id.includes('777-200') && !id.includes('ER')) {
+    return {
+      photoUrl: './aircrafts/b777_200.jpg',
+      caption: 'Boeing 777-200 Original Triple-Seven Widebody',
+      airlineLivery: 'United Airlines Battleship Gray / Blue Fleet Livery',
+      flightContext: 'Cruising Above High Clouds with Massive GE90 Turbofans',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'WIDEBODY',
+    };
+  }
+
+  // 17. Modern Flagship Twinjets: Boeing 777-200ER, 777-300ER, 787, Airbus A350
   if (
     id.includes('777') ||
     id.includes('787') ||
@@ -244,7 +289,19 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 14. Boeing 767 Transcontinental Widebody Twinjet
+  // 18. Boeing 767-300ER Stretched Widebody
+  if (id.includes('767-300') || id.includes('B767-300')) {
+    return {
+      photoUrl: './aircrafts/b767_300er.jpg',
+      caption: 'Boeing 767-300ER Extended-Range Widebody Twinjet',
+      airlineLivery: 'Delta Air Lines Modern Flagship Livery',
+      flightContext: 'Transatlantic ETOPS Crossing Above Ocean Cloudscape',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'WIDEBODY',
+    };
+  }
+
+  // 19. Boeing 767-200
   if (id.includes('767') || id.includes('B767')) {
     return {
       photoUrl: './aircrafts/b767_200.jpg',
@@ -256,7 +313,7 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 15. Airbus A340 Long-Haul Quadjet
+  // 20. Airbus A340 Long-Haul Quadjet
   if (id.includes('A340') || id.includes('340')) {
     return {
       photoUrl: './aircrafts/a340_300.jpg',
@@ -268,7 +325,7 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 16. Airbus A330 High-Efficiency Twinjet
+  // 21. Airbus A330 High-Efficiency Twinjet
   if (id.includes('A330') || id.includes('330')) {
     return {
       photoUrl: './aircrafts/a330_300.jpg',
@@ -280,11 +337,32 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 17. Early Airbus Widebodies: A300 & A310
-  if (
-    id.includes('A300') ||
-    id.includes('310')
-  ) {
+  // 22. Airbus A300-600 Advanced Widebody
+  if (id.includes('A300-600') || id.includes('A300_600')) {
+    return {
+      photoUrl: './aircrafts/a300_600.jpg',
+      caption: 'Airbus A300-600 Advanced Widebody Twinjet',
+      airlineLivery: 'Thai Airways International Royal Orchid Livery',
+      flightContext: 'Cruising Smoothly with Wingtip Fences in Golden Skies',
+      manufacturerWatermark: 'AIRBUS INDUSTRIE',
+      badgeType: 'WIDEBODY',
+    };
+  }
+
+  // 23. Airbus A310-300 Compact Widebody
+  if (id.includes('310') || id.includes('A310')) {
+    return {
+      photoUrl: './aircrafts/a310_300.jpg',
+      caption: 'Airbus A310-300 Compact Transcontinental Twinjet',
+      airlineLivery: 'Lufthansa Classic European Twin-Aisle Livery',
+      flightContext: 'Cruising Above Stratocumulus Deck at 37,000 ft',
+      manufacturerWatermark: 'AIRBUS INDUSTRIE',
+      badgeType: 'WIDEBODY',
+    };
+  }
+
+  // 24. Early Airbus A300B4
+  if (id.includes('A300')) {
     return {
       photoUrl: './aircrafts/a300.jpg',
       caption: `${model.model} Widebody Airliner`,
@@ -295,7 +373,7 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 16. Boeing 757 High-Performance Twinjet
+  // 25. Boeing 757 High-Performance Twinjet
   if (id.includes('757') || id.includes('B757')) {
     return {
       photoUrl: './aircrafts/b757_200.jpg',
@@ -307,7 +385,19 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 17. Boeing 737-300 Classic High-Bypass
+  // 26. Boeing 737-800 Next-Generation
+  if (id.includes('737-800') || id.includes('B737-800')) {
+    return {
+      photoUrl: './aircrafts/b737_800.jpg',
+      caption: 'Boeing 737-800 Next-Generation High-Bypass Twinjet',
+      airlineLivery: 'American Airlines Polished Bare-Metal Fleet Livery',
+      flightContext: 'Climbing with Blended Winglets in Crisp Blue Skies',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 27. Boeing 737-300 Classic High-Bypass
   if (id.includes('737-300') || id.includes('B737-300')) {
     return {
       photoUrl: './aircrafts/b737_300.jpg',
@@ -319,7 +409,7 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 18. Airbus A320-200 Fly-By-Wire Pioneer
+  // 28. Airbus A320-200 Fly-By-Wire Pioneer
   if (id.includes('A320-200') || (id.includes('A320') && !id.includes('NEO'))) {
     return {
       photoUrl: './aircrafts/a320_200.jpg',
@@ -331,7 +421,7 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 19. Standard Narrowbody Airliners: Boeing 737, 757, Airbus A320neo, A321XLR
+  // 29. Standard Narrowbody Airliners: Airbus A320neo, A321XLR, Embraer E190, COMAC C919
   return {
     photoUrl: './aircrafts/b737.jpg',
     caption: `${model.model} High-Efficiency Narrowbody Jet`,

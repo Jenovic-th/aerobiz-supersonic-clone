@@ -79,6 +79,7 @@ function getAircraftPhotoUrl(model) {
     return 'future.jpg';
   }
   if (id.includes('747-400') || id.includes('B747-400')) return 'b747_400.jpg';
+  if (id.includes('747-300') || id.includes('B747-300')) return 'b747_300.jpg';
   if (id.includes('747')) return 'b747.jpg';
   if (id.includes('380')) return 'a380.jpg';
   if (id.includes('707')) return 'b707.jpg';
@@ -96,15 +97,17 @@ function getAircraftPhotoUrl(model) {
   }
   if (id.includes('154') || id.includes('TU-154')) return 'tu154.jpg';
   if (id.includes('IL-86') || id.includes('IL86')) return 'il86.jpg';
+  if (id.includes('IL-96') || id.includes('IL96')) return 'il96_300.jpg';
+  if (id.includes('204') || id.includes('TU-204')) return 'tu204.jpg';
   if (
     id.includes('IL-') ||
-    id.includes('204') ||
     id.includes('404') ||
     model.manufacturer.toLowerCase().includes('ilyushin') ||
     model.manufacturer.toLowerCase().includes('tupolev')
   ) {
     return 'soviet.jpg';
   }
+  if (id === 'B777-200' || (id.includes('777-200') && !id.includes('ER'))) return 'b777_200.jpg';
   if (
     id.includes('777') ||
     id.includes('787') ||
@@ -114,16 +117,17 @@ function getAircraftPhotoUrl(model) {
   ) {
     return 'b777.jpg';
   }
+  if (id.includes('767-300') || id.includes('B767-300')) return 'b767_300er.jpg';
   if (id.includes('767') || id.includes('B767')) return 'b767_200.jpg';
   if (id.includes('A340') || id.includes('340')) return 'a340_300.jpg';
   if (id.includes('A330') || id.includes('330')) return 'a330_300.jpg';
-  if (
-    id.includes('A300') ||
-    id.includes('310')
-  ) {
+  if (id.includes('A300-600') || id.includes('A300_600')) return 'a300_600.jpg';
+  if (id.includes('310') || id.includes('A310')) return 'a310_300.jpg';
+  if (id.includes('A300')) {
     return 'a300.jpg';
   }
   if (id.includes('757') || id.includes('B757')) return 'b757_200.jpg';
+  if (id.includes('737-800') || id.includes('B737-800')) return 'b737_800.jpg';
   if (id.includes('737-300') || id.includes('B737-300')) return 'b737_300.jpg';
   if (id.includes('A320-200') || (id.includes('A320') && !id.includes('NEO'))) return 'a320_200.jpg';
   return 'b737.jpg';
