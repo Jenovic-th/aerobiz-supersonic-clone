@@ -5,6 +5,10 @@ import {
   BarScore,
   DrumStyle,
 } from './executiveLoungeFullSong';
+import {
+  BGM_TRACKS_CATALOG,
+  BgmTrackDefinition,
+} from './retroMusicTracks';
 
 // Helper: Note Name to Frequency in Hz
 const noteFreq = (name: string | null): number => {
@@ -35,9 +39,11 @@ class RetroCityPopBgmEngine {
   private schedulerTimer: any = null;
   private currentStep: number = 0;
   private nextStepTime: number = 0;
-  private readonly BPM: number = 100; // User-selected exact 100 BPM
-  private readonly TOTAL_BARS: number = EXECUTIVE_LOUNGE_FULL_SCORE.length; // 48 bars
-  private readonly TOTAL_STEPS: number = EXECUTIVE_LOUNGE_FULL_SCORE.length * 16; // 768 steps = 115.2s
+  private currentTrackId: string = 'executive_lounge';
+  private currentBpm: number = 100;
+  private activeScore: BarScore[] = EXECUTIVE_LOUNGE_FULL_SCORE;
+  private totalBars: number = EXECUTIVE_LOUNGE_FULL_SCORE.length;
+  private totalSteps: number = EXECUTIVE_LOUNGE_FULL_SCORE.length * 16;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -302,15 +308,15 @@ class RetroCityPopBgmEngine {
     const ctx = getAudioContext();
     if (!ctx) return;
 
-    const secondsPerStep = (60 / this.BPM) / 4; // 16th note step = 0.15s @ 100 BPM
+    const secondsPerStep = (60 / this.currentBpm) / 4; // 16th note step based on current BPM
     const lookahead = 0.12;
 
     while (this.nextStepTime < ctx.currentTime + lookahead) {
-      const stepIndex = this.currentStep % this.TOTAL_STEPS; // 0 to 767
-      const barIndex = Math.floor(stepIndex / 16);           // 0 to 47
-      const stepInBar = stepIndex % 16;                      // 0 to 15
+      const stepIndex = this.currentStep % this.totalSteps;
+      const barIndex = Math.floor(stepIndex / 16);
+      const stepInBar = stepIndex % 16;
 
-      const bar: BarScore = EXECUTIVE_LOUNGE_FULL_SCORE[barIndex];
+      const bar: BarScore = this.activeScore[barIndex];
 
       if (bar) {
         // 1. Dynamic Drums according to section context
@@ -419,6 +425,14 @@ class RetroCityPopBgmEngine {
       this.vinylGain.connect(this.masterGain);
       this.vinylNode.start();
 
+      // Resolve active track from user settings
+      const track = this.resolveActiveTrack(settings.bgmTrack);
+      this.currentTrackId = track.id;
+      this.currentBpm = track.bpm;
+      this.activeScore = track.score;
+      this.totalBars = track.score.length;
+      this.totalSteps = track.score.length * 16;
+
       this.isRunning = true;
       this.usingCustomTrack = false;
       this.currentStep = 0;
@@ -427,11 +441,25 @@ class RetroCityPopBgmEngine {
       this.scheduleLoop();
 
       console.log(
-        `[BGM] Built-in SNES City Pop Suite started: Executive Lounge (Full 48 Bars, 1m55s @ 100 BPM)`
+        `[BGM] Built-in 16-Bit Soundtrack started: ${track.id} (${this.totalBars} bars, ${this.totalSteps} steps @ ${this.currentBpm} BPM)`
       );
     } catch (err) {
       console.warn('[BGM] Failed to start BGM:', err);
     }
+  }
+
+  // Resolve active track score and BPM by ID
+  private resolveActiveTrack(trackId?: string): { id: string; bpm: number; score: BarScore[] } {
+    const settings = loadSettings();
+    const targetId = trackId || settings.bgmTrack || 'executive_lounge';
+    if (targetId === 'executive_lounge') {
+      return { id: 'executive_lounge', bpm: 100, score: EXECUTIVE_LOUNGE_FULL_SCORE };
+    }
+    const found = BGM_TRACKS_CATALOG.find((t) => t.id === targetId);
+    if (found && found.score && found.score.length > 0) {
+      return { id: found.id, bpm: found.bpm, score: found.score };
+    }
+    return { id: 'executive_lounge', bpm: 100, score: EXECUTIVE_LOUNGE_FULL_SCORE };
   }
 
   // Stop / Pause BGM cleanly
@@ -507,14 +535,41 @@ class RetroCityPopBgmEngine {
     return this.usingCustomTrack;
   }
 
+  // Switch to a new track smoothly
+  public setTrack(trackId: string) {
+    const track = this.resolveActiveTrack(trackId);
+    this.currentTrackId = track.id;
+    this.currentBpm = track.bpm;
+    this.activeScore = track.score;
+    this.totalBars = track.score.length;
+    this.totalSteps = track.score.length * 16;
+    this.currentStep = 0;
+
+    if (this.isRunning) {
+      const ctx = getAudioContext();
+      if (ctx) {
+        this.nextStepTime = ctx.currentTime + 0.05;
+      }
+    }
+    console.log(`[BGM] Switched active soundtrack to: ${track.id} (${track.bpm} BPM)`);
+  }
+
+  public getCurrentTrackId(): string {
+    return this.currentTrackId;
+  }
+
+  public getTracksList(): BgmTrackDefinition[] {
+    return BGM_TRACKS_CATALOG;
+  }
+
   public getCurrentSection(): string {
     if (!this.isRunning) return 'Standby';
-    const barIndex = Math.floor((this.currentStep % this.TOTAL_STEPS) / 16);
-    return EXECUTIVE_LOUNGE_FULL_SCORE[barIndex]?.sectionName || 'Main Theme';
+    const barIndex = Math.floor((this.currentStep % this.totalSteps) / 16);
+    return this.activeScore[barIndex]?.sectionName || 'Main Theme';
   }
 
   public getTotalDurationSec(): number {
-    return this.TOTAL_STEPS * 0.15; // 115.2s
+    return this.totalSteps * ((60 / this.currentBpm) / 4);
   }
 }
 

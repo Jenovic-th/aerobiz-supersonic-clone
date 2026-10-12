@@ -25,7 +25,12 @@ const targetImages = [
   { file: 'b777_300er.jpg', model: 'Boeing 777-300ER' },
   { file: 'a380.jpg', model: 'Airbus A380-800' },
   { file: 'b747_8i.jpg', model: 'Boeing 747-8 Intercontinental' },
-  { file: 'b787_9.jpg', model: 'Boeing 787-9 Dreamliner' }
+  { file: 'b787_9.jpg', model: 'Boeing 787-9 Dreamliner' },
+  { file: 'a350_900.jpg', model: 'Airbus A350-900 XWB' },
+  { file: 'a320neo.jpg', model: 'Airbus A320neo' },
+  { file: 'b737_max8.jpg', model: 'Boeing 737 MAX 8' },
+  { file: 'a220_300.jpg', model: 'Airbus A220-300' },
+  { file: 'a350_1000.jpg', model: 'Airbus A350-1000 XWB' }
 ];
 
 let allPassed = true;
@@ -51,5 +56,5 @@ if (!allPassed) {
 }
 
 clearTimeout(_safetyWatchdog);
-console.log('ALL ' + targetImages.length + ' / 6 ACTIVE ERA 2 DEDICATED PHOTOS VERIFIED SUCCESSFULLY');
+console.log('ALL ' + targetImages.length + ' / 11 ACTIVE ERA 2 DEDICATED PHOTOS VERIFIED SUCCESSFULLY (100% COVERAGE)');
 process.exit(0);

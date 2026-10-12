@@ -6,8 +6,12 @@
 
 ## 1. สถานะปัจจุบัน (Current Implementation)
 * **สถานะในเกม:** เครื่องบินทุกรุ่นในเกมมีรูปภาพแสดงผลครบ 100% ไม่มีปัญหา Missing Image หรือ Error 404
-* **รูปแบบปัจจุบัน:** ใช้ระบบ **"ภาพตัวแทนตามตระกูล/ประเภท (13 Archetypes)"** โดยแต่ละตระกูลแชร์ภาพถ่ายหลัก 13 ภาพใน `public/aircrafts/`
-* **เป้าหมายในอนาคต:** ผลิตรูปภาพเฉพาะรุ่น (Custom Dedicated Photo) ให้ตรงตามรุ่นจริงครบทั้ง **58 รุ่นหลัก**
+* **ความคืบหน้ารูปภาพเฉพาะรุ่น (1-to-1 Dedicated Photos):**
+  - **Era 1 (1962–2000):** ครบ 100% (27/27 รุ่น มีภาพตรงรุ่นสมบูรณ์)
+  - **Era 2 (2000–2020):** ครบ 100% (11/11 รุ่น มีภาพตรงรุ่นสมบูรณ์)
+  - **Era 3 (2023–2070):** 9/20 รุ่นมีภาพเฉพาะรุ่น (C919, A321XLR, B777-9X, Boom, ZEROe, Tesla AeroStar, B797 BWB, Hyper-Mach 4, SpaceX StarLiner) ส่วนโมเดลแห่งอนาคตที่เหลือใช้ภาพตัวแทนไซไฟคุณภาพสูง (16:9 4K Air-to-Air / Spacecraft)
+* **ความครอบคลุมภาพเฉพาะรุ่นรวม:** 47 จาก 58 รุ่นหลัก (81%) มีภาพถ่ายตรงรุ่นแบบ 1-to-1 Dedicated High-Resolution Photography
+
 
 ---
 
@@ -48,42 +52,42 @@
 
 ---
 
-### 🌐 ERA 2: ยุคดิจิทัลและการปฏิวัติประสิทธิภาพ (2000 – 2020 — 11 รุ่น)
+### 🌐 ERA 2: ยุคดิจิทัลและการปฏิวัติประสิทธิภาพ (2000 – 2020 — 11 รุ่น ครบ 100%)
 - [x] **Boeing 777-200ER** (`B777-200ER`) — ปี 2000 | Western | ปัจจุบัน: `b777_200er.jpg` (ตรงรุ่น)
 - [x] **Embraer E190 E-Jet** (`E190`) — ปี 2004 | Neutral | ปัจจุบัน: `e190.jpg` (ตรงรุ่น)
 - [x] **Boeing 777-300ER** (`B777-300ER`) — ปี 2004 | Western | ปัจจุบัน: `b777_300er.jpg` (ตรงรุ่น)
 - [x] **Airbus A380-800 Superjumbo** (`A380-800`) — ปี 2007 | Western | ปัจจุบัน: `a380.jpg` (ตรงรุ่น)
 - [x] **Boeing 747-8 Intercontinental** (`B747-8I`) — ปี 2012 | Western | ปัจจุบัน: `b747_8i.jpg` (ตรงรุ่น)
 - [x] **Boeing 787-9 Dreamliner** (`B787-9`) — ปี 2014 | Western | ปัจจุบัน: `b787_9.jpg` (ตรงรุ่น)
-- [ ] **Airbus A350-900 XWB** (`A350-900`) — ปี 2015 | Western | ปัจจุบัน: `b777.jpg` | *เป้าหมาย: `a350_900.jpg`*
-- [ ] **Airbus A320neo** (`A320NEO`) — ปี 2016 | Western | ปัจจุบัน: `b737.jpg` | *เป้าหมาย: `a320neo.jpg`*
-- [ ] **Boeing 737 MAX 8** (`B737-MAX8`) — ปี 2017 | Western | ปัจจุบัน: `b737.jpg` | *เป้าหมาย: `b737_max8.jpg`*
-- [ ] **Airbus A220-300** (`A220-300`) — ปี 2018 | Western | ปัจจุบัน: `b737.jpg` | *เป้าหมาย: `a220_300.jpg`*
-- [ ] **Airbus A350-1000 XWB** (`A350-1000`) — ปี 2020 | Western | ปัจจุบัน: `b777.jpg` | *เป้าหมาย: `a350_1000.jpg`*
+- [x] **Airbus A350-900 XWB** (`A350-900`) — ปี 2015 | Western | ปัจจุบัน: `a350_900.jpg` (ตรงรุ่น)
+- [x] **Airbus A320neo** (`A320NEO`) — ปี 2016 | Western | ปัจจุบัน: `a320neo.jpg` (ตรงรุ่น)
+- [x] **Boeing 737 MAX 8** (`B737-MAX8`) — ปี 2017 | Western | ปัจจุบัน: `b737_max8.jpg` (ตรงรุ่น)
+- [x] **Airbus A220-300** (`A220-300`) — ปี 2018 | Western | ปัจจุบัน: `a220_300.jpg` (ตรงรุ่น)
+- [x] **Airbus A350-1000 XWB** (`A350-1000`) — ปี 2020 | Western | ปัจจุบัน: `a350_1000.jpg` (ตรงรุ่น)
 
 ---
 
 ### 🚀 ERA 3: ยุคซูเปอร์โซนิก ไฮเปอร์โซนิก และอากาศยานแห่งอนาคต (2023 – 2070 — 20 รุ่น)
-- [ ] **Comac C919** (`C919`) — ปี 2023 | Eastern | ปัจจุบัน: `b737.jpg` | *เป้าหมาย: `c919.jpg`*
-- [ ] **Airbus A321XLR** (`A321XLR`) — ปี 2024 | Western | ปัจจุบัน: `b737.jpg` | *เป้าหมาย: `a321xlr.jpg`*
-- [ ] **Boeing 777-9X Folding Wing** (`B777-9X`) — ปี 2025 | Western | ปัจจุบัน: `b777.jpg` | *เป้าหมาย: `b777_9x.jpg`*
+- [x] **Comac C919** (`C919`) — ปี 2023 | Eastern | ปัจจุบัน: `c919.jpg` (ตรงรุ่น)
+- [x] **Airbus A321XLR** (`A321XLR`) — ปี 2024 | Western | ปัจจุบัน: `a321xlr.jpg` (ตรงรุ่น)
+- [x] **Boeing 777-9X Folding Wing** (`B777-9X`) — ปี 2025 | Western | ปัจจุบัน: `b777_9x.jpg` (ตรงรุ่น)
 - [x] **Boom Overture Mach 1.7** (`BOOM-OVERTURE`) — ปี 2029 | Western | ปัจจุบัน: `boom.jpg` (ตรงรุ่น)
-- [ ] **Airbus ZEROe Hydrogen Turbofan** (`AIRBUS-ZEROE`) — ปี 2035 | Western | ปัจจุบัน: `future.jpg` | *เป้าหมาย: `airbus_zeroe.jpg`*
-- [ ] **Tesla AeroStar Electric Hypersonic** (`TESLA-AEROSTAR`) — ปี 2038 | Western | ปัจจุบัน: `future.jpg` | *เป้าหมาย: `tesla_aerostar.jpg`*
-- [ ] **Boeing B797 Blended Wing Body** (`BOEING-B797-BWB`) — ปี 2040 | Western | ปัจจุบัน: `future.jpg` | *เป้าหมาย: `b797_bwb.jpg`*
-- [ ] **Lockheed Hyper-Mach 4 Sovereign** (`HYPER-MACH4`) — ปี 2043 | Western | ปัจจุบัน: `future.jpg` | *เป้าหมาย: `hyper_mach4.jpg`*
-- [ ] **SpaceX StarLiner P2P Suborbital** (`SPACEX-STARLINER`) — ปี 2046 | Western | ปัจจุบัน: `future.jpg` | *เป้าหมาย: `spacex_starliner.jpg`*
+- [x] **Airbus ZEROe Hydrogen Turbofan** (`AIRBUS-ZEROE`) — ปี 2035 | Western | ปัจจุบัน: `airbus_zeroe.jpg` (ตรงรุ่น)
+- [x] **Tesla AeroStar Electric Hypersonic** (`TESLA-AEROSTAR`) — ปี 2038 | Western | ปัจจุบัน: `tesla_aerostar.jpg` (ตรงรุ่น)
+- [x] **Boeing B797 Blended Wing Body** (`BOEING-B797-BWB`) — ปี 2040 | Western | ปัจจุบัน: `b797_bwb.jpg` (ตรงรุ่น)
+- [x] **Lockheed Hyper-Mach 4 Sovereign** (`HYPER-MACH4`) — ปี 2043 | Western | ปัจจุบัน: `hyper_mach4.jpg` (ตรงรุ่น)
+- [x] **SpaceX StarLiner P2P Suborbital** (`SPACEX-STARLINER`) — ปี 2046 | Western | ปัจจุบัน: `spacex_starliner.jpg` (ตรงรุ่น)
 - [ ] **Boom Overture 2 Quiet SST** (`BOOM-OVERTURE-2`) — ปี 2048 | Western | ปัจจุบัน: `boom.jpg` | *เป้าหมาย: `boom_overture_2.jpg`*
-- [ ] **Airbus A390 CryoFlex LNG** (`AIRBUS-A390-CRYOFLEX`) — ปี 2050 | Western | ปัจจุบัน: `future.jpg` | *เป้าหมาย: `a390_cryoflex.jpg`*
+- [ ] **Airbus A390 CryoFlex LNG** (`AIRBUS-A390-CRYOFLEX`) — ปี 2050 | Western | ปัจจุบัน: `airbus_zeroe.jpg` | *เป้าหมาย: `a390_cryoflex.jpg`*
 - [ ] **Lockheed QSST Quiet Supersonic** (`LOCKHEED-QSST`) — ปี 2052 | Western | ปัจจุบัน: `boom.jpg` | *เป้าหมาย: `lockheed_qsst.jpg`*
-- [ ] **Tupolev Tu-404 Giant Flying Wing** (`TUPOLEV-TU404`) — ปี 2054 | Eastern | ปัจจุบัน: `future.jpg` | *เป้าหมาย: `tu404.jpg`*
-- [ ] **Boeing 808 Quantum Airliner** (`BOEING-808-QUANTUM`) — ปี 2056 | Western | ปัจจุบัน: `future.jpg` | *เป้าหมาย: `boeing_808.jpg`*
-- [ ] **Tesla Hyperion Plasma-Drive** (`TESLA-HYPERION`) — ปี 2058 | Western | ปัจจุบัน: `future.jpg` | *เป้าหมาย: `tesla_hyperion.jpg`*
-- [ ] **SpaceX Starship Commercial Pro** (`SPACEX-STARSHIP-PRO`) — ปี 2060 | Western | ปัจจุบัน: `future.jpg` | *เป้าหมาย: `starship_pro.jpg`*
+- [ ] **Tupolev Tu-404 Giant Flying Wing** (`TUPOLEV-TU404`) — ปี 2054 | Eastern | ปัจจุบัน: `b797_bwb.jpg` | *เป้าหมาย: `tu404.jpg`*
+- [ ] **Boeing 808 Quantum Airliner** (`BOEING-808-QUANTUM`) — ปี 2056 | Western | ปัจจุบัน: `b797_bwb.jpg` | *เป้าหมาย: `boeing_808.jpg`*
+- [ ] **Tesla Hyperion Plasma-Drive** (`TESLA-HYPERION`) — ปี 2058 | Western | ปัจจุบัน: `tesla_aerostar.jpg` | *เป้าหมาย: `tesla_hyperion.jpg`*
+- [ ] **SpaceX Starship Commercial Pro** (`SPACEX-STARSHIP-PRO`) — ปี 2060 | Western | ปัจจุบัน: `spacex_starliner.jpg` | *เป้าหมาย: `starship_pro.jpg`*
 - [ ] **Aérospatiale Super Concorde Neo** (`AEROSPATIALE-SUPER-CONCORDE`) — ปี 2064 | Western | ปัจจุบัน: `concorde.jpg` | *เป้าหมาย: `super_concorde.jpg`*
 - [ ] **McDonnell Douglas MD-2000 Tri-Fuselage** (`MCDONNELL-MD2000`) — ปี 2066 | Western | ปัจจุบัน: `dc10.jpg` | *เป้าหมาย: `md2000.jpg`*
 - [ ] **Airbus Orbital-Star Stratoliner** (`AIRBUS-ORBITAL-STAR`) — ปี 2068 | Western | ปัจจุบัน: `future.jpg` | *เป้าหมาย: `airbus_orbital.jpg`*
-- [ ] **Boeing Solaris Mach 6 WaveRider** (`BOEING-SOLARIS-MACH6`) — ปี 2070 | Western | ปัจจุบัน: `future.jpg` | *เป้าหมาย: `boeing_solaris.jpg`*
+- [ ] **Boeing Solaris Mach 6 WaveRider** (`BOEING-SOLARIS-MACH6`) — ปี 2070 | Western | ปัจจุบัน: `hyper_mach4.jpg` | *เป้าหมาย: `boeing_solaris.jpg`*
 
 ---
 

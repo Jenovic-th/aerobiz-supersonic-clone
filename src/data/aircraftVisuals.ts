@@ -36,22 +36,59 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 3. Sci-Fi Hypersonic, Cryogenic & Point-to-Point Spaceplanes
+  // 3. Sci-Fi Hypersonic, Suborbital & Futuristic Transports
+  if (id.includes('STARLINER') || id.includes('STARSHIP')) {
+    return {
+      photoUrl: './aircrafts/spacex_starliner.jpg',
+      caption: `${model.model} Commercial Suborbital StarLiner`,
+      airlineLivery: 'SpaceX Commercial StarLiner Stainless Steel & Hex-Tile Hull',
+      flightContext: 'Suborbital High-Earth Point-to-Point Orbit with Raptor Plumes',
+      manufacturerWatermark: 'SPACEX COMMERCIAL SPACEFLIGHT',
+      badgeType: 'FUTURE',
+    };
+  }
+  if (id.includes('AEROSTAR') || id.includes('HYPERION')) {
+    return {
+      photoUrl: './aircrafts/tesla_aerostar.jpg',
+      caption: `${model.model} Electric Hypersonic Transport`,
+      airlineLivery: 'Tesla Aerospace Minimalist White & Red Ion Accents',
+      flightContext: 'Stratospheric High-Speed Cruise at 65,000 ft with Plasma Thrusters',
+      manufacturerWatermark: 'TESLA AEROSPACE',
+      badgeType: 'FUTURE',
+    };
+  }
+  if (id.includes('MACH4') || id.includes('SOLARIS') || id.includes('MACH6')) {
+    return {
+      photoUrl: './aircrafts/hyper_mach4.jpg',
+      caption: `${model.model} Hypersonic Sovereign Transport`,
+      airlineLivery: 'Lockheed Titanium Heat-Shield Polished Hull',
+      flightContext: 'Mach 4.0+ High-Stratosphere Shockwave Cruise at 75,000 ft',
+      manufacturerWatermark: 'LOCKHEED SKUNK WORKS',
+      badgeType: 'FUTURE',
+    };
+  }
+  if (id.includes('B797') || id.includes('TU404') || id.includes('404') || id.includes('808') || id.includes('QUANTUM')) {
+    return {
+      photoUrl: './aircrafts/b797_bwb.jpg',
+      caption: `${model.model} Blended Wing Body Advanced Liner`,
+      airlineLivery: 'Aerodynamic Lifting-Body Flagship Livery',
+      flightContext: 'Smooth High-Efficiency Cruising Above Marine Clouds',
+      manufacturerWatermark: model.manufacturer.toUpperCase(),
+      badgeType: 'FUTURE',
+    };
+  }
+  if (id.includes('ZEROE') || id.includes('CRYOFLEX')) {
+    return {
+      photoUrl: './aircrafts/airbus_zeroe.jpg',
+      caption: `${model.model} Hydrogen Clean-Aero Airliner`,
+      airlineLivery: 'Airbus Eco-Clean Cyan Hydrogen Livery',
+      flightContext: 'Zero-Emission Hydrogen Turbofan Cruise at 38,000 ft',
+      manufacturerWatermark: 'AIRBUS INDUSTRIE',
+      badgeType: 'FUTURE',
+    };
+  }
   if (
-    id.includes('STARLINER') ||
-    id.includes('STARSHIP') ||
-    id.includes('AEROSTAR') ||
-    id.includes('MACH4') ||
-    id.includes('MACH6') ||
-    id.includes('B797') ||
-    id.includes('808') ||
-    id.includes('ZEROE') ||
-    id.includes('CRYOFLEX') ||
-    id.includes('HYPERION') ||
     id.includes('ORBITAL') ||
-    id.includes('SOLARIS') ||
-    id.includes('404') ||
-    id.includes('QUANTUM') ||
     id.includes('GEN')
   ) {
     return {
@@ -313,12 +350,40 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 18. Modern Flagship Twinjets: Airbus A350, Boeing 777-9X
+  // 18. Modern Flagship Widebodies: A350-1000, A350-900, B777-9X
+  if (id.includes('A350-1000') || id.includes('350-1000')) {
+    return {
+      photoUrl: './aircrafts/a350_1000.jpg',
+      caption: 'Airbus A350-1000 Stretched Flagship Widebody',
+      airlineLivery: 'Cathay Pacific Asian Intercontinental Livery',
+      flightContext: 'Sunset Cruise with 6-Wheel Bogies & Rolls-Royce Trent XWB-97',
+      manufacturerWatermark: 'AIRBUS INDUSTRIE',
+      badgeType: 'WIDEBODY',
+    };
+  }
+  if (id.includes('A350') || id.includes('350')) {
+    return {
+      photoUrl: './aircrafts/a350_900.jpg',
+      caption: 'Airbus A350-900 XWB Modern Flagship Twinjet',
+      airlineLivery: 'Airbus Carbon Composite Flagship House Livery',
+      flightContext: 'Sunrise High-Altitude Cruise Above Clouds with Curved Winglets',
+      manufacturerWatermark: 'AIRBUS INDUSTRIE',
+      badgeType: 'WIDEBODY',
+    };
+  }
+  if (id.includes('777-9') || id.includes('B777-9')) {
+    return {
+      photoUrl: './aircrafts/b777_9x.jpg',
+      caption: 'Boeing 777-9X Folding-Wingtip Ultra-Widebody',
+      airlineLivery: 'Boeing Commercial Commercial Next-Gen Livery',
+      flightContext: 'Golden Hour Cruise with Folding Wingtips and Massive GE9X',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'WIDEBODY',
+    };
+  }
   if (
     id.includes('777') ||
-    id.includes('350') ||
-    id.includes('B777') ||
-    id.includes('A350')
+    id.includes('B777')
   ) {
     return {
       photoUrl: './aircrafts/b777.jpg',
@@ -474,7 +539,67 @@ export function getAircraftPhotoInfo(model: AircraftModel): AircraftPhotoInfo {
     };
   }
 
-  // 30. Standard Narrowbody Airliners: Airbus A320neo, A321XLR, COMAC C919
+  // 30. Airbus A320neo Family
+  if (id.includes('320NEO') || id.includes('A320NEO')) {
+    return {
+      photoUrl: './aircrafts/a320neo.jpg',
+      caption: 'Airbus A320neo New Engine Option Narrowbody',
+      airlineLivery: 'European Commercial Flagship Livery',
+      flightContext: 'Cruising with Large LEAP Engines and Sharklets at FL380',
+      manufacturerWatermark: 'AIRBUS INDUSTRIE',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 31. Airbus A321XLR Extra Long Range
+  if (id.includes('A321XLR') || id.includes('321XLR') || id.includes('A321')) {
+    return {
+      photoUrl: './aircrafts/a321xlr.jpg',
+      caption: 'Airbus A321XLR Extra Long-Range Transatlantic Narrowbody',
+      airlineLivery: 'Lufthansa Deep Blue Livery',
+      flightContext: 'Transatlantic Long-Haul Cruise Above Marine Clouds',
+      manufacturerWatermark: 'AIRBUS INDUSTRIE',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 32. Boeing 737 MAX 8
+  if (id.includes('MAX') || id.includes('MAX8') || id.includes('B737-MAX8')) {
+    return {
+      photoUrl: './aircrafts/b737_max8.jpg',
+      caption: 'Boeing 737 MAX 8 Advanced Single-Aisle Twinjet',
+      airlineLivery: 'Boeing Modern Sky-Blue Commercial Livery',
+      flightContext: 'Cruising with Split-Scimitar Winglets and Serrated Nacelles',
+      manufacturerWatermark: 'BOEING COMMERCIAL AIRPLANES',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 33. Airbus A220-300
+  if (id.includes('A220') || id.includes('220')) {
+    return {
+      photoUrl: './aircrafts/a220_300.jpg',
+      caption: 'Airbus A220-300 High-Efficiency Regional Jet',
+      airlineLivery: 'Coastal Blue Horizon Commercial Livery',
+      flightContext: 'Cruising Above Island Coastline with Geared Turbofans',
+      manufacturerWatermark: 'AIRBUS INDUSTRIE',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 34. COMAC C919
+  if (id.includes('C919') || id.includes('COMAC')) {
+    return {
+      photoUrl: './aircrafts/c919.jpg',
+      caption: 'COMAC C919 Modern Commercial Airliner',
+      airlineLivery: 'COMAC Flagship Green & Blue Ribbon Livery',
+      flightContext: 'Cruising High Above Mountain Ridge and Clouds',
+      manufacturerWatermark: 'COMAC COMMERCIAL AIRCRAFT',
+      badgeType: 'NARROWBODY',
+    };
+  }
+
+  // 35. Standard Narrowbody Airliners Fallback
   return {
     photoUrl: './aircrafts/b737.jpg',
     caption: `${model.model} High-Efficiency Narrowbody Jet`,

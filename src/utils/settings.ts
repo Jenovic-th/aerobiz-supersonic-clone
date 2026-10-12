@@ -4,6 +4,7 @@ export interface GameSettings {
   sfxVolume: number; // 0 - 100
   bgmEnabled: boolean;
   bgmVolume: number; // 0 - 100
+  bgmTrack: string; // Active soundtrack ID
   autoSaveEnabled: boolean;
   fastAnimation: boolean;
   crtFilter: boolean;
@@ -17,6 +18,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   sfxVolume: 75,
   bgmEnabled: true,
   bgmVolume: 55,
+  bgmTrack: 'executive_lounge',
   autoSaveEnabled: true,
   fastAnimation: false,
   crtFilter: false,

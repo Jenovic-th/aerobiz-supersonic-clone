@@ -14,8 +14,11 @@ import {
   CheckCircle2,
   Sliders,
   Globe,
+  Disc,
+  Radio,
 } from 'lucide-react';
 import { bgmPlayer } from '../utils/lofiBgm';
+import { BGM_TRACKS_CATALOG } from '../utils/retroMusicTracks';
 import { useI18n, Language } from '../utils/i18n';
 
 interface SettingsModalProps {
@@ -79,6 +82,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setSettings(updated);
     saveSettings(updated);
     bgmPlayer.setVolume(vol);
+    if (onSettingsChanged) onSettingsChanged(updated);
+  };
+
+  const handleTrackSelect = (trackId: string) => {
+    playSound.click();
+    const updated = { ...settings, bgmTrack: trackId };
+    setSettings(updated);
+    saveSettings(updated);
+    bgmPlayer.setTrack(trackId);
+    if (!bgmPlayer.getIsPlaying() && settings.bgmEnabled) {
+      bgmPlayer.start();
+    }
     if (onSettingsChanged) onSettingsChanged(updated);
   };
 
@@ -199,25 +214,102 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
           </div>
 
-          {/* BGM Volume Slider */}
+          {/* BGM Volume & Track Jukebox */}
           {settings.bgmEnabled && (
-            <div className="p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-2xl space-y-2">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-300 font-bold flex items-center gap-1.5">
-                  <Headphones className="w-3.5 h-3.5 text-purple-400" />
-                  <span>{t.settings.bgmVolume}</span>
-                </span>
-                <span className="font-mono text-purple-400 font-bold">{settings.bgmVolume}%</span>
+            <div className="p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-2xl space-y-3">
+              {/* Volume Slider */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-300 font-bold flex items-center gap-1.5">
+                    <Headphones className="w-3.5 h-3.5 text-purple-400" />
+                    <span>{t.settings.bgmVolume}</span>
+                  </span>
+                  <span className="font-mono text-purple-400 font-bold">{settings.bgmVolume}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={settings.bgmVolume}
+                  onChange={(e) => handleBgmVolumeChange(parseInt(e.target.value, 10))}
+                  className="w-full accent-purple-400 cursor-pointer"
+                />
               </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={settings.bgmVolume}
-                onChange={(e) => handleBgmVolumeChange(parseInt(e.target.value, 10))}
-                className="w-full accent-purple-400 cursor-pointer"
-              />
-              <div className="text-[11px] text-slate-400 flex items-center justify-between pt-0.5">
+
+              {/* Jukebox Track Selector */}
+              <div className="pt-2 border-t border-slate-700/60 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+                    <Disc className="w-3.5 h-3.5 text-purple-400" />
+                    <span>{t.settings.bgmTrackSelect}</span>
+                  </div>
+                  <span className="text-[10px] text-purple-300 bg-purple-950/70 border border-purple-500/30 px-2 py-0.5 rounded-full font-mono font-bold">
+                    6 Tracks
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-tight">
+                  {t.settings.bgmTrackDesc}
+                </p>
+
+                {/* Track List Grid */}
+                <div className="space-y-1.5 pt-1">
+                  {BGM_TRACKS_CATALOG.map((track) => {
+                    const isSelected = (settings.bgmTrack || 'executive_lounge') === track.id;
+                    const title = lang === 'th' ? track.titleTh : track.titleEn;
+                    const desc = lang === 'th' ? track.descTh : track.descEn;
+
+                    return (
+                      <button
+                        key={track.id}
+                        type="button"
+                        onClick={() => handleTrackSelect(track.id)}
+                        className={`w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                          isSelected
+                            ? 'bg-gradient-to-r from-purple-950/70 to-slate-800 border-purple-400/80 shadow-md ring-1 ring-purple-400/40'
+                            : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/80 hover:border-slate-600'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div
+                            className={`p-1.5 rounded-lg shrink-0 ${
+                              isSelected
+                                ? 'bg-purple-500/30 text-purple-300 border border-purple-400/50'
+                                : 'bg-slate-700/50 text-slate-400'
+                            }`}
+                          >
+                            <Radio className="w-3.5 h-3.5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`text-xs font-bold truncate ${
+                                  isSelected ? 'text-white' : 'text-slate-300'
+                                }`}
+                              >
+                                {title}
+                              </span>
+                              {isSelected && (
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400 truncate">
+                              {desc}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900/80 border border-slate-700 text-slate-300">
+                            {track.bpm} BPM
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-700/60">
                 <span>{lang === 'th' ? '💡 รองรับไฟล์เพลงส่วนตัว: วางไฟล์ lofi.mp3 ใน public/audio/bgm/' : '💡 Custom BGM supported: Place lofi.mp3 in public/audio/bgm/'}</span>
               </div>
             </div>
